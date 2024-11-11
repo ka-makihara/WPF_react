@@ -13,6 +13,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
+using WpfApp1_cmd.ViewModel;
+
 namespace WpfApp1_cmd.View
 {
     /// <summary>
@@ -23,6 +25,38 @@ namespace WpfApp1_cmd.View
         public BView()
         {
             InitializeComponent();
+        }
+        // 依存関係プロパティの定義に必要なDependencyProperty(ボイラープレート)
+        // わかりやすくするため名前は プロパティ名+Property にする
+        public static readonly DependencyProperty ValueProperty =
+            DependencyProperty.Register(
+                nameof(Value),        // プロパティ名
+                typeof(MyCtrlData),   // プロパティの型
+                typeof(BView),        // プロパティを所有する型(自分自身の型)
+                new PropertyMetadata(   // 初期値をPropertyMetadataで指定
+                    false)
+                );
+
+        // 実際にバインドするプロパティ
+        // 上で定義したDependencyPropertyをラップするCLRプロパティ
+        public MyCtrlData Value
+        {
+            get => (MyCtrlData)GetValue(ValueProperty); 
+            set => SetValue(ValueProperty, value);
+        }
+
+        public static readonly DependencyProperty SelectedTextProperty =
+            DependencyProperty.Register(
+                nameof(SelectedText),
+                typeof(string),
+                typeof(BView),
+                new PropertyMetadata(
+                    false)
+                );
+        public string SelectedText
+        {
+            get => (string)GetValue(SelectedTextProperty);
+            set => SetValue(SelectedTextProperty, value);
         }
     }
 }

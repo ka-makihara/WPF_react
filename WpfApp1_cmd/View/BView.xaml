@@ -10,6 +10,7 @@
         <StackPanel Margin="10,100,20,0" Orientation="Vertical">
             <Label HorizontalAlignment="Center" VerticalAlignment="Center" Content="BView画面" FontSize="32" />
             <Button Content="LCU Lib Test" Command="{Binding LcuCommandTest}" Width="100"/>
+            <TextBlock Text="{Binding Value.Name, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource AncestorType={x:Type local:BView}}}" />
         </StackPanel>
     </Grid>
 </UserControl>

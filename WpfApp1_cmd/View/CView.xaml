@@ -3,10 +3,19 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:local="clr-namespace:WpfApp1_cmd.View"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
-        <Label HorizontalAlignment="Center" VerticalAlignment="Center" Content="CView画面" FontSize="32" />
+        <StackPanel Orientation="Vertical" >
+            <Label HorizontalAlignment="Center" VerticalAlignment="Center" Content="CView画面" FontSize="32" />
+            <ComboBox materialDesign:HintAssist.Hint="OS" >
+              <ComboBoxItem Content="Android" />
+              <ComboBoxItem Content="iOS" />
+              <ComboBoxItem Content="Linux" />
+              <ComboBoxItem Content="Windows" />
+            </ComboBox>
+        </StackPanel>
     </Grid>
 </UserControl>

@@ -29,4 +29,6 @@ namespace WpfApp1_cmd.ViewModel
             return true;
         }
     }
+
+    public record MyCtrlData(string Name, string CurVersion, string NewVersion);
 }

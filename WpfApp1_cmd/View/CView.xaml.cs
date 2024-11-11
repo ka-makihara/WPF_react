@@ -24,5 +24,10 @@ namespace WpfApp1_cmd.View
         {
             InitializeComponent();
         }
+
+        private void ComboBox_Selected(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }
