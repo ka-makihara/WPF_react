@@ -10,50 +10,88 @@
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:mahApps="http://metro.mahapps.com/winfx/xaml/controls"
         Style="{StaticResource MaterialDesignWindow}"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="550" Width="800">
     <Window.DataContext>
         <vm:MainWindowViewModel />
     </Window.DataContext>
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="200"/>
-            <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="83*"/>
+            <ColumnDefinition Width="317*"/>
         </Grid.ColumnDefinitions>
-        
-        <StatusBar VerticalAlignment="Bottom" Grid.ColumnSpan="3" >
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Menu IsMainMenu="True" Grid.ColumnSpan="2">
+            <MenuItem Header="_File">
+                <MenuItem Header="Save" Icon="{materialDesign:PackIcon Kind=ContentSave}" />
+                <MenuItem Header="Save As.." />
+                <MenuItem Header="Exit" Icon="{materialDesign:PackIcon Kind=ExitToApp}" InputGestureText="Ctrl+E" />
+                <Separator />
+                <MenuItem Header="Excellent" IsCheckable="True" IsChecked="True" />
+                <MenuItem Header="Rubbish" IsCheckable="True" />
+                <MenuItem Header="Dig Deeper" InputGestureText="Ctrl+D">
+                    <MenuItem Header="Enlightenment?" IsCheckable="True" />
+                    <MenuItem Header="Disappointment" IsCheckable="True" />
+                </MenuItem>
+                <MenuItem Header="Look Deeper" InputGestureText="Ctrl+D">
+                    <MenuItem Header="Plain" />
+                    <MenuItem Header="Ice Cream" />
+                </MenuItem>
+            </MenuItem>
+            <MenuItem Header="_Edit">
+                <MenuItem Command="{Binding CutCommand}" Header="Cut" Icon="{materialDesign:PackIcon Kind=ContentCut}" />
+                <MenuItem Command="{Binding CopyCommand}" Header="_Copy" Icon="{materialDesign:PackIcon Kind=ContentCopy}" />
+                <MenuItem Command="{Binding PasteCommand}" Header="_Paste" Icon="{materialDesign:PackIcon Kind=ContentPaste}" />
+            </MenuItem>
+        </Menu>
+        <StatusBar VerticalAlignment="Center" Grid.Row="2" Grid.ColumnSpan="2">
             <ProgressBar Width="160" Height="20" Value="60"/>
             <Label Content="60" />
             <Separator/>
             <Label Content="処理中" />
         </StatusBar>
-        
-        <GroupBox Margin="10,5,10,10">
-            <GroupBox.Header>
-                <Label Content="ボタン一覧"/>
-            </GroupBox.Header>
-            <StackPanel Grid.Column="0">
-                <Button Content="AView" Command="{Binding ScreenTransitionCommand}" CommandParameter="AView" Margin="10" />
-                <Button Content="BView" Command="{Binding ScreenTransitionCommand}" CommandParameter="BView" Margin="10" />
-                <Button Content="CView" Command="{Binding ScreenTransitionCommand}" CommandParameter="CView" Margin="10" />
-                <Button Margin="50" Command="{Binding ButtonCommand}" Content="Click" />
-                <Button Margin="10" Command="{Binding ButtonCommand2}" Content="ReactiveClick" />
-            </StackPanel>
-        </GroupBox>
-        <GridSplitter Grid.Column="1" Style="{StaticResource VerticalGridSplitter}" />
-        <Grid Grid.Column="2" >
-            <Grid.Resources>
-                <DataTemplate DataType="{x:Type vm:AViewModel}">
-                    <view:Aview />
-                </DataTemplate>
-                <DataTemplate DataType="{x:Type vm:BViewModel}">
-                    <view:BView />
-                </DataTemplate>
-                <DataTemplate DataType="{x:Type vm:CViewModel}">
-                    <view:CView />
-                </DataTemplate>
-            </Grid.Resources>
-            <ContentControl Content="{Binding ActiveView}"/>
+        <Grid Grid.Row="1" Grid.ColumnSpan="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="200"/>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <GroupBox Margin="10,5,10,10">
+                <GroupBox.Header>
+                    <Label Content="ボタン一覧"/>
+                </GroupBox.Header>
+                <StackPanel Grid.Column="0">
+                    <Button Content="AView" Command="{Binding ScreenTransitionCommand}" CommandParameter="AView" Margin="10" />
+                    <Button Content="BView" Command="{Binding ScreenTransitionCommand}" CommandParameter="BView" Margin="10" />
+                    <Button Content="CView" Command="{Binding ScreenTransitionCommand}" CommandParameter="CView" Margin="10" />
+                    <Button Content="GridView" Command="{Binding ScreenTransitionCommand}" CommandParameter="GView" Margin="10" />
+                    <Button Content="GridView2" Command="{Binding ScreenTransitionCommand}" CommandParameter="HView" Margin="10" />
+                    <Button Margin="20,20,20,5" Command="{Binding ButtonCommand}" Content="Click" />
+                    <Button Margin="20,10,20,5" Command="{Binding ButtonCommand2}" Content="ReactiveClick" />
+                </StackPanel>
+            </GroupBox>
+            <GridSplitter Grid.Column="1" Style="{StaticResource VerticalGridSplitter}" />
+            <Grid Grid.Column="2" >
+                <Grid.Resources>
+                    <DataTemplate DataType="{x:Type vm:AViewModel}">
+                        <view:Aview />
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type vm:BViewModel}">
+                        <view:BView />
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type vm:CViewModel}">
+                        <view:CView />
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type vm:GViewModel}">
+                        <view:GView />
+                    </DataTemplate>
+                </Grid.Resources>
+                <ContentControl Content="{Binding ActiveView}"/>
+            </Grid>
         </Grid>
     </Grid>
 </mahApps:MetroWindow>

@@ -17,4 +17,10 @@
     <PackageReference Include="ReactiveProperty.WPF" Version="9.6.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="WpfLcuCtrlLib">
+      <HintPath>..\..\WpfLcuCtrlLib\WpfLcuCtrlLib\bin\Debug\net8.0-windows\WpfLcuCtrlLib.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>

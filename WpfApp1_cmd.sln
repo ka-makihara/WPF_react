@@ -3,18 +3,34 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.11.35327.3
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WpfApp1_cmd", "WpfApp1_cmd\WpfApp1_cmd.csproj", "{B1947DC4-DFB5-4EF9-BB2D-3E622D5CE72F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WpfApp1_cmd", "WpfApp1_cmd\WpfApp1_cmd.csproj", "{B1947DC4-DFB5-4EF9-BB2D-3E622D5CE72F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WpfLcuCtrlLib", "..\WpfLcuCtrlLib\WpfLcuCtrlLib\WpfLcuCtrlLib.csproj", "{8DFCC88E-AA1E-46EE-8FFF-1601655C640A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
 		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{B1947DC4-DFB5-4EF9-BB2D-3E622D5CE72F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B1947DC4-DFB5-4EF9-BB2D-3E622D5CE72F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1947DC4-DFB5-4EF9-BB2D-3E622D5CE72F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B1947DC4-DFB5-4EF9-BB2D-3E622D5CE72F}.Debug|x64.Build.0 = Debug|Any CPU
 		{B1947DC4-DFB5-4EF9-BB2D-3E622D5CE72F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B1947DC4-DFB5-4EF9-BB2D-3E622D5CE72F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1947DC4-DFB5-4EF9-BB2D-3E622D5CE72F}.Release|x64.ActiveCfg = Release|Any CPU
+		{B1947DC4-DFB5-4EF9-BB2D-3E622D5CE72F}.Release|x64.Build.0 = Release|Any CPU
+		{8DFCC88E-AA1E-46EE-8FFF-1601655C640A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8DFCC88E-AA1E-46EE-8FFF-1601655C640A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8DFCC88E-AA1E-46EE-8FFF-1601655C640A}.Debug|x64.ActiveCfg = Debug|x64
+		{8DFCC88E-AA1E-46EE-8FFF-1601655C640A}.Debug|x64.Build.0 = Debug|x64
+		{8DFCC88E-AA1E-46EE-8FFF-1601655C640A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8DFCC88E-AA1E-46EE-8FFF-1601655C640A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8DFCC88E-AA1E-46EE-8FFF-1601655C640A}.Release|x64.ActiveCfg = Release|x64
+		{8DFCC88E-AA1E-46EE-8FFF-1601655C640A}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

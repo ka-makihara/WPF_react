@@ -7,6 +7,9 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
-        <Label HorizontalAlignment="Center" VerticalAlignment="Center" Content="BView画面" FontSize="32" />
+        <StackPanel Margin="10,100,20,0" Orientation="Vertical">
+            <Label HorizontalAlignment="Center" VerticalAlignment="Center" Content="BView画面" FontSize="32" />
+            <Button Content="LCU Lib Test" Command="{Binding LcuCommandTest}" Width="100"/>
+        </StackPanel>
     </Grid>
 </UserControl>
