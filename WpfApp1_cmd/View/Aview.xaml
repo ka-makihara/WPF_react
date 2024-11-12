@@ -21,6 +21,8 @@
                     </i:EventTrigger>
                 </i:Interaction.Triggers>
             </TextBlock>
+            <TextBlock FontSize="20" Text="{Binding CounterValue, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource AncestorType={x:Type local:Aview}}}" />
+            <Button Width="100" Content="Prop" Click="Button_Click" />
         </StackPanel>
     </Grid>
 </UserControl>

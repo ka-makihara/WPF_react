@@ -1,33 +1,38 @@
-﻿using System;
+﻿using Reactive.Bindings;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace WpfApp1_cmd.ViewModel
 {
     public class CViewModel : ViewModelBase
     {
-        ObservableCollection<MySelectData> Items { get; set; } = [];
+        private ObservableCollection<MySelectData> _items = [];
+        public ObservableCollection<MySelectData> Items
+        {
+            get => _items;
+            set => _items = value;
+        }
+
+        public ReactiveProperty<MySelectData> SelectedItem { get; } = new ReactiveProperty<MySelectData>();
+
         public CViewModel()
         {
             Items.Add(new MySelectData { Name = "Item1" });
             Items.Add(new MySelectData { Name = "Item2" });
             Items.Add(new MySelectData { Name = "Item3" });
 
-            _selectedItem = Items[0];
+            SelectedItem.Value = Items[0];
+            SelectedItem.Subscribe(SelectedItem => SelectionChanged());
         } 
-        private MySelectData _selectedItem;
-
-        public MySelectData SelectedItem
+        private void SelectionChanged()
         {
-            get => _selectedItem;
-        }
-         private void ComboBox_Selected(object sender, RoutedEventArgs e)
-        {
-
+            //MessageBox.Show($"SelectionChanged:{SelectedItem.Value.Name}");
         }
     }
     public class MySelectData

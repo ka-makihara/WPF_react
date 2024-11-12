@@ -69,7 +69,7 @@
                     <Button Content="BView" Command="{Binding ScreenTransitionCommand}" CommandParameter="BView" Margin="10" />
                     <Button Content="CView" Command="{Binding ScreenTransitionCommand}" CommandParameter="CView" Margin="10" />
                     <Button Content="GridView" Command="{Binding ScreenTransitionCommand}" CommandParameter="GView" Margin="10" />
-                    <Button Content="GridView2" Command="{Binding ScreenTransitionCommand}" CommandParameter="HView" Margin="10" />
+                    <Button Content="HView" Command="{Binding ScreenTransitionCommand}" CommandParameter="HView" Margin="10" />
                     <Button Margin="20,20,20,5" Command="{Binding ButtonCommand}" Content="Click" />
                     <Button Margin="20,10,20,5" Command="{Binding ButtonCommand2}" Content="ReactiveClick" />
                 </StackPanel>
@@ -81,13 +81,16 @@
                         <view:Aview />
                     </DataTemplate>
                     <DataTemplate DataType="{x:Type vm:BViewModel}">
-                        <view:BView />
+                        <view:BView Text="BView設定" Value="{Binding TextValue}"/>
                     </DataTemplate>
                     <DataTemplate DataType="{x:Type vm:CViewModel}">
                         <view:CView />
                     </DataTemplate>
                     <DataTemplate DataType="{x:Type vm:GViewModel}">
                         <view:GView />
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type vm:MachineViewModel}">
+                        <view:MachineView />
                     </DataTemplate>
                 </Grid.Resources>
                 <ContentControl Content="{Binding ActiveView}"/>

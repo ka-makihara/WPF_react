@@ -23,6 +23,33 @@ namespace WpfApp1_cmd.View
         public Aview()
         {
             InitializeComponent();
+            CounterValue = 5;
+        }
+
+        public int CounterValue 
+        {
+            get { return (int)GetValue(CounterValueProperty); }
+            set { SetValue(CounterValueProperty, value); }
+        }
+
+        // Using a DependencyProperty as the backing store for .  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty CounterValueProperty =
+            DependencyProperty.Register("CounterValue",
+                typeof(int),
+                typeof(Aview),
+                new PropertyMetadata(0, OnCounterValueChanged));
+
+        private static void OnCounterValueChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            Aview control = d as Aview;
+            if (control != null)
+            {
+                control.CounterValue = (int)e.NewValue;
+            }
+        }
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            CounterValue++;
         }
     }
 }

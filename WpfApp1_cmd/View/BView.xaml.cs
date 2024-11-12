@@ -26,6 +26,30 @@ namespace WpfApp1_cmd.View
         {
             InitializeComponent();
         }
+        public static readonly DependencyProperty TextProperty =
+            DependencyProperty.Register(
+                nameof(Text),
+                typeof(string),
+                typeof(BView),
+                new FrameworkPropertyMetadata("項目名"));
+        public string Text
+        {
+            get => (string)GetValue(TextProperty);
+            set => SetValue(TextProperty, value);
+        }
+
+        public static readonly DependencyProperty ValueProperty =
+            DependencyProperty.Register(
+                nameof(Value),
+                typeof(string),
+                typeof(BView),
+                new FrameworkPropertyMetadata("値",FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
+        public string Value
+        {
+            get => (string)GetValue(ValueProperty);
+            set => SetValue(ValueProperty, value);
+        }
+        /*
         // 依存関係プロパティの定義に必要なDependencyProperty(ボイラープレート)
         // わかりやすくするため名前は プロパティ名+Property にする
         public static readonly DependencyProperty ValueProperty =
@@ -58,5 +82,6 @@ namespace WpfApp1_cmd.View
             get => (string)GetValue(SelectedTextProperty);
             set => SetValue(SelectedTextProperty, value);
         }
+        */
     }
 }

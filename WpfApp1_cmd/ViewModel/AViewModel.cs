@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using WpfApp1_cmd.Command;
 
 using WpfLcuCtrlLib;
@@ -34,6 +35,8 @@ namespace WpfApp1_cmd.ViewModel
         public ReactiveCommand MouseEnterCommand { get; } = new ReactiveCommand();
         public ReactiveCommand MouseLeaveCommand { get; } = new ReactiveCommand();
 
+        public ReactiveProperty<int> CounterProperty { get; set; } = new ReactiveProperty<int>();
+
         public AViewModel()
         {
             CountCommand = new DelegateCommand(CountExecute);
@@ -44,6 +47,8 @@ namespace WpfApp1_cmd.ViewModel
         private void CountExecute()
         {
             ClickCount++;
+
+            
         }
     }
 }

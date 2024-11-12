@@ -16,18 +16,16 @@ using System.Windows.Shapes;
 namespace WpfApp1_cmd.View
 {
     /// <summary>
-    /// CView.xaml の相互作用ロジック
+    /// MachineView.xaml の相互作用ロジック
     /// </summary>
-    public partial class CView : UserControl
+    public partial class MachineView : UserControl
     {
-        public CView()
+
+        public MachineView()
         {
             InitializeComponent();
         }
-
-        private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-
-        }
     }
+
+    
 }

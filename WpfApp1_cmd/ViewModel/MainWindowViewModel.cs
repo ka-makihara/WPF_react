@@ -2,6 +2,7 @@
 using Reactive.Bindings.Extensions;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Data;
 using System.Diagnostics;
 using System.Linq;
@@ -16,6 +17,13 @@ namespace WpfApp1_cmd.ViewModel
     public class MainWindowViewModel : ViewModelBase
     {
         private ViewModelBase activeView = null;
+
+        private ObservableCollection<UnitVersion> _versions;
+        public ObservableCollection<UnitVersion> Versions
+        {
+            get => _versions;
+            set => SetProperty(ref _versions, value);
+        }
 
         public ViewModelBase ActiveView
         {
@@ -53,6 +61,8 @@ namespace WpfApp1_cmd.ViewModel
 
         public MainWindowViewModel()
         {
+            LoadUnitVersions();
+
             ButtonCommand = new DelegateCommand(async () =>
             {
                 Flag = false;
@@ -67,8 +77,9 @@ namespace WpfApp1_cmd.ViewModel
                 { "AView", new AViewModel() },
                 { "BView", new BViewModel() },
                 { "CView", new CViewModel() },
-                { "GView", new GViewModel() },
-                { "HView", new GViewModel() }
+                { "GView", new GViewModel(Versions) },
+                { "HView", new GViewModel(Versions) },
+                { "MView", new MachineViewModel() }
             };
             ActiveView = viewModeTable["AView"];
 
@@ -120,6 +131,24 @@ namespace WpfApp1_cmd.ViewModel
         private void screenTransitionExecute(string screenName)
         {
             ActiveView = viewModeTable[screenName];
+        }
+        private void LoadUnitVersions()
+        {
+            Versions = new ObservableCollection<UnitVersion>
+            {
+                new UnitVersion { IsSelected = true,  Name = "Unit1", CurVersion = "1.0.0", NewVersion = "1.0.1" },
+                new UnitVersion { IsSelected = false, Name = "Unit2", CurVersion = "1.0.0", NewVersion = "1.0.1" },
+                new UnitVersion { IsSelected = true,  Name = "Unit3", CurVersion = "1.0.0", NewVersion = "1.0.1" },
+                new UnitVersion { IsSelected = false, Name = "Unit4", CurVersion = "1.0.0", NewVersion = "1.0.1" },
+                new UnitVersion { IsSelected = true,  Name = "Unit5", CurVersion = "1.0.0", NewVersion = "1.0.1" },
+            };
+        }
+
+        private string _textValue = "Hello, World!";
+        public string TextValue 
+        {
+            get => _textValue;
+            set => SetProperty(ref _textValue,value);
         }
     }
 }

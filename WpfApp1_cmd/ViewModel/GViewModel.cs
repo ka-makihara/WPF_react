@@ -20,12 +20,14 @@ namespace WpfApp1_cmd.ViewModel
             } 
         }
 
-        public GViewModel()
+        public GViewModel(ObservableCollection<UnitVersion> versions)
         {
+            UnitVersions = versions;
+            /*
             LoadUnitVersions();
-
+*/
             // IsSelected プロパティが変更されたときに、IsAllSelected プロパティを更新する
-            foreach (var item in UnitVersions)
+            foreach (var item in versions)
             {
                 item.PropertyChanged += (sender, e) =>
                 {
@@ -36,6 +38,7 @@ namespace WpfApp1_cmd.ViewModel
                 };
             }
         }
+
         private void LoadUnitVersions()
         {
             UnitVersions = new ObservableCollection<UnitVersion>
@@ -47,7 +50,6 @@ namespace WpfApp1_cmd.ViewModel
                 new UnitVersion { IsSelected = true,  Name = "Unit5", CurVersion = "1.0.0", NewVersion = "1.0.1" },
             };
         }
-
         public bool? IsAllSelected
         {
             get {

@@ -26,6 +26,12 @@ namespace WpfApp1_cmd.ViewModel
             Console.WriteLine("LcuCommandTestExec");
         }
 
-        public ReactiveProperty<MyCtrlData> MyData { get; } = new ReactiveProperty<MyCtrlData>(new MyCtrlData("Unit1", "1.0.0", "1.0.1"));
+        //public ReactiveProperty<MyCtrlData> MyData { get; } = new ReactiveProperty<MyCtrlData>(new MyCtrlData("Unit1", "1.0.0", "1.0.1"));
+        private string _textValue = "Hello, World!";
+        public string TextValue 
+        {
+            get => _textValue;
+            set => _textValue=value;
+        }
     }
 }
