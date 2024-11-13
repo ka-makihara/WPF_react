@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\WpfLcuCtrlLib\WpfLcuCtrlLib\WpfLcuCtrlLib.csproj" />
+    <ProjectReference Include="..\..\WPF_LcuCtrlLib\WpfLcuCtrlLib\WpfLcuCtrlLib.csproj" />
   </ItemGroup>
 
 </Project>
