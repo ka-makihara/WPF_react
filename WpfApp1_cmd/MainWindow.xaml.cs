@@ -22,5 +22,6 @@ namespace WpfApp1_cmd
         {
             InitializeComponent();
         }
+
     }
 }

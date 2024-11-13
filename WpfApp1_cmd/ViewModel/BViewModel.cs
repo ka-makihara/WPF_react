@@ -12,7 +12,7 @@ namespace WpfApp1_cmd.ViewModel
     public class BViewModel : ViewModelBase
     {
         public ReactiveCommand LcuCommandTest { get; } = new ReactiveCommand();
-        private readonly LcuCtrl lcuCtrl = new();
+        private readonly LcuCtrl lcuCtrl = new("localhost:9000");
 
         public BViewModel()
         {
@@ -21,7 +21,7 @@ namespace WpfApp1_cmd.ViewModel
 
         private async void LcuCommandTestExec()
         {
-            bool ret = await lcuCtrl.LCU_Version("localhost:9000");
+            bool ret = await lcuCtrl.LCU_Version();
 
             Console.WriteLine("LcuCommandTestExec");
         }

@@ -5,12 +5,15 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using System.Windows;
+using System.Xml.Serialization;
 using WpfApp1_cmd.Command;
+using WpfLcuCtrlLib;
 
 namespace WpfApp1_cmd.ViewModel
 {
@@ -24,6 +27,7 @@ namespace WpfApp1_cmd.ViewModel
             get => _versions;
             set => SetProperty(ref _versions, value);
         }
+        public ObservableCollection<TreeItemLcu> TreeViewItems { get; set; }
 
         public ViewModelBase ActiveView
         {
@@ -59,9 +63,13 @@ namespace WpfApp1_cmd.ViewModel
         public ReactiveProperty<bool> FlagProperty2 { get; } = new ReactiveProperty<bool>(false);
         public ReactiveProperty<bool> FlagProperty3 { get; } = new ReactiveProperty<bool>(false);
 
+        public ReactiveCommand TreeViewSelectedItemChangedCommand { get; }
+
         public MainWindowViewModel()
         {
             LoadUnitVersions();
+
+            LoadLineInfo();
 
             ButtonCommand = new DelegateCommand(async () =>
             {
@@ -117,6 +125,36 @@ namespace WpfApp1_cmd.ViewModel
 
             CopyCommand.Subscribe(() => { Debug.WriteLine("Copy"); });
             PasteCommand.Subscribe(() => { Debug.WriteLine("Paste"); });
+
+            TreeViewSelectedItemChangedCommand = new ReactiveCommand();
+            TreeViewSelectedItemChangedCommand.Subscribe(args => TreeViewSelectedItemChanged(args as RoutedPropertyChangedEventArgs<object>));
+        }
+
+        /// <summary>
+        ///  ツリーの選択状態が変更されたときの処理
+        /// </summary>
+        /// <param name="e"></param>
+        public void TreeViewSelectedItemChanged(RoutedPropertyChangedEventArgs<object> e)
+        {
+            TreeItem? item = e.NewValue as TreeItem;
+            if( item == null)
+            {
+                return;
+            }
+            Debug.WriteLine($"TreeViewSelectedItemChanged={item.Name}:{item.ItemType}");
+
+            switch (item.ItemType)
+            {
+                case MachineType.LCU:
+                    ActiveView = viewModeTable["AView"];    //
+                    break;
+                case MachineType.Machine:
+                    ActiveView = viewModeTable["MView"];
+                    break;
+                case MachineType.Module:
+                    ActiveView = viewModeTable["GView"];
+                    break;
+            }
         }
 
         private void CutCmdExecute()
@@ -143,12 +181,93 @@ namespace WpfApp1_cmd.ViewModel
                 new UnitVersion { IsSelected = true,  Name = "Unit5", CurVersion = "1.0.0", NewVersion = "1.0.1" },
             };
         }
+        private async void LoadLineInfo()
+        {
+            TreeViewItems = new ObservableCollection<TreeItemLcu>
+            {
+                // Add Localhost[Debuge用 -> localhost:9000で仮想LCU(WebAPIサーバーを起動して確認する)]
+                new ("localhost:9000"){ Name = "localhost:9000", IsChecked = true, ItemType=MachineType.LCU},
+                new ("ch-lcu33"){ Name = "ch-lcu33", IsChecked = true, ItemType=MachineType.LCU},
+            };
+            // 起動時に情報取得する場合
+            foreach (var lcu in TreeViewItems)
+            {
+                bool ret = await UpdateLcuInfo(lcu);
+            }
+        }
 
         private string _textValue = "Hello, World!";
         public string TextValue 
         {
             get => _textValue;
             set => SetProperty(ref _textValue,value);
+        }
+
+        /// <summary>
+        /// LCUの情報を更新する
+        /// </summary>
+        /// <param name="lcuName"></param>
+        public async Task<bool> UpdateLcuInfo(TreeItemLcu lcu) 
+        {
+            if (lcu.LcuCtrl.FtpUser == null)
+            {
+                // FTPアカウント情報を取得
+                var str = await lcu.LcuCtrl.LCU_Command(FtpData.Command());
+                FtpData? data = FtpData.FromJson(str);
+                if(data == null)
+                {
+                    return false;
+                }
+                if(data.username == null || data.password == null)
+                {
+                    return false;
+                } 
+                string password = FtpData.GetPasswd(data.username, data.password);
+
+                lcu.FtpUser = data.username;
+                lcu.FtpPassword = password;
+            }
+
+            //装置情報が未取得の場合
+            if (lcu.Children != null && lcu.Children.Count == 0)
+            {
+                // Machine 情報を登録
+                XmlSerializer serializer = new(typeof(LineInfo));
+                string response = await lcu.LcuCtrl.LCU_HttpGet("lines");
+
+                LineInfo lineInfo = (LineInfo)serializer.Deserialize( new StringReader(response));
+
+                foreach(var mc in lineInfo.Line.Machines)
+                {
+                    TreeItemMachine machine = new()
+                    {
+                        Name = mc.MachineName,
+                        ItemType = MachineType.Machine,
+                        IsChecked = true,
+                        Machine = mc,
+                        Parent = lcu,
+                        Children = new ObservableCollection<TreeItemModule>(),
+                    };
+                    foreach (var base_ in mc.Bases)
+                    {
+                        foreach (var module in base_.Modules)
+                        {
+                            TreeItemModule moduleItem = new()
+                            {
+                                Name = module.DispModule,
+                                ItemType = MachineType.Module,
+                                IsChecked = true,
+                                Base = base_,
+                                Module = module,
+                                Parent = machine,
+                            };
+                            machine.Children.Add(moduleItem);
+                        }
+                    }
+                    lcu.Children.Add(machine);
+                }
+            }
+            return true;
         }
     }
 }
