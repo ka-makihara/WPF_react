@@ -36,7 +36,7 @@ namespace WpfApp1_cmd.ViewModel
             {
                 if (activeView != value) {
                     activeView = value;
-                    OnPropertyChanged("ActiveView");
+                    OnPropertyChanged(nameof(ActiveView));
                 }
             }
         }
@@ -87,7 +87,8 @@ namespace WpfApp1_cmd.ViewModel
                 { "CView", new CViewModel() },
                 { "GView", new GViewModel(Versions) },
                 { "HView", new GViewModel(Versions) },
-                { "MView", new MachineViewModel() }
+                { "MView", new MachineViewModel() },
+                { "LView", new LcuViewModel()  }
             };
             ActiveView = viewModeTable["AView"];
 

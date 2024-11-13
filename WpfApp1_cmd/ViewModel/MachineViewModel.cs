@@ -9,14 +9,14 @@ namespace WpfApp1_cmd.ViewModel
 {
     class MachineViewModel : ViewModelBase
     {
-        private ObservableCollection<MachineInfo> _machines;
-        public ObservableCollection<MachineInfo> Machines
+        private ObservableCollection<ModuleInfo> _modules;
+        public ObservableCollection<ModuleInfo> Modules
         {
-            get => _machines;
+            get => _modules;
             set
             {
-                _machines = value;
-                SetProperty(ref _machines, value);
+                _modules = value;
+                SetProperty(ref _modules, value);
             }
         }
 
@@ -24,7 +24,7 @@ namespace WpfApp1_cmd.ViewModel
         {
             LoadMachineInfo();
             // IsSelected プロパティが変更されたときに、IsAllSelected プロパティを更新する
-            foreach (var item in Machines)
+            foreach (var item in Modules)
             {
                 item.PropertyChanged += (sender, e) =>
                 {
@@ -38,29 +38,29 @@ namespace WpfApp1_cmd.ViewModel
 
         private void LoadMachineInfo()
         {
-            Machines = new ObservableCollection<MachineInfo>
-            {
-                new MachineInfo { IsSelected = true,  Name = "Machine1", ID = 1, Pos = 1, IPAddress="localhost"},
-                new MachineInfo { IsSelected = false, Name = "Machine2", ID = 2, Pos = 2, IPAddress="localhost"},
-                new MachineInfo { IsSelected = true,  Name = "Machine3", ID = 3, Pos = 3, IPAddress="localhost"},
-                new MachineInfo { IsSelected = false, Name = "Machine4", ID = 4, Pos = 4, IPAddress="localhost"},
-                new MachineInfo { IsSelected = true,  Name = "Machine5", ID = 5, Pos = 5, IPAddress="localhost"},
-            };
+            Modules =
+            [
+                new () { IsSelected = true,  Name = "Machine1", ModuleId = 1, LogicalPos = 1, PhysicalPos=1},
+                new () { IsSelected = false, Name = "Machine2", ModuleId = 2, LogicalPos = 2, PhysicalPos=2},
+                new () { IsSelected = true,  Name = "Machine3", ModuleId = 3, LogicalPos = 3, PhysicalPos=3},
+                new () { IsSelected = false, Name = "Machine4", ModuleId = 4, LogicalPos = 4, PhysicalPos=4},
+                new () { IsSelected = true,  Name = "Machine5", ModuleId = 5, LogicalPos = 5, PhysicalPos=5},
+            ];
         }
         public bool? IsAllSelected
         {
             get {
-                var selected = Machines.Select(item => item.IsSelected).Distinct().ToList();
+                var selected = Modules.Select(item => item.IsSelected).Distinct().ToList();
                 return selected.Count == 1 ? selected.Single() : (bool?)null;
             }
             set {
                 if (value.HasValue) {
-                    SelectAll(value.Value, Machines);
+                    SelectAll(value.Value, Modules);
                     OnPropertyChanged();
                 }
             }
         }
-        private static void SelectAll(bool select, IEnumerable<MachineInfo> models)
+        private static void SelectAll(bool select, IEnumerable<ModuleInfo> models)
         {
             foreach (var model in models) {
                 model.IsSelected = select;
