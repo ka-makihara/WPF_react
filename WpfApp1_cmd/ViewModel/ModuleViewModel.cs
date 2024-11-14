@@ -7,8 +7,9 @@ using System.Threading.Tasks;
 
 namespace WpfApp1_cmd.ViewModel
 {
-    internal class GViewModel : ViewModelBase
+    internal class ModuleViewModel : ViewModelBase
     {
+        /*
         private ObservableCollection<UnitVersion> _unitVersions;
         public ObservableCollection<UnitVersion> UnitVersions
         {
@@ -19,11 +20,13 @@ namespace WpfApp1_cmd.ViewModel
                 SetProperty(ref _unitVersions, value);
             } 
         }
+        */
 
-        //public GViewModel(ObservableCollection<UnitVersion> versions)
-        public GViewModel()
+        public ObservableCollection<UnitVersion> UnitVersions { get; set; }
+        public ModuleViewModel(ObservableCollection<UnitVersion> unitVersions)
         {
-            LoadUnitVersions();
+            //LoadUnitVersions();
+            UnitVersions = unitVersions;
 
             // IsSelected プロパティが変更されたときに、IsAllSelected プロパティを更新する
             foreach (var item in UnitVersions)

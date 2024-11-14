@@ -9,6 +9,7 @@ namespace WpfApp1_cmd.ViewModel
 {
     class MachineViewModel : ViewModelBase
     {
+        /*
         private ObservableCollection<ModuleInfo> _modules;
         public ObservableCollection<ModuleInfo> Modules
         {
@@ -19,10 +20,14 @@ namespace WpfApp1_cmd.ViewModel
                 SetProperty(ref _modules, value);
             }
         }
+        */
+        public ObservableCollection<ModuleInfo> Modules { get; set; }
 
-        public MachineViewModel()
+        public MachineViewModel(ObservableCollection<ModuleInfo> modules)
         {
-            LoadMachineInfo();
+            //LoadMachineInfo();
+            Modules = modules;
+
             // IsSelected プロパティが変更されたときに、IsAllSelected プロパティを更新する
             foreach (var item in Modules)
             {
@@ -40,11 +45,7 @@ namespace WpfApp1_cmd.ViewModel
         {
             Modules =
             [
-                new () { IsSelected = true,  Name = "Machine1", ModuleId = 1, LogicalPos = 1, PhysicalPos=1},
-                new () { IsSelected = false, Name = "Machine2", ModuleId = 2, LogicalPos = 2, PhysicalPos=2},
-                new () { IsSelected = true,  Name = "Machine3", ModuleId = 3, LogicalPos = 3, PhysicalPos=3},
-                new () { IsSelected = false, Name = "Machine4", ModuleId = 4, LogicalPos = 4, PhysicalPos=4},
-                new () { IsSelected = true,  Name = "Machine5", ModuleId = 5, LogicalPos = 5, PhysicalPos=5},
+                new (){Name="Module1", IsSelected=true}
             ];
         }
         public bool? IsAllSelected
@@ -66,5 +67,6 @@ namespace WpfApp1_cmd.ViewModel
                 model.IsSelected = select;
             }
         }
+
     }
 }

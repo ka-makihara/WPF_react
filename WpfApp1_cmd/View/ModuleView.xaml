@@ -1,21 +1,20 @@
-﻿<UserControl x:Class="WpfApp1_cmd.View.LcuView"
+﻿<UserControl x:Class="WpfApp1_cmd.View.ModuleView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:WpfApp1_cmd.View"
-              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:viewmodel="clr-namespace:WpfApp1_cmd.ViewModel"
-             d:DataContext="{d:DesignInstance Type=viewmodel:LcuViewModel}"
+             d:DataContext="{d:DesignInstance Type=viewmodel:ModuleViewModel}"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
-        <!-- 意味不明だが必要　-->
+         <!-- 意味不明だが必要　-->
         <FrameworkElement x:Name="DataContextProxy" DataContext="{Binding}" />
 
-        <TextBlock Text="LCU名" FontSize="20" Margin="10,10,10,10" />
         <DataGrid AutoGenerateColumns="False"
-                  ItemsSource="{Binding MachineInfos}"
+                  ItemsSource="{Binding UnitVersions}"
                   FontSize="20"
                   CanUserAddRows="False"
                   HeadersVisibility="All"
@@ -39,26 +38,24 @@
                     </DataGridCheckBoxColumn.HeaderStyle>
                 </DataGridCheckBoxColumn>
 
-
                  <materialDesign:DataGridTextColumn 
                         EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnPopupEditingStyle}"
                         ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"
-                        Header="Name" FontSize="14" FontFamily="Arial" Width="100" MinWidth="100" Binding="{Binding Name}" IsReadOnly="True">
+                        Header="ユニット名" FontSize="16" FontFamily="Arial" Width="120" MinWidth="120" Binding="{Binding Name}" IsReadOnly="True">
                 </materialDesign:DataGridTextColumn>
 
                 <materialDesign:DataGridTextColumn
                         EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnPopupEditingStyle}"
                         ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"
-                        Header="MachineType" FontSize="14" FontFamily="Arial" Width="100" MinWidth="180" Binding="{Binding MachineType}" IsReadOnly="True">
+                        Header="現在バージョン" FontSize="16" FontFamily="Arial" Width="120" MinWidth="129" Binding="{Binding CurVersion}" IsReadOnly="True">
                 </materialDesign:DataGridTextColumn>
 
                 <materialDesign:DataGridTextColumn
                         EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnPopupEditingStyle}"
                         ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"
-                        Header="ModelName" FontSize="14" FontFamily="Arial" Width="100" MinWidth="150" Binding="{Binding ModelName}" IsReadOnly="True">
+                        Header="新規バージョン" FontSize="16" FontFamily="Arial" Width="120" MinWidth="120" Binding="{Binding NewVersion}" IsReadOnly="True">
                 </materialDesign:DataGridTextColumn>
-
             </DataGrid.Columns> 
-        </DataGrid>         
+        </DataGrid> 
     </Grid>
 </UserControl>

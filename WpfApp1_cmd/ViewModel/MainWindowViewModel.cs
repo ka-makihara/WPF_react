@@ -21,6 +21,7 @@ namespace WpfApp1_cmd.ViewModel
     {
         private ViewModelBase activeView = null;
 
+        /*
         private ObservableCollection<UnitVersion> _versions;
         public ObservableCollection<UnitVersion> Versions
         {
@@ -28,7 +29,10 @@ namespace WpfApp1_cmd.ViewModel
             set => SetProperty(ref _versions, value);
         }
         public ObservableCollection<TreeItemLcu> TreeViewItems { get; set; }
+        */
+        public ObservableCollection<LcuInfo> TreeViewItems { get; set; }
 
+        private Dictionary<string, ViewModelBase> viewModeTable { get; }
         public ViewModelBase ActiveView
         {
             get { return activeView; }
@@ -40,8 +44,6 @@ namespace WpfApp1_cmd.ViewModel
                 }
             }
         }
-
-        private Dictionary<string, ViewModelBase> viewModeTable { get; }
 
 
         private bool flag = true;
@@ -67,8 +69,6 @@ namespace WpfApp1_cmd.ViewModel
 
         public MainWindowViewModel()
         {
-            LoadUnitVersions();
-
             LoadLineInfo();
 
             ButtonCommand = new DelegateCommand(async () =>
@@ -85,11 +85,12 @@ namespace WpfApp1_cmd.ViewModel
                 { "AView", new AViewModel() },
                 { "BView", new BViewModel() },
                 { "CView", new CViewModel() },
-                { "GView", new GViewModel(Versions) },
-                { "HView", new GViewModel(Versions) },
-                { "MView", new MachineViewModel() },
-                { "LView", new LcuViewModel()  }
+                { "GView", new GViewModel() },
             };
+            /*
+                { "ModuleView",  new ModuleViewModel() },
+                { "LcuView",     new LcuViewModel(TreeViewItems)  }
+           */ 
             ActiveView = viewModeTable["AView"];
 
             ButtonCommand2.Subscribe(async () =>
@@ -137,7 +138,7 @@ namespace WpfApp1_cmd.ViewModel
         /// <param name="e"></param>
         public void TreeViewSelectedItemChanged(RoutedPropertyChangedEventArgs<object> e)
         {
-            TreeItem? item = e.NewValue as TreeItem;
+            CheckableItem? item = e.NewValue as CheckableItem;
             if( item == null)
             {
                 return;
@@ -147,13 +148,60 @@ namespace WpfApp1_cmd.ViewModel
             switch (item.ItemType)
             {
                 case MachineType.LCU:
-                    ActiveView = viewModeTable["AView"];    //
+                    if (viewModeTable.ContainsKey($"LcuViewi_{item.Name}") == false)
+                    {
+                        viewModeTable.Add($"LcuView_{item.Name}", new LcuViewModel(TreeViewItems.Where(x => x.Name == item.Name).First().Children));
+                    }
+                     ActiveView = viewModeTable[$"LcuView_{item.Name}"];
                     break;
                 case MachineType.Machine:
-                    ActiveView = viewModeTable["MView"];
+                    if (viewModeTable.ContainsKey($"MachineView_{item.Name}") == false)
+                    {
+                        string lcuName = (item as MachineInfo).Parent.Name;
+                        foreach (var lcu in TreeViewItems)
+                        {
+                            if (lcu.Children == null || lcu.Name != lcuName )
+                            {
+                                continue;
+                            }
+                            viewModeTable.Add($"MachineView_{item.Name}", new MachineViewModel(lcu.Children.Where(x => x.Name == item.Name).First().Children));
+                            break;
+                        }
+                    }
+                    ActiveView = viewModeTable[$"MachineView_{item.Name}"];
                     break;
                 case MachineType.Module:
-                    ActiveView = viewModeTable["GView"];
+                    if (viewModeTable.ContainsKey($"ModuleView_{item.Name}") == false)
+                    {
+                        string lcuName = (item as ModuleInfo).Parent.Parent.Name;
+                        foreach (var lcu in TreeViewItems)
+                        {
+                            if (lcu.Children == null || lcu.Name != lcuName)
+                            {
+                                continue;
+                            }
+                            foreach (var machine in lcu.Children)
+                            {
+                                if (machine.Children == null || machine.Name != (item as ModuleInfo).Parent.Name)
+                                {
+                                    continue;
+                                }
+                                foreach (var module in machine.Children)
+                                {
+                                    if (module.Name != item.Name)
+                                    {
+                                        continue;
+                                    }
+                                    //viewModeTable.Add($"ModuleView_{item.Name}", new ModuleViewModel(module.Children));
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        ActiveView = viewModeTable[$"ModuleView_{item.Name}"];
+                    }
                     break;
             }
         }
@@ -171,32 +219,7 @@ namespace WpfApp1_cmd.ViewModel
         {
             ActiveView = viewModeTable[screenName];
         }
-        private void LoadUnitVersions()
-        {
-            Versions = new ObservableCollection<UnitVersion>
-            {
-                new UnitVersion { IsSelected = true,  Name = "Unit1", CurVersion = "1.0.0", NewVersion = "1.0.1" },
-                new UnitVersion { IsSelected = false, Name = "Unit2", CurVersion = "1.0.0", NewVersion = "1.0.1" },
-                new UnitVersion { IsSelected = true,  Name = "Unit3", CurVersion = "1.0.0", NewVersion = "1.0.1" },
-                new UnitVersion { IsSelected = false, Name = "Unit4", CurVersion = "1.0.0", NewVersion = "1.0.1" },
-                new UnitVersion { IsSelected = true,  Name = "Unit5", CurVersion = "1.0.0", NewVersion = "1.0.1" },
-            };
-        }
-        private async void LoadLineInfo()
-        {
-            TreeViewItems = new ObservableCollection<TreeItemLcu>
-            {
-                // Add Localhost[Debuge用 -> localhost:9000で仮想LCU(WebAPIサーバーを起動して確認する)]
-                new ("localhost:9000"){ Name = "localhost:9000", IsChecked = true, ItemType=MachineType.LCU},
-                new ("ch-lcu33"){ Name = "ch-lcu33", IsChecked = true, ItemType=MachineType.LCU},
-            };
-            // 起動時に情報取得する場合
-            foreach (var lcu in TreeViewItems)
-            {
-                bool ret = await UpdateLcuInfo(lcu);
-            }
-        }
-
+        
         private string _textValue = "Hello, World!";
         public string TextValue 
         {
@@ -205,11 +228,34 @@ namespace WpfApp1_cmd.ViewModel
         }
 
         /// <summary>
+        /// ライン情報を取得する
+        /// </summary>
+        private async void LoadLineInfo()
+        {
+            TreeViewItems = new ObservableCollection<LcuInfo>
+            {
+                // Add Localhost[Debuge用 -> localhost:9000で仮想LCU(WebAPIサーバーを起動して確認する)]
+                new (){ Name = "localhost:9000", IsSelected = true, ItemType=MachineType.LCU},
+                new (){ Name = "ch-lcu33",       IsSelected = true, ItemType=MachineType.LCU},
+            };
+            // 起動時に情報取得する場合
+            foreach (var lcu in TreeViewItems)
+            {
+                bool ret = await UpdateLcuInfo(lcu);
+            }
+        }
+
+        /// <summary>
         /// LCUの情報を更新する
         /// </summary>
-        /// <param name="lcuName"></param>
-        public async Task<bool> UpdateLcuInfo(TreeItemLcu lcu) 
+        /// <param name="LcuInfo">LCU情報</param>
+        public async Task<bool> UpdateLcuInfo(LcuInfo lcu) 
         {
+            if( lcu.LcuCtrl == null)
+            {
+                lcu.LcuCtrl = new LcuCtrl(lcu.Name);
+            }
+
             if (lcu.LcuCtrl.FtpUser == null)
             {
                 // FTPアカウント情報を取得
@@ -227,41 +273,77 @@ namespace WpfApp1_cmd.ViewModel
 
                 lcu.FtpUser = data.username;
                 lcu.FtpPassword = password;
+
+                // LCU バージョン取得
+                str = await lcu.LcuCtrl.LCU_Command(LcuVersion.Command());
+                IList<LcuVersion> versionInfo = LcuVersion.FromJson(str);
+                lcu.Version = versionInfo.Where(x => x.itemName == "Fuji LCU Communication Server Service").First().itemVersion;
+            }
+
+            if( lcu.Children == null)
+            {
+                lcu.Children = [];
             }
 
             //装置情報が未取得の場合
-            if (lcu.Children != null && lcu.Children.Count == 0)
+            if ( lcu.Children.Count == 0)
             {
                 // Machine 情報を登録
                 XmlSerializer serializer = new(typeof(LineInfo));
                 string response = await lcu.LcuCtrl.LCU_HttpGet("lines");
 
-                LineInfo lineInfo = (LineInfo)serializer.Deserialize( new StringReader(response));
-
-                foreach(var mc in lineInfo.Line.Machines)
+                LineInfo? lineInfo = (LineInfo)serializer.Deserialize( new StringReader(response));
+                if(lineInfo == null)
                 {
-                    TreeItemMachine machine = new()
+                    return false;
+                }
+                if( lineInfo.Line == null )
+                {
+                    return false;
+                }
+                if(lineInfo.Line.Machines == null)
+                {
+                    return false;
+                }
+
+
+                foreach (var mc in lineInfo.Line.Machines)
+                {
+                    MachineInfo machine = new()
                     {
                         Name = mc.MachineName,
                         ItemType = MachineType.Machine,
-                        IsChecked = true,
+                        IsSelected = true,
                         Machine = mc,
                         Parent = lcu,
-                        Children = new ObservableCollection<TreeItemModule>(),
+                        Bases = [],
+                        Children = []
                     };
                     foreach (var base_ in mc.Bases)
                     {
+                        BaseInfo baseInfo = new()
+                        {
+                            Name = "",
+                            ItemType = MachineType.Base,
+                            IsSelected = true,
+                            Base = base_,
+                            Parent = machine,
+                            Children = []
+                        };
+                        machine.Bases.Add(baseInfo);
+
                         foreach (var module in base_.Modules)
                         {
-                            TreeItemModule moduleItem = new()
+                            ModuleInfo moduleItem = new()
                             {
                                 Name = module.DispModule,
                                 ItemType = MachineType.Module,
-                                IsChecked = true,
-                                Base = base_,
+                                IsSelected = true,
                                 Module = module,
                                 Parent = machine,
+                                IPAddress = base_.IpAddr,
                             };
+                            baseInfo.Children.Add(moduleItem);
                             machine.Children.Add(moduleItem);
                         }
                     }

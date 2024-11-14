@@ -14,7 +14,7 @@
         <FrameworkElement x:Name="DataContextProxy" DataContext="{Binding}" />
 
         <DataGrid AutoGenerateColumns="False"
-                  ItemsSource="{Binding Machines}"
+                  ItemsSource="{Binding Modules}"
                   FontSize="20"
                   CanUserAddRows="False"
                   HeadersVisibility="All"

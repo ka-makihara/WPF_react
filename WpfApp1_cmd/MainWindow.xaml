@@ -73,8 +73,8 @@
                     <Button Content="BView" Command="{Binding ScreenTransitionCommand}" CommandParameter="BView" Margin="5" />
                     <Button Content="CView" Command="{Binding ScreenTransitionCommand}" CommandParameter="CView" Margin="5" />
                     <Button Content="GridView" Command="{Binding ScreenTransitionCommand}" CommandParameter="GView" Margin="5" />
-                    <Button Content="HView" Command="{Binding ScreenTransitionCommand}" CommandParameter="HView" Margin="5" />
-                    <Button Content="LView" Command="{Binding ScreenTransitionCommand}" CommandParameter="LView" Margin="5" />
+                    <Button Content="Machineiew" Command="{Binding ScreenTransitionCommand}" CommandParameter="MachineView" Margin="5" />
+                    <Button Content="LcuView" Command="{Binding ScreenTransitionCommand}" CommandParameter="LcuView" Margin="5" />
                     <Button Margin="20,20,20,5" Command="{Binding ButtonCommand}" Content="Click" />
                     <Button Margin="20,10,20,5" Command="{Binding ButtonCommand2}" Content="ReactiveClick" />
                 </StackPanel>
@@ -92,7 +92,7 @@
                 <TreeView.ItemTemplate>
                     <HierarchicalDataTemplate ItemsSource="{Binding Children}">
                         <StackPanel Orientation="Horizontal">
-                            <CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay}"  HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"  HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             <TextBlock Text="{Binding Name}" Margin="5,0,0,0" FontSize="16"/>
                         </StackPanel>
                     </HierarchicalDataTemplate>
@@ -119,6 +119,9 @@
                     </DataTemplate>
                     <DataTemplate DataType="{x:Type vm:LcuViewModel}">
                         <view:LcuView />
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type vm:ModuleViewModel}">
+                        <view:ModuleView />
                     </DataTemplate>
                 </Grid.Resources>
                 <ContentControl Content="{Binding ActiveView}"/>

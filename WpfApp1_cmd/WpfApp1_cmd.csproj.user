@@ -25,6 +25,9 @@
     <Compile Update="View\MachineView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="View\ModuleView.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Page Update="MainWindow.xaml">
@@ -46,6 +49,9 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Update="View\MachineView.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="View\ModuleView.xaml">
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
