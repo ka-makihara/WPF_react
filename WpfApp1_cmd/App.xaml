@@ -15,12 +15,12 @@
                 <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Themes/Light.Blue.xaml" />
                 
                 <!--Material Design-->
-                <materialDesign:MahAppsBundledTheme BaseTheme="Inherit" PrimaryColor="DeepPurple" SecondaryColor="Amber" />
-                <materialDesign:BundledTheme BaseTheme="Inherit" PrimaryColor="Indigo" SecondaryColor="Amber"/>
-                <!--
-                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Light.xaml" />
-                -->
-                <ResourceDictionary Source="pack://application:,,,/MaterialDesignColors;component/Themes/Recommended/Primary/MaterialDesignColor.DeepPurple.xaml" />
+                <materialDesign:MahAppsBundledTheme BaseTheme="Inherit" PrimaryColor="Blue" SecondaryColor="Blue" />
+                <materialDesign:BundledTheme BaseTheme="Inherit" PrimaryColor="Blue" SecondaryColor="Blue"/>
+                
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Dark.xaml" />
+                
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignColors;component/Themes/Recommended/Primary/MaterialDesignColor.Blue.xaml" />
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />
 
                 <!--MaterialDesign: MahApps Compatibility

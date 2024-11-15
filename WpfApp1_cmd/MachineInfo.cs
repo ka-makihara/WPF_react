@@ -297,12 +297,12 @@ namespace WpfApp1_cmd
 
         public MachineInfo? Parent { get; set; }
 
-        // Treeで表示するためには Children が必要(表示させないためにプロパティを Units としている)
-        private ObservableCollection<UnitInfo>? _units;
-        public ObservableCollection<UnitInfo>? Units
+        // Treeで表示するためには Children が必要(表示させないためにプロパティを UnitVersions としている)
+        private ObservableCollection<UnitVersion>? _unitVersions;
+        public ObservableCollection<UnitVersion>? UnitVersions
         {
-            get => _units;
-            set { _units = value; SetProperty(ref _units, value); }
+            get => _unitVersions;
+            set { _unitVersions = value; SetProperty(ref _unitVersions, value); }
         }
 
         public int ID {get => Module.ModuleId; }

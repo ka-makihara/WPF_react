@@ -35,5 +35,8 @@ namespace WpfApp1_cmd
             get => _newVersion;
             set => SetProperty(ref _newVersion, value);
         }
+
+        public string? Path { get; set; }
+        public string? Attribute { get; set; }
     }
 }

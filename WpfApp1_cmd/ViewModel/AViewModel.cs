@@ -15,8 +15,6 @@ namespace WpfApp1_cmd.ViewModel
     {
         private int clickCount = 0;
 
-        private IniFileParser? iniFileParser = null;
-
         public int ClickCount
         {
             get { return clickCount; }

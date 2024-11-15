@@ -14,6 +14,8 @@ using System.Windows;
 using System.Xml.Serialization;
 using WpfApp1_cmd.Command;
 using WpfLcuCtrlLib;
+using MaterialDesignThemes.Wpf;
+using ControlzEx.Theming;
 
 namespace WpfApp1_cmd.ViewModel
 {
@@ -21,18 +23,10 @@ namespace WpfApp1_cmd.ViewModel
     {
         private ViewModelBase activeView = null;
 
-        /*
-        private ObservableCollection<UnitVersion> _versions;
-        public ObservableCollection<UnitVersion> Versions
-        {
-            get => _versions;
-            set => SetProperty(ref _versions, value);
-        }
-        public ObservableCollection<TreeItemLcu> TreeViewItems { get; set; }
-        */
         public ObservableCollection<LcuInfo> TreeViewItems { get; set; }
 
         private Dictionary<string, ViewModelBase> viewModeTable { get; }
+
         public ViewModelBase ActiveView
         {
             get { return activeView; }
@@ -44,7 +38,6 @@ namespace WpfApp1_cmd.ViewModel
                 }
             }
         }
-
 
         private bool flag = true;
         public bool Flag
@@ -85,7 +78,7 @@ namespace WpfApp1_cmd.ViewModel
                 { "AView", new AViewModel() },
                 { "BView", new BViewModel() },
                 { "CView", new CViewModel() },
-                { "GView", new GViewModel() },
+                //{ "GView", new GViewModel() },
             };
             /*
                 { "ModuleView",  new ModuleViewModel() },
@@ -130,13 +123,19 @@ namespace WpfApp1_cmd.ViewModel
 
             TreeViewSelectedItemChangedCommand = new ReactiveCommand();
             TreeViewSelectedItemChangedCommand.Subscribe(args => TreeViewSelectedItemChanged(args as RoutedPropertyChangedEventArgs<object>));
+
+            var ret = CreateVersionInfo(
+                new LcuInfo { Name = "localhost:9000",LcuCtrl=new("localhost:9000") { } },
+                new MachineInfo { Name = "localhost:9000" },
+                new ModuleInfo { Name = "1-L", Module = new() { LogicalPos=1}}
+            );
         }
 
         /// <summary>
         ///  ツリーの選択状態が変更されたときの処理
         /// </summary>
         /// <param name="e"></param>
-        public void TreeViewSelectedItemChanged(RoutedPropertyChangedEventArgs<object> e)
+        public async void TreeViewSelectedItemChanged(RoutedPropertyChangedEventArgs<object> e)
         {
             CheckableItem? item = e.NewValue as CheckableItem;
             if( item == null)
@@ -192,7 +191,17 @@ namespace WpfApp1_cmd.ViewModel
                                     {
                                         continue;
                                     }
-                                    //viewModeTable.Add($"ModuleView_{item.Name}", new ModuleViewModel(module.Children));
+                                    if (module.UnitVersions == null)
+                                    {
+                                        //初めての場合はバージョン情報を取得する
+                                        var ret = await CreateVersionInfo(lcu, machine, module);
+                                        if (ret != null )
+                                        {
+                                            module.UnitVersions = ret;
+                                            viewModeTable.Add($"ModuleView_{item.Name}", new ModuleViewModel(module.UnitVersions));
+                                        }
+                                    }
+                                    ActiveView = viewModeTable[$"ModuleView_{item.Name}"];
                                     return;
                                 }
                             }
@@ -206,6 +215,52 @@ namespace WpfApp1_cmd.ViewModel
             }
         }
 
+        /// <summary>
+        /// LCUからユニットバージョン情報を取得する
+        /// </summary>
+        /// <param name="lcu"></param>
+        /// <param name="machine"></param>
+        /// <param name="module"></param>
+        /// <returns></returns>
+        public async Task<ObservableCollection<UnitVersion>?> CreateVersionInfo(LcuInfo lcu, MachineInfo machine, ModuleInfo module)
+        {
+            if( lcu.LcuCtrl == null)
+            {
+                return null;
+            }
+
+            string tmpFile = Path.GetTempFileName();
+            bool ret = await lcu.LcuCtrl.GetMachineFile(lcu.Name, machine.Name, module.Pos, "Peripheral/UpdateCommon.inf", tmpFile);
+
+            if( ret == false)
+            {
+                return null;
+            }
+            IniFileParser parser = new(tmpFile);
+
+            System.IO.File.Delete(tmpFile);
+
+            IList<string> sec = parser.SectionCount();
+
+            ObservableCollection<UnitVersion> versions = [];
+
+            foreach (var unit in sec)
+            {
+                UnitVersion version = new()
+                {
+                    IsSelected = true,
+                    Name = unit,
+                    Attribute = parser.GetValue(unit, "Attribute"),
+                    Path = parser.GetValue(unit, "Path"),
+                    CurVersion = parser.GetValue(unit, "Version"),
+                    NewVersion = parser.GetValue(unit, "Version") + "New" // 暫定
+                };
+                versions.Add(version);
+            }
+            return versions;
+        }
+
+        
         private void CutCmdExecute()
         {
             Debug.WriteLine("Cut");
@@ -226,6 +281,21 @@ namespace WpfApp1_cmd.ViewModel
             get => _textValue;
             set => SetProperty(ref _textValue,value);
         }
+
+        public void ToggleTheme(bool isDark)
+        {
+            ToggleMetroTheme(isDark);
+            ToggleMdTheme(isDark);
+        }
+
+        private void ToggleMdTheme(bool isDark)
+        {
+            var pallet = new PaletteHelper();
+            var theme = pallet.GetTheme();
+        }
+
+        private void ToggleMetroTheme(bool isDark)
+            => ThemeManager.Current.ChangeTheme(Application.Current, isDark ? "Dark.Blue" : "Light.Blue");
 
         /// <summary>
         /// ライン情報を取得する
