@@ -16,6 +16,7 @@ using WpfApp1_cmd.Command;
 using WpfLcuCtrlLib;
 using MaterialDesignThemes.Wpf;
 using ControlzEx.Theming;
+using WpfApp1_cmd.View;
 
 namespace WpfApp1_cmd.ViewModel
 {
@@ -60,6 +61,9 @@ namespace WpfApp1_cmd.ViewModel
 
         public ReactiveCommand TreeViewSelectedItemChangedCommand { get; }
 
+        public string DialogTitle { get; set; } = "Dialog Title";
+        public string DialogText { get; set; } = "Dialog Text";
+
         public MainWindowViewModel()
         {
             LoadLineInfo();
@@ -67,8 +71,10 @@ namespace WpfApp1_cmd.ViewModel
             ButtonCommand = new DelegateCommand(async () =>
             {
                 Flag = false;
-                await Task.Delay(5000);
+                var r = DialogHost.Show(new MyMessageBox());
+                await Task.Delay(2000);
                 Flag = true;
+                DialogHost.CloseDialogCommand.Execute(null, null);
             }, canExecuteCommand);
 
             ScreenTransitionCommand = new DelegateCommand<string>(screenTransitionExecute);
@@ -124,11 +130,13 @@ namespace WpfApp1_cmd.ViewModel
             TreeViewSelectedItemChangedCommand = new ReactiveCommand();
             TreeViewSelectedItemChangedCommand.Subscribe(args => TreeViewSelectedItemChanged(args as RoutedPropertyChangedEventArgs<object>));
 
+            /*
             var ret = CreateVersionInfo(
                 new LcuInfo { Name = "localhost:9000",LcuCtrl=new("localhost:9000") { } },
                 new MachineInfo { Name = "localhost:9000" },
                 new ModuleInfo { Name = "1-L", Module = new() { LogicalPos=1}}
             );
+            */
         }
 
         /// <summary>
@@ -260,7 +268,7 @@ namespace WpfApp1_cmd.ViewModel
             return versions;
         }
 
-        
+
         private void CutCmdExecute()
         {
             Debug.WriteLine("Cut");

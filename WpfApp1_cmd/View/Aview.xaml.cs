@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MaterialDesignThemes.Wpf;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -47,9 +48,12 @@ namespace WpfApp1_cmd.View
                 control.CounterValue = (int)e.NewValue;
             }
         }
-        private void Button_Click(object sender, RoutedEventArgs e)
+        private async void Button_Click(object sender, RoutedEventArgs e)
         {
             CounterValue++;
+            var r = DialogHost.Show(new MyMessageBox());
+            await Task.Delay(5000);
+            DialogHost.CloseDialogCommand.Execute(null, null);
         }
     }
 }

@@ -5,13 +5,18 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:WpfApp1_cmd.View"
              mc:Ignorable="d" 
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
              d:DesignHeight="450" d:DesignWidth="800">
-    <Grid>
-        <StackPanel Margin="10,100,20,0" Orientation="Vertical">
-            <Label HorizontalAlignment="Center" VerticalAlignment="Center" Content="AView画面" FontSize="32" />
-            <Button Width="100" Command="{Binding CountCommand}" Content="Click" />
-            <TextBlock Text="{Binding ClickCount, StringFormat=ClickCount:{0}}" TextAlignment="Center" FontSize="20">
+
+<!--
+    <materialDesign:DialogHost  DialogTheme="Inherit" CloseOnClickAway="false">
+    -->
+        <Grid>
+            <StackPanel Margin="10,100,20,0" Orientation="Vertical">
+                <Label HorizontalAlignment="Center" VerticalAlignment="Center" Content="AView画面" FontSize="32" />
+                <Button Width="100" Command="{Binding CountCommand}" Content="Click" />
+                <TextBlock Text="{Binding ClickCount, StringFormat=ClickCount:{0}}" TextAlignment="Center" FontSize="20">
                 <i:Interaction.Triggers>
                     <i:EventTrigger EventName="MouseEnter">
                         <i:InvokeCommandAction Command="{Binding MouseEnterCommand}" />
@@ -20,9 +25,12 @@
                         <i:InvokeCommandAction Command="{Binding MouseEnterCommand}" />
                     </i:EventTrigger>
                 </i:Interaction.Triggers>
-            </TextBlock>
-            <TextBlock FontSize="20" Text="{Binding CounterValue, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource AncestorType={x:Type local:Aview}}}" />
-            <Button Width="100" Content="Prop" Click="Button_Click" />
-        </StackPanel>
-    </Grid>
+                </TextBlock>
+                <TextBlock FontSize="20" Text="{Binding CounterValue, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource AncestorType={x:Type local:Aview}}}" />
+                <Button Width="100" Content="Prop" Click="Button_Click" />
+            </StackPanel>
+        </Grid>
+        <!--
+    </materialDesign:DialogHost>
+    -->
 </UserControl>

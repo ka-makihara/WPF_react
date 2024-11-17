@@ -5,17 +5,26 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:WpfApp1_cmd.View"
              xmlns:viewmodel="clr-namespace:WpfApp1_cmd.ViewModel"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:mahApps="http://metro.mahapps.com/winfx/xaml/controls"
+             xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
              d:DataContext="{d:DesignInstance Type=viewmodel:BViewModel}"
              x:Name="root"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
-    <Grid>
-        <StackPanel Margin="10,100,20,0" Orientation="Vertical">
-            <Label HorizontalAlignment="Center" VerticalAlignment="Center" Content="BView画面" FontSize="32" />
-            <Button Content="LCU Lib Test" Command="{Binding LcuCommandTest}" Width="100"/>
+             <!--
+    <materialDesign:DialogHost  DialogTheme="Inherit" CloseOnClickAway="false">
+    -->
+        <Grid>
+            <StackPanel Margin="10,100,20,0" Orientation="Vertical">
+                <Label HorizontalAlignment="Center" VerticalAlignment="Center" Content="BView画面" FontSize="32" />
+                <Button Content="LCU Lib Test" Command="{Binding LcuCommandTest}" Width="100"/>
 
-            <TextBlock Text="{Binding Text, ElementName=root}" Width="100"/>
-            <TextBox Text="{Binding Value, ElementName=root}" Width="100" />
+                <TextBlock Text="{Binding Text, ElementName=root}" Width="100"/>
+                <TextBox Text="{Binding Value, ElementName=root}" Width="100" />
         </StackPanel>
-    </Grid>
+        </Grid>
+        <!--
+    </materialDesign:DialogHost>
+    -->
 </UserControl>

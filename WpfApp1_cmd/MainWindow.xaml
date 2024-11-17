@@ -11,12 +11,47 @@
         mc:Ignorable="d"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:mahApps="http://metro.mahapps.com/winfx/xaml/controls"
+        xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+        xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+        GlowBrush="{DynamicResource MahApps.Brushes.Accent}"
+        ResizeMode="CanResizeWithGrip"
+        WindowStartupLocation="CenterScreen"
         Style="{StaticResource MaterialDesignWindow}"
-        Title="MainWindow" Height="550" Width="1000">
+        Title="TransferTool" Height="550" Width="1000">
     <Window.DataContext>
         <vm:MainWindowViewModel />
     </Window.DataContext>
+
+    <mah:MetroWindow.LeftWindowCommands>
+        <mah:WindowCommands>
+            <Button Click="LaunchGitHubSite" ToolTip="Launch GitHub Site">
+                <iconPacks:PackIconModern Width="22" Height="22" Kind="SocialGithubOctocat" />
+            </Button>
+        </mah:WindowCommands>
+    </mah:MetroWindow.LeftWindowCommands>
+
+    <mah:MetroWindow.RightWindowCommands>
+        <mah:WindowCommands>
+            <Button Click="DeployCupCakes" Content="Deploy CupCakes">
+                <Button.ContentTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <iconPacks:PackIconModern Width="22"
+                                        Height="22"
+                                        VerticalAlignment="Center"
+                                        Kind="FoodCupcake" />
+                            <TextBlock Margin="4 0 0 0"
+                         VerticalAlignment="Center"
+                         Text="{Binding}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </Button.ContentTemplate>
+            </Button>
+        </mah:WindowCommands>
+    </mah:MetroWindow.RightWindowCommands>
+
     <Grid>
+            
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="83*"/>
             <ColumnDefinition Width="317*"/>
@@ -100,32 +135,41 @@
             </TreeView> 
 
             <GridSplitter Grid.Column="3" Style="{StaticResource VerticalGridSplitter}" />
-            <Grid Grid.Column="4" >
-                <Grid.Resources>
-                    <DataTemplate DataType="{x:Type vm:AViewModel}">
-                        <view:Aview />
-                    </DataTemplate>
-                    <DataTemplate DataType="{x:Type vm:BViewModel}">
-                        <view:BView Text="BView設定" Value="{Binding TextValue}"/>
-                    </DataTemplate>
-                    <DataTemplate DataType="{x:Type vm:CViewModel}">
-                        <view:CView />
-                    </DataTemplate>
-                    <DataTemplate DataType="{x:Type vm:GViewModel}">
-                        <view:GView />
-                    </DataTemplate>
-                    <DataTemplate DataType="{x:Type vm:MachineViewModel}">
-                        <view:MachineView />
-                    </DataTemplate>
-                    <DataTemplate DataType="{x:Type vm:LcuViewModel}">
-                        <view:LcuView />
-                    </DataTemplate>
-                    <DataTemplate DataType="{x:Type vm:ModuleViewModel}">
-                        <view:ModuleView />
-                    </DataTemplate>
-                </Grid.Resources>
-                <ContentControl Content="{Binding ActiveView}"/>
-            </Grid>
+
+                <Grid Grid.Column="4" >
+                    <Grid.Resources>
+                        <DataTemplate DataType="{x:Type vm:AViewModel}">
+                            <view:Aview />
+                        </DataTemplate>
+                        <DataTemplate DataType="{x:Type vm:BViewModel}">
+                            <view:BView Text="BView設定" Value="{Binding TextValue}"/>
+                        </DataTemplate>
+                        <DataTemplate DataType="{x:Type vm:CViewModel}">
+                            <view:CView />
+                        </DataTemplate>
+                        <DataTemplate DataType="{x:Type vm:GViewModel}">
+                            <view:GView />
+                        </DataTemplate>
+                        <DataTemplate DataType="{x:Type vm:MachineViewModel}">
+                            <view:MachineView />
+                        </DataTemplate>
+                        <DataTemplate DataType="{x:Type vm:LcuViewModel}">
+                            <view:LcuView />
+                        </DataTemplate>
+                        <DataTemplate DataType="{x:Type vm:ModuleViewModel}">
+                            <view:ModuleView />
+                        </DataTemplate>
+                    </Grid.Resources>
+            <materialDesign:DialogHost  DialogTheme="Inherit" CloseOnClickAway="false">
+                <!--
+                    <ContentControl Content="{Binding ActiveView}"/>
+                    -->
+                    <mahApps:TransitioningContentControl Content="{Binding ActiveView}" Transition="RightReplace" />
+                </materialDesign:DialogHost>
+                </Grid>
         </Grid>
     </Grid>
+<!--
+    </materialDesign:DialogHost>
+-->
 </mahApps:MetroWindow>
