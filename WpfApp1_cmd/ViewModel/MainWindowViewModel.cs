@@ -17,6 +17,7 @@ using WpfLcuCtrlLib;
 using MaterialDesignThemes.Wpf;
 using ControlzEx.Theming;
 using WpfApp1_cmd.View;
+using System.Windows.Navigation;
 
 namespace WpfApp1_cmd.ViewModel
 {
@@ -55,14 +56,32 @@ namespace WpfApp1_cmd.ViewModel
         public ReactiveCommand CopyCommand { get; } = new ReactiveCommand();
         public ReactiveCommand PasteCommand { get; } = new ReactiveCommand();
 
-        public ReactiveProperty<bool> FlagProperty1 { get; } = new ReactiveProperty<bool>(false);
+        public ReactiveProperty<bool> FlagProperty1 { get; } = new ReactiveProperty<bool>(true);
         public ReactiveProperty<bool> FlagProperty2 { get; } = new ReactiveProperty<bool>(false);
-        public ReactiveProperty<bool> FlagProperty3 { get; } = new ReactiveProperty<bool>(false);
+        public ReactiveProperty<bool> FlagProperty3 { get; } = new ReactiveProperty<bool>(true);
 
-        public ReactiveCommand TreeViewSelectedItemChangedCommand { get; }
+        public ReactiveCommand TreeViewSelectedItemChangedCommand { get; } = new ReactiveCommand();
 
         public string DialogTitle { get; set; } = "Dialog Title";
         public string DialogText { get; set; } = "Dialog Text";
+
+        // 転送制御ボタン
+        public ReactiveCommand StartTransferCommand { get; } = new ReactiveCommand();
+        public ReactiveCommand StopTransferCommand { get; } = new ReactiveCommand();
+        public ReactiveCommand QuitApplicationCommand { get; } = new ReactiveCommand();
+
+        // TreeView を Enable/Disable しようとしたがうまく動作しない
+        //  MainWindow から設定するとOK
+        private bool _isTreeEnabled = true;
+        public bool IsTreeEnabled
+        {
+            get => _isTreeEnabled;
+            set
+            {
+                _isTreeEnabled = value;
+                SetProperty(ref _isTreeEnabled, value);
+            }
+        }
 
         public MainWindowViewModel()
         {
@@ -84,12 +103,7 @@ namespace WpfApp1_cmd.ViewModel
                 { "AView", new AViewModel() },
                 { "BView", new BViewModel() },
                 { "CView", new CViewModel() },
-                //{ "GView", new GViewModel() },
             };
-            /*
-                { "ModuleView",  new ModuleViewModel() },
-                { "LcuView",     new LcuViewModel(TreeViewItems)  }
-           */ 
             ActiveView = viewModeTable["AView"];
 
             ButtonCommand2.Subscribe(async () =>
@@ -98,9 +112,7 @@ namespace WpfApp1_cmd.ViewModel
                 await Task.Delay(1000);
                 Flag = true;
 
-                //FlagProperty1.Value = true;
                 FlagProperty2.Value = true;
-                //FlagProperty3.Value = true;
             });
 
             /*
@@ -127,16 +139,103 @@ namespace WpfApp1_cmd.ViewModel
             CopyCommand.Subscribe(() => { Debug.WriteLine("Copy"); });
             PasteCommand.Subscribe(() => { Debug.WriteLine("Paste"); });
 
-            TreeViewSelectedItemChangedCommand = new ReactiveCommand();
             TreeViewSelectedItemChangedCommand.Subscribe(args => TreeViewSelectedItemChanged(args as RoutedPropertyChangedEventArgs<object>));
 
-            /*
-            var ret = CreateVersionInfo(
-                new LcuInfo { Name = "localhost:9000",LcuCtrl=new("localhost:9000") { } },
-                new MachineInfo { Name = "localhost:9000" },
-                new ModuleInfo { Name = "1-L", Module = new() { LogicalPos=1}}
-            );
-            */
+            // 転送制御ボタン
+            StartTransferCommand = FlagProperty1.ToReactiveCommand();
+            StartTransferCommand.Subscribe(() => StartTransferExecute() );
+
+            StopTransferCommand = FlagProperty2.ToReactiveCommand();
+            StopTransferCommand.Subscribe(() => StopTransferExecute() );
+
+            QuitApplicationCommand = FlagProperty3.ToReactiveCommand();
+            QuitApplicationCommand.Subscribe(() => ApplicationShutDown() );
+        }
+
+        /// <summary>
+        /// 転送開始
+        /// </summary>
+        private async void StartTransferExecute()
+        {
+            Debug.WriteLine("StartTransfer");
+            FlagProperty1.Value = false;
+            FlagProperty2.Value = true;
+            FlagProperty3.Value = false;
+
+            await TransferExecute();
+
+            FlagProperty1.Value = true;
+            FlagProperty3.Value = true;
+            FlagProperty2.Value = false;
+        }
+        public async Task<bool> TransferExecute()
+        {
+            foreach(var lcu in TreeViewItems)
+            {
+                if (lcu.Children == null || lcu.LcuCtrl == null || lcu.IsSelected == false)
+                {
+                    continue;
+                }
+                foreach (var machine in lcu.Children)
+                {
+                    if( machine.Children == null || machine.Name == null || machine.IsSelected == false)
+                    {
+                        continue;
+                    }
+                    foreach(var module in machine.Children)
+                    {
+                         string user = "Administrator";
+                         string password = "password";
+                        if( module.IsSelected == false)
+                        {
+                            continue;
+                        }
+
+                        string ret = await lcu.LcuCtrl.LCU_Command(McFileList.Command(machine.Name, module.Pos, user, password, @"/Data"));
+                        if (ret == "" || ret == "Internal Server Error")
+                        {
+                            Debug.WriteLine($"Error:{ret}");
+                            continue;
+                        }
+
+                        McFileList list = McFileList.FromJson(ret);
+                        if (list != null)
+                        {
+                            if (list.ftp != null && list.ftp.data != null)
+                            {
+                                foreach (var item in list.ftp.data)
+                                {
+                                    Debug.WriteLine($"Path={item.mcPath}");
+                                    foreach (var file in item.list)
+                                    {
+                                        Debug.WriteLine($"File={file.name}");
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+
+        /// <summary>
+        ///  転送中止
+        /// </summary>
+        private void StopTransferExecute()
+        {
+            Debug.WriteLine("StopTransfer");
+            FlagProperty1.Value = true;
+            FlagProperty2.Value = false;
+            FlagProperty3.Value = true;
+        }
+
+        /// <summary>
+        ///  アプリ終了
+        /// </summary>
+        private void ApplicationShutDown()
+        {
+            Application.Current.Shutdown();
         }
 
         /// <summary>
@@ -202,11 +301,20 @@ namespace WpfApp1_cmd.ViewModel
                                     if (module.UnitVersions == null)
                                     {
                                         //初めての場合はバージョン情報を取得する
+                                        IsTreeEnabled = false;
+                                        var r = DialogHost.Show(new WaitProgress("ユニット情報読み込み中"));    //時間がかかるので、クルクルを表示
                                         var ret = await CreateVersionInfo(lcu, machine, module);
+                                        DialogHost.CloseDialogCommand.Execute(null, null);
+
                                         if (ret != null )
                                         {
                                             module.UnitVersions = ret;
                                             viewModeTable.Add($"ModuleView_{item.Name}", new ModuleViewModel(module.UnitVersions));
+                                        }
+                                        else
+                                        {
+                                            // LCU からの情報取得に失敗した場合
+                                            return;
                                         }
                                     }
                                     ActiveView = viewModeTable[$"ModuleView_{item.Name}"];
@@ -242,6 +350,7 @@ namespace WpfApp1_cmd.ViewModel
 
             if( ret == false)
             {
+                Debug.WriteLine("GetMachineFile Error");
                 return null;
             }
             IniFileParser parser = new(tmpFile);
@@ -290,6 +399,7 @@ namespace WpfApp1_cmd.ViewModel
             set => SetProperty(ref _textValue,value);
         }
 
+ /*
         public void ToggleTheme(bool isDark)
         {
             ToggleMetroTheme(isDark);
@@ -304,7 +414,7 @@ namespace WpfApp1_cmd.ViewModel
 
         private void ToggleMetroTheme(bool isDark)
             => ThemeManager.Current.ChangeTheme(Application.Current, isDark ? "Dark.Blue" : "Light.Blue");
-
+*/
         /// <summary>
         /// ライン情報を取得する
         /// </summary>

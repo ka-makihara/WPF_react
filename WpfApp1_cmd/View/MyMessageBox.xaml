@@ -122,9 +122,11 @@
         -->
         <StackPanel Orientation="Vertical" >
 
+            <!--
             <materialDesign:PackIcon Kind="AlertCircle" Foreground="Red" Width="40" Height="40"/>
             <iconPacks:PackIconMaterial Kind="AlertCircle" Foreground="Red" Width="40" Height="40"/>
-            <TextBlock Text="処理中" FontSize="20" FontWeight="Bold" />
+            -->
+            <TextBlock Text="処理中" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
             <!--
             <ProgressBar x:Name="IndeterminateToDeterminateCircularProgress" IsIndeterminate="True" Style="{StaticResource MaterialDesignCircularProgressBar}" Value="20" />
             -->

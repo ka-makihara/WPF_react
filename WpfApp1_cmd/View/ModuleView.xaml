@@ -8,7 +8,7 @@
              xmlns:viewmodel="clr-namespace:WpfApp1_cmd.ViewModel"
              d:DataContext="{d:DesignInstance Type=viewmodel:ModuleViewModel}"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+             d:DesignHeight="370" d:DesignWidth="800">
     <Grid>
          <!-- 意味不明だが必要　-->
         <FrameworkElement x:Name="DataContextProxy" DataContext="{Binding}" />
@@ -19,6 +19,7 @@
                   CanUserAddRows="False"
                   HeadersVisibility="All"
                   AlternatingRowBackground="#666666"
+                  Height="370"
                   IsReadOnly="False"
                   >
             <DataGrid.Columns>
@@ -41,19 +42,19 @@
                  <materialDesign:DataGridTextColumn 
                         EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnPopupEditingStyle}"
                         ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"
-                        Header="ユニット名" FontSize="16" FontFamily="Arial" Width="120" MinWidth="120" Binding="{Binding Name}" IsReadOnly="True">
+                        Header="ユニット名" FontSize="16" FontFamily="Arial" Width="200" MinWidth="200" Binding="{Binding Name}" IsReadOnly="True">
                 </materialDesign:DataGridTextColumn>
 
                 <materialDesign:DataGridTextColumn
                         EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnPopupEditingStyle}"
                         ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"
-                        Header="現在バージョン" FontSize="16" FontFamily="Arial" Width="120" MinWidth="129" Binding="{Binding CurVersion}" IsReadOnly="True">
+                        Header="現在Version" FontSize="16" FontFamily="Arial" Width="150" MinWidth="150" Binding="{Binding CurVersion}" IsReadOnly="True">
                 </materialDesign:DataGridTextColumn>
 
                 <materialDesign:DataGridTextColumn
                         EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnPopupEditingStyle}"
                         ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"
-                        Header="新規バージョン" FontSize="16" FontFamily="Arial" Width="120" MinWidth="120" Binding="{Binding NewVersion}" IsReadOnly="True">
+                        Header="新規Version" FontSize="16" FontFamily="Arial" Width="150" MinWidth="150" Binding="{Binding NewVersion}" IsReadOnly="True">
                 </materialDesign:DataGridTextColumn>
             </DataGrid.Columns> 
         </DataGrid> 

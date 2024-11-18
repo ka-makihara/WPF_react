@@ -16,8 +16,11 @@
         GlowBrush="{DynamicResource MahApps.Brushes.Accent}"
         ResizeMode="CanResizeWithGrip"
         WindowStartupLocation="CenterScreen"
+        ShowIconOnTitleBar="True"
+        ShowSystemMenuOnRightClick="True"
+        TitleCharacterCasing="Normal"
         Style="{StaticResource MaterialDesignWindow}"
-        Title="TransferTool" Height="550" Width="1000">
+        Title="TransferTool" Height="800" Width="1050">
     <Window.DataContext>
         <vm:MainWindowViewModel />
     </Window.DataContext>
@@ -51,7 +54,6 @@
     </mah:MetroWindow.RightWindowCommands>
 
     <Grid>
-            
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="83*"/>
             <ColumnDefinition Width="317*"/>
@@ -90,6 +92,7 @@
             <Separator/>
             <Label Content="処理中" />
         </StatusBar>
+
         <Grid Grid.Row="1" Grid.ColumnSpan="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="200"/>
@@ -118,6 +121,7 @@
 
             <TreeView x:Name="lineView" Grid.Column="2"
                   ItemsSource="{Binding TreeViewItems}"
+                  IsEnabled="{Binding IsTreeEnabled, Mode=TwoWay}"
                   >
                 <i:Interaction.Triggers>
                     <i:EventTrigger EventName="SelectedItemChanged">
@@ -132,44 +136,85 @@
                         </StackPanel>
                     </HierarchicalDataTemplate>
                 </TreeView.ItemTemplate>
-            </TreeView> 
+            </TreeView>
 
             <GridSplitter Grid.Column="3" Style="{StaticResource VerticalGridSplitter}" />
 
-                <Grid Grid.Column="4" >
-                    <Grid.Resources>
-                        <DataTemplate DataType="{x:Type vm:AViewModel}">
-                            <view:Aview />
-                        </DataTemplate>
-                        <DataTemplate DataType="{x:Type vm:BViewModel}">
-                            <view:BView Text="BView設定" Value="{Binding TextValue}"/>
-                        </DataTemplate>
-                        <DataTemplate DataType="{x:Type vm:CViewModel}">
-                            <view:CView />
-                        </DataTemplate>
-                        <DataTemplate DataType="{x:Type vm:GViewModel}">
-                            <view:GView />
-                        </DataTemplate>
-                        <DataTemplate DataType="{x:Type vm:MachineViewModel}">
-                            <view:MachineView />
-                        </DataTemplate>
-                        <DataTemplate DataType="{x:Type vm:LcuViewModel}">
-                            <view:LcuView />
-                        </DataTemplate>
-                        <DataTemplate DataType="{x:Type vm:ModuleViewModel}">
-                            <view:ModuleView />
-                        </DataTemplate>
-                    </Grid.Resources>
-            <materialDesign:DialogHost  DialogTheme="Inherit" CloseOnClickAway="false">
-                <!--
-                    <ContentControl Content="{Binding ActiveView}"/>
-                    -->
-                    <mahApps:TransitioningContentControl Content="{Binding ActiveView}" Transition="RightReplace" />
+            <Grid Grid.Column="4" >
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Grid.Resources>
+                    <DataTemplate DataType="{x:Type vm:AViewModel}">
+                        <view:Aview />
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type vm:BViewModel}">
+                        <view:BView Text="BView設定" Value="{Binding TextValue}"/>
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type vm:CViewModel}">
+                        <view:CView />
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type vm:GViewModel}">
+                        <view:GView />
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type vm:MachineViewModel}">
+                        <view:MachineView />
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type vm:LcuViewModel}">
+                        <view:LcuView />
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type vm:ModuleViewModel}">
+                        <view:ModuleView />
+                    </DataTemplate>
+                </Grid.Resources>
+
+                <materialDesign:DialogHost DialogTheme="Inherit" CloseOnClickAway="true" VerticalAlignment="Top">
+                    <mahApps:TransitioningContentControl Content="{Binding ActiveView}" Transition="RightReplace" Height="342" />
                 </materialDesign:DialogHost>
-                </Grid>
+
+                <GridSplitter Grid.Row="1" Height="5" Style="{StaticResource HorizontalGridSplitter}" />    
+                <StackPanel Grid.Row="2" Orientation="Vertical">
+                    <TextBlock Text="実行ログ" FontSize="16" FontWeight="Bold" Margin="5,10,1,1"/>
+                    <Border BorderThickness="1" BorderBrush="White"/>
+                    <TextBox x:Name="log" AcceptsReturn="True"
+                            MinHeight="260"
+                            FontSize="16"
+                            Margin="5"
+                            TextWrapping="Wrap"
+                            IsReadOnly="True"
+                            BorderBrush="{DynamicResource MaterialDesignShadowBrush}" BorderThickness="1"
+                            VerticalScrollBarVisibility="Auto"
+                            HorizontalScrollBarVisibility="Auto" />
+                    <StackPanel Orientation="Horizontal" Margin="5,10,1,1" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                        <Button Height="30" materialDesign:ButtonAssist.CornerRadius="5"
+                                Command="{Binding StartTransferCommand}"
+                                Style="{StaticResource MaterialDesignRaisedLightButton}"
+                                ToolTip="Transfer start"
+                                Margin="10,0,10,0"
+                                VerticalAlignment="Bottom">
+                            <TextBlock Text="転　　送" />
+                        </Button>
+                        <Button Height="30" materialDesign:ButtonAssist.CornerRadius="5"
+                                Command="{Binding StopTransferCommand}"
+                                Style="{StaticResource MaterialDesignRaisedLightButton}"
+                                ToolTip="Transfer Stop"
+                                Margin="10,0,10,0"
+                                VerticalAlignment="Bottom">
+                            <TextBlock Text="停　　止" />
+                        </Button>
+                        <Button Height="30" materialDesign:ButtonAssist.CornerRadius="5"
+                                Command="{Binding QuitApplicationCommand}"
+                                Style="{StaticResource MaterialDesignRaisedLightButton}"
+                                ToolTip="Application End"
+                                Margin="10,0,10,0"
+                                VerticalAlignment="Bottom">
+                            <TextBlock Text="終　　了" />
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
         </Grid>
     </Grid>
-<!--
-    </materialDesign:DialogHost>
--->
 </mahApps:MetroWindow>

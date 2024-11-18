@@ -30,6 +30,7 @@ namespace WpfApp1_cmd
         private void DeployCupCakes(object sender, RoutedEventArgs e)
         {
             // deploy some CupCakes...
+            lineView.IsEnabled = false;
         }
     }
 }
