@@ -11,6 +11,12 @@ namespace WpfApp1_cmd
         Base = 2,
         Module = 3,
     }
+
+    public static class Define
+    {
+        public const string FTP_ROOT_PATH = "C:\\users\\ka.makihara\\docker\\docker_ftp\\data";
+        public const string LCU_ROOT_PATH = "\\LCU_1\\MCFiles";
+    }
     /// <summary>
     /// Interaction logic for App.xaml
     /// </summary>

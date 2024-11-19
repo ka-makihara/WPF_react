@@ -67,18 +67,22 @@ namespace WpfApp1_cmd
             {
                 if (Children != null)
                 {
-                    int cnt = Children.Where(x => x.IsSelected == true).ToList().Count();
-                    if( cnt == 0)
+                    int cnt1 = Children.Where(x => x.IsSelected == true).ToList().Count();
+                    int cnt2 = Children.Where(x => x.IsSelected == null).ToList().Count();
+                    if (cnt1 == 0 && cnt2 == 0)
                     {
                         base._isSelected = false;
                     }
-                    else if( cnt != Children.Count())
-                    {
-                        base._isSelected = null;
-                    }
                     else
                     {
-                        base._isSelected = true;
+                        if (cnt1 == Children.Count())
+                        {
+                            base._isSelected = true;
+                        }
+                        else
+                        {
+                            base._isSelected = null;
+                        }
                     }
                 }
                 else

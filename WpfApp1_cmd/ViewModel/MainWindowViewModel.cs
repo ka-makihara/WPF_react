@@ -186,33 +186,27 @@ namespace WpfApp1_cmd.ViewModel
                     {
                          string user = "Administrator";
                          string password = "password";
-                        if( module.IsSelected == false)
+                        if( module.IsSelected == false || module.UnitVersions == null )
                         {
                             continue;
                         }
 
-                        string ret = await lcu.LcuCtrl.LCU_Command(McFileList.Command(machine.Name, module.Pos, user, password, @"/Data"));
-                        if (ret == "" || ret == "Internal Server Error")
-                        {
-                            Debug.WriteLine($"Error:{ret}");
-                            continue;
-                        }
+                        // UpdateCommon.inf の Path のフォルダにファイルを転送する
+                        List<string> vers = module.UnitVersions.Where(unit => unit.IsSelected == true).ToList().Select(x => x.Path).ToList();
 
-                        McFileList list = McFileList.FromJson(ret);
-                        if (list != null)
+                        lcu.LcuCtrl.CreateFtpFolders(vers);
+                        lcu.LcuCtrl.UploadFiles(Define.LCU_ROOT_PATH,vers, Define.FTP_ROOT_PATH);
+
+                        /*
+                        string ret = await lcu.LcuCtrl.LCU_Command(PostMcFile.Command(machine.Name, module.Pos, user, password, vers));
+
+                        if( ret == "" || ret == "Internal Server Error")
                         {
-                            if (list.ftp != null && list.ftp.data != null)
-                            {
-                                foreach (var item in list.ftp.data)
-                                {
-                                    Debug.WriteLine($"Path={item.mcPath}");
-                                    foreach (var file in item.list)
-                                    {
-                                        Debug.WriteLine($"File={file.name}");
-                                    }
-                                }
-                            }
+                            Debug.WriteLine("PostMCFile Error");
+                            return false;
                         }
+                        */
+                        lcu.LcuCtrl.ClearFtpFolders(Define.LCU_ROOT_PATH);
                     }
                 }
             }
@@ -346,7 +340,7 @@ namespace WpfApp1_cmd.ViewModel
             }
 
             string tmpFile = Path.GetTempFileName();
-            bool ret = await lcu.LcuCtrl.GetMachineFile(lcu.Name, machine.Name, module.Pos, "Peripheral/UpdateCommon.inf", tmpFile);
+            bool ret = await lcu.LcuCtrl.GetMachineFile(lcu.Name, machine.Name, module.Pos, "Peripheral/UpdateCommon_mini.inf", tmpFile);
 
             if( ret == false)
             {
@@ -459,8 +453,13 @@ namespace WpfApp1_cmd.ViewModel
                 } 
                 string password = FtpData.GetPasswd(data.username, data.password);
 
+                // デバッグ用のFTPアカウント情報を設定
+                lcu.FtpUser = "Administrator"; // "Administrator
+                lcu.FtpPassword = "password"; // password
+                /*
                 lcu.FtpUser = data.username;
                 lcu.FtpPassword = password;
+                */
 
                 // LCU バージョン取得
                 str = await lcu.LcuCtrl.LCU_Command(LcuVersion.Command());
