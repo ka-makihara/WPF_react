@@ -284,6 +284,15 @@ namespace WpfApp1_cmd
                     {
                         Parent.Update(value);
                     }
+
+                    // ツリー側の選択状態をユニットの選択状態に反映させるのなら
+                    if(UnitVersions != null)
+                    {
+                        foreach (var unit in UnitVersions)
+                        {
+                            unit.IsSelected = value;
+                        }
+                    }
                 }
             }
         }

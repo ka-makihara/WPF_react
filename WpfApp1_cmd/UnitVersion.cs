@@ -38,5 +38,6 @@ namespace WpfApp1_cmd
 
         public string? Path { get; set; }
         public string? Attribute { get; set; }
+        public ModuleInfo? Parent { get; set; }
     }
 }

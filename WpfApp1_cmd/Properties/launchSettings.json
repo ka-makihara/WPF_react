@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "WpfApp1_cmd": {
+      "commandName": "Project",
+      "commandLineArgs": "--dataFolder C:\\users\\ka.makihara\\develop\\updateData\r\n--data=c:\\users\\ka.makihara\r\n--fullMach\r\n--timer 300\r\n--debug=true\r\n--backup"
+    }
+  }
+}

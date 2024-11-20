@@ -23,12 +23,17 @@ namespace WpfApp1_cmd.ViewModel
 {
     public class MainWindowViewModel : ViewModelBase
     {
-        private ViewModelBase activeView = null;
-
+        // ツリービューのアイテム
         public ObservableCollection<LcuInfo> TreeViewItems { get; set; }
 
+        // ツリービューの選択項目に対応するビューモデル
         private Dictionary<string, ViewModelBase> viewModeTable { get; }
 
+        // ツリーの選択項目
+        public CheckableItem SelectedItem { get; set; }
+
+        // ビューの切り替え
+        private ViewModelBase activeView = null;
         public ViewModelBase ActiveView
         {
             get { return activeView; }
@@ -48,8 +53,9 @@ namespace WpfApp1_cmd.ViewModel
             set { flag = value; ButtonCommand.DelegateCanExecute(); }
         }
 
-        public DelegateCommand ButtonCommand { get; }
         public DelegateCommand<string> ScreenTransitionCommand { get; }
+
+        public DelegateCommand ButtonCommand { get; }
         public ReactiveCommand ButtonCommand2 { get; } = new ReactiveCommand();
 
         public ReactiveCommand CutCommand { get; private set; } = new ReactiveCommand();
@@ -86,6 +92,12 @@ namespace WpfApp1_cmd.ViewModel
         public MainWindowViewModel()
         {
             LoadLineInfo();
+
+            string data = Options.GetOption("--dataFolder", "");
+            int tim = Options.GetOptionInt("--timer", 0);
+            bool kk = Options.GetOptionBool("--debug", false);
+            bool key = Options.HasSwitch("--backup");
+
 
             ButtonCommand = new DelegateCommand(async () =>
             {
@@ -153,7 +165,7 @@ namespace WpfApp1_cmd.ViewModel
         }
 
         /// <summary>
-        /// 転送開始
+        /// 転送開始コマンド
         /// </summary>
         private async void StartTransferExecute()
         {
@@ -162,12 +174,31 @@ namespace WpfApp1_cmd.ViewModel
             FlagProperty2.Value = true;
             FlagProperty3.Value = false;
 
+            /*
+            switch(SelectedItem.ItemType)
+            {
+                case MachineType.LCU:
+                    LcuInfo lcu = SelectedItem as LcuInfo;
+                    List<string> folders = [
+                        "Fuji/System3/Program/Peripheral/UpdateCommon.inf",
+                        ]; 
+                    lcu.LcuCtrl.CreateFtpFolders(folders,"MCFiles\\");
+                    lcu.LcuCtrl.ClearFtpFolders("MCFiles\\");
+                    break;
+                case MachineType.Machine:
+                    break;
+                case MachineType.Module:
+                    break;
+            }
+            */
+
             await TransferExecute();
 
             FlagProperty1.Value = true;
             FlagProperty3.Value = true;
             FlagProperty2.Value = false;
         }
+
         public async Task<bool> TransferExecute()
         {
             foreach(var lcu in TreeViewItems)
@@ -184,18 +215,24 @@ namespace WpfApp1_cmd.ViewModel
                     }
                     foreach(var module in machine.Children)
                     {
-                         string user = "Administrator";
-                         string password = "password";
                         if( module.IsSelected == false || module.UnitVersions == null )
                         {
                             continue;
                         }
 
                         // UpdateCommon.inf の Path のフォルダにファイルを転送する
-                        List<string> vers = module.UnitVersions.Where(unit => unit.IsSelected == true).ToList().Select(x => x.Path).ToList();
+                        //   ※ UpdateCommon.inf に記載されているデータは存在するものとする
+                        //       指定されたフォルダにあるUpdateCommon.inf を読み込んでいるので
+                        //
+                        //  ↓は選択された項目のバージョン情報から Path を抽出してリスト化
+                        List<string> folders = module.UnitVersions.Where(unit => unit.IsSelected == true).ToList().Select(x => x.Path).ToList();
 
-                        lcu.LcuCtrl.CreateFtpFolders(vers);
-                        lcu.LcuCtrl.UploadFiles(Define.LCU_ROOT_PATH,vers, Define.FTP_ROOT_PATH);
+                        //LCU上にフォルダを作成する
+                        //  (MCFiles/ 以下に Fuji/System3/Program/Peripheral/*** を作成)
+                        lcu.LcuCtrl.CreateFtpFolders(folders,Define.LCU_ROOT_PATH);
+
+                        //LCUにファイルをアップロードする
+                        lcu.LcuCtrl.UploadFiles(Define.LCU_ROOT_PATH, Define.FTP_ROOT_PATH, folders);
 
                         /*
                         string ret = await lcu.LcuCtrl.LCU_Command(PostMcFile.Command(machine.Name, module.Pos, user, password, vers));
@@ -206,6 +243,8 @@ namespace WpfApp1_cmd.ViewModel
                             return false;
                         }
                         */
+
+                        // LCU 上に作成、転送したファイルを削除する
                         lcu.LcuCtrl.ClearFtpFolders(Define.LCU_ROOT_PATH);
                     }
                 }
@@ -243,12 +282,13 @@ namespace WpfApp1_cmd.ViewModel
             {
                 return;
             }
+            SelectedItem = item;
             Debug.WriteLine($"TreeViewSelectedItemChanged={item.Name}:{item.ItemType}");
 
             switch (item.ItemType)
             {
                 case MachineType.LCU:
-                    if (viewModeTable.ContainsKey($"LcuViewi_{item.Name}") == false)
+                    if (viewModeTable.ContainsKey($"LcuView_{item.Name}") == false)
                     {
                         viewModeTable.Add($"LcuView_{item.Name}", new LcuViewModel(TreeViewItems.Where(x => x.Name == item.Name).First().Children));
                     }
@@ -334,25 +374,37 @@ namespace WpfApp1_cmd.ViewModel
         /// <returns></returns>
         public async Task<ObservableCollection<UnitVersion>?> CreateVersionInfo(LcuInfo lcu, MachineInfo machine, ModuleInfo module)
         {
-            if( lcu.LcuCtrl == null)
+            if( lcu.LcuCtrl == null || lcu.IsSelected == false)
             {
                 return null;
             }
 
-            string tmpFile = Path.GetTempFileName();
-            bool ret = await lcu.LcuCtrl.GetMachineFile(lcu.Name, machine.Name, module.Pos, "Peripheral/UpdateCommon_mini.inf", tmpFile);
+            //string tmpFile = Path.GetTempFileName();
+            string tmpDir = Path.GetTempPath();
+            //bool ret = await lcu.LcuCtrl.GetMachineFile(lcu.Name, machine.Name, module.Pos, "Peripheral/UpdateCommon_mini.inf", tmpFile);
+
+            // UpdateCommon.inf を取得するフォルダを作成
+            string infoFile = Define.MC_PERIPHERAL_PATH + Define.UPDATE_INFO_FILE;
+            string lcuPath = $"LCU_{module.Pos}/MCFiles/";
+            //string lcuPath = "/MCFiles/";
+            bool ret = lcu.LcuCtrl.CreateFtpFolders(new List<string> { infoFile }, lcuPath);
+
+            //装置から UpdateCommon.inf を取得してテンポラリに保存
+            ret = await lcu.LcuCtrl.GetMachineFile(lcu.Name, machine.Name, module.Pos, infoFile, tmpDir);
 
             if( ret == false)
             {
                 Debug.WriteLine("GetMachineFile Error");
                 return null;
             }
-            IniFileParser parser = new(tmpFile);
+            IniFileParser parser = new(tmpDir + Define.UPDATE_INFO_FILE);
 
-            System.IO.File.Delete(tmpFile);
+            //テンポラリに生成したファイルを削除
+            System.IO.File.Delete(tmpDir + Define.UPDATE_INFO_FILE);
 
             IList<string> sec = parser.SectionCount();
 
+            //バージョン情報を生成
             ObservableCollection<UnitVersion> versions = [];
 
             foreach (var unit in sec)
@@ -364,7 +416,8 @@ namespace WpfApp1_cmd.ViewModel
                     Attribute = parser.GetValue(unit, "Attribute"),
                     Path = parser.GetValue(unit, "Path"),
                     CurVersion = parser.GetValue(unit, "Version"),
-                    NewVersion = parser.GetValue(unit, "Version") + "New" // 暫定
+                    NewVersion = parser.GetValue(unit, "Version") + "New", // 暫定
+                    Parent = module
                 };
                 versions.Add(version);
             }
@@ -417,8 +470,9 @@ namespace WpfApp1_cmd.ViewModel
             TreeViewItems = new ObservableCollection<LcuInfo>
             {
                 // Add Localhost[Debuge用 -> localhost:9000で仮想LCU(WebAPIサーバーを起動して確認する)]
-                new (){ Name = "localhost:9000", IsSelected = true, ItemType=MachineType.LCU},
-                new (){ Name = "ch-lcu33",       IsSelected = true, ItemType=MachineType.LCU},
+                new (){ Name = "localhost:9000", IsSelected = true,  ItemType=MachineType.LCU},
+                new (){ Name = "DESKTOP-P98TLDK",IsSelected = true,  ItemType=MachineType.LCU},
+                new (){ Name = "ch-lcu33",       IsSelected = false, ItemType=MachineType.LCU},
             };
             // 起動時に情報取得する場合
             foreach (var lcu in TreeViewItems)
@@ -454,12 +508,10 @@ namespace WpfApp1_cmd.ViewModel
                 string password = FtpData.GetPasswd(data.username, data.password);
 
                 // デバッグ用のFTPアカウント情報を設定
-                lcu.FtpUser = "Administrator"; // "Administrator
-                lcu.FtpPassword = "password"; // password
-                /*
                 lcu.FtpUser = data.username;
                 lcu.FtpPassword = password;
-                */
+                lcu.LcuCtrl.FtpUser = lcu.FtpUser;
+                lcu.LcuCtrl.FtpPassword = lcu.FtpPassword;
 
                 // LCU バージョン取得
                 str = await lcu.LcuCtrl.LCU_Command(LcuVersion.Command());
@@ -478,6 +530,11 @@ namespace WpfApp1_cmd.ViewModel
                 // Machine 情報を登録
                 XmlSerializer serializer = new(typeof(LineInfo));
                 string response = await lcu.LcuCtrl.LCU_HttpGet("lines");
+
+                if( response.Contains("errorCode") )
+                {
+                    return false;
+                }
 
                 LineInfo? lineInfo = (LineInfo)serializer.Deserialize( new StringReader(response));
                 if(lineInfo == null)
@@ -500,7 +557,7 @@ namespace WpfApp1_cmd.ViewModel
                     {
                         Name = mc.MachineName,
                         ItemType = MachineType.Machine,
-                        IsSelected = true,
+                        IsSelected = lcu.IsSelected,
                         Machine = mc,
                         Parent = lcu,
                         Bases = [],
@@ -512,7 +569,7 @@ namespace WpfApp1_cmd.ViewModel
                         {
                             Name = "",
                             ItemType = MachineType.Base,
-                            IsSelected = true,
+                            IsSelected = machine.IsSelected,
                             Base = base_,
                             Parent = machine,
                             Children = []
@@ -525,7 +582,7 @@ namespace WpfApp1_cmd.ViewModel
                             {
                                 Name = module.DispModule,
                                 ItemType = MachineType.Module,
-                                IsSelected = true,
+                                IsSelected = machine.IsSelected,
                                 Module = module,
                                 Parent = machine,
                                 IPAddress = base_.IpAddr,
