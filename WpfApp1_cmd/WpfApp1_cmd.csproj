@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\mcAccount\mcAccount\mcAccount.vcxproj" />
     <ProjectReference Include="..\..\WPF_LcuCtrlLib\WpfLcuCtrlLib\WpfLcuCtrlLib.csproj" />
   </ItemGroup>
 

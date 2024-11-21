@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using WpfLcuCtrlLib;
 
 namespace WpfApp1_cmd.ViewModel
 {
@@ -23,7 +24,7 @@ namespace WpfApp1_cmd.ViewModel
         */
 
         public ObservableCollection<UnitVersion> UnitVersions { get; set; }
-        public ModuleViewModel(ObservableCollection<UnitVersion> unitVersions)
+        public ModuleViewModel(ObservableCollection<UnitVersion> unitVersions, ObservableCollection<UpdateInfo> updates)
         {
             //LoadUnitVersions();
             UnitVersions = unitVersions;
@@ -38,6 +39,28 @@ namespace WpfApp1_cmd.ViewModel
                         OnPropertyChanged(nameof(IsAllSelected));
                     }
                 };
+                if (updates != null)
+                {
+                    try {
+                        // 要素が見つからない場合は例外が発生する
+                        string newVer = updates.First(x => x.Name == item.Name).Version;
+                        if(newVer != item.CurVersion)
+                        {
+                            item.NewVersion = newVer;
+                            item.IsSelected = true;
+                        }
+                        else
+                        {
+                            item.NewVersion = newVer;
+                            item.IsSelected = false;
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        item.NewVersion = "N/A";
+                        item.IsSelected = false;
+                    }
+                }
             }
         }
 

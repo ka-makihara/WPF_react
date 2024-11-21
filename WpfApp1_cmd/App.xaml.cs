@@ -18,6 +18,7 @@ namespace WpfApp1_cmd
         public const string LCU_ROOT_PATH = "\\MCFiles";
         public const string MC_PERIPHERAL_PATH = "Fuji/System3/Program/Peripheral";
         public const string UPDATE_INFO_FILE = "/UpdateCommon.inf";
+        public const string LOCAL_BACKUP_PATH = "C:\\users\\ka.makihara\\Backup";
     }
 
     /// <summary>

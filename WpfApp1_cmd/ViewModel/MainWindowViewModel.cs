@@ -7,22 +7,29 @@ using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reactive.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ControlzEx.Theming;
+using System.Windows.Navigation;
+using System.Reactive.Linq;
 using System.Windows;
 using System.Xml.Serialization;
 using WpfApp1_cmd.Command;
-using WpfLcuCtrlLib;
-using MaterialDesignThemes.Wpf;
-using ControlzEx.Theming;
 using WpfApp1_cmd.View;
-using System.Windows.Navigation;
+using MaterialDesignThemes.Wpf;
+using System.Runtime.InteropServices;
+
+using WpfLcuCtrlLib;
+//using NeximDataControl;
+using ControlzEx.Standard;
 
 namespace WpfApp1_cmd.ViewModel
 {
     public class MainWindowViewModel : ViewModelBase
     {
+        [DllImport("mcAccount.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
+        static extern int getMcUser(StringBuilder s, Int32 len);
+
         // ツリービューのアイテム
         public ObservableCollection<LcuInfo> TreeViewItems { get; set; }
 
@@ -45,6 +52,8 @@ namespace WpfApp1_cmd.ViewModel
                 }
             }
         }
+        private ObservableCollection<UpdateInfo>? Updates { get;set; }
+
 
         private bool flag = true;
         public bool Flag
@@ -91,13 +100,27 @@ namespace WpfApp1_cmd.ViewModel
 
         public MainWindowViewModel()
         {
+            //オプション処理
+            string dataFolder = Options.GetOption("--dataFolder", "");
+            if(dataFolder != "")
+            {
+               Updates = ReadUpdateCommon(dataFolder + "\\UpdateCommon.inf");
+            }
+            StringBuilder sb = new StringBuilder(1024);
+            Int32 len = getMcUser(sb, sb.Capacity);
+            Debug.WriteLine($"user={sb.ToString()} len={len}");
+
+            //ビューの生成
+            viewModeTable = new Dictionary<string, ViewModelBase>
+            {
+                { "AView", new AViewModel() },
+                { "BView", new BViewModel() },
+                { "CView", new CViewModel() },
+            };
+            ActiveView = viewModeTable["AView"];
+
+            //ライン情報読み込み
             LoadLineInfo();
-
-            string data = Options.GetOption("--dataFolder", "");
-            int tim = Options.GetOptionInt("--timer", 0);
-            bool kk = Options.GetOptionBool("--debug", false);
-            bool key = Options.HasSwitch("--backup");
-
 
             ButtonCommand = new DelegateCommand(async () =>
             {
@@ -109,14 +132,6 @@ namespace WpfApp1_cmd.ViewModel
             }, canExecuteCommand);
 
             ScreenTransitionCommand = new DelegateCommand<string>(screenTransitionExecute);
-
-            viewModeTable = new Dictionary<string, ViewModelBase>
-            {
-                { "AView", new AViewModel() },
-                { "BView", new BViewModel() },
-                { "CView", new CViewModel() },
-            };
-            ActiveView = viewModeTable["AView"];
 
             ButtonCommand2.Subscribe(async () =>
             {
@@ -162,6 +177,32 @@ namespace WpfApp1_cmd.ViewModel
 
             QuitApplicationCommand = FlagProperty3.ToReactiveCommand();
             QuitApplicationCommand.Subscribe(() => ApplicationShutDown() );
+
+        }
+
+        /// <summary>
+        ///  UpdateCommon.inf を読み込み、UpdateInfo のリストを返す
+        /// </summary>
+        /// <param name="path">UpdateCommon.inf ファイルのパス</param>
+        /// <returns></returns>
+        private ObservableCollection<UpdateInfo> ReadUpdateCommon(string path)
+        {
+            ObservableCollection<UpdateInfo> updates = [];
+            IniFileParser parser = new(path);
+            IList<string> sec = parser.SectionCount();
+
+            foreach (var unit in sec)
+            {
+                UpdateInfo update = new()
+                {
+                    Name = unit,
+                    Attribute = parser.GetValue(unit, "Attribute"),
+                    Path = parser.GetValue(unit, "Path"),
+                    Version = parser.GetValue(unit, "Version"),
+                };
+                updates.Add(update);
+            }
+            return updates;
         }
 
         /// <summary>
@@ -191,14 +232,22 @@ namespace WpfApp1_cmd.ViewModel
                     break;
             }
             */
+            ModuleInfo module = SelectedItem as ModuleInfo;
+            MachineInfo machine = module.Parent;
+            LcuInfo lcu = machine.Parent;
 
-            await TransferExecute();
+            await DownloadModuleFiles(lcu, machine, module);
+            //await TransferExecute();
 
             FlagProperty1.Value = true;
             FlagProperty3.Value = true;
             FlagProperty2.Value = false;
         }
 
+        /// <summary>
+        /// データ転送
+        /// </summary>
+        /// <returns></returns>
         public async Task<bool> TransferExecute()
         {
             foreach(var lcu in TreeViewItems)
@@ -224,25 +273,7 @@ namespace WpfApp1_cmd.ViewModel
                         //   ※ UpdateCommon.inf に記載されているデータは存在するものとする
                         //       指定されたフォルダにあるUpdateCommon.inf を読み込んでいるので
                         //
-                        //  ↓は選択された項目のバージョン情報から Path を抽出してリスト化
-                        List<string> folders = module.UnitVersions.Where(unit => unit.IsSelected == true).ToList().Select(x => x.Path).ToList();
-
-                        //LCU上にフォルダを作成する
-                        //  (MCFiles/ 以下に Fuji/System3/Program/Peripheral/*** を作成)
-                        lcu.LcuCtrl.CreateFtpFolders(folders,Define.LCU_ROOT_PATH);
-
-                        //LCUにファイルをアップロードする
-                        lcu.LcuCtrl.UploadFiles(Define.LCU_ROOT_PATH, Define.FTP_ROOT_PATH, folders);
-
-                        /*
-                        string ret = await lcu.LcuCtrl.LCU_Command(PostMcFile.Command(machine.Name, module.Pos, user, password, vers));
-
-                        if( ret == "" || ret == "Internal Server Error")
-                        {
-                            Debug.WriteLine("PostMCFile Error");
-                            return false;
-                        }
-                        */
+                        bool ret = await UploadModuleFiles(lcu, machine, module);
 
                         // LCU 上に作成、転送したファイルを削除する
                         lcu.LcuCtrl.ClearFtpFolders(Define.LCU_ROOT_PATH);
@@ -252,6 +283,91 @@ namespace WpfApp1_cmd.ViewModel
             return true;
         }
 
+        /// <summary>
+        ///  バージョン情報にあるデータを装置から取得する
+        /// </summary>
+        /// <param name="lcu"></param>
+        /// <param name="machine"></param>
+        /// <param name="module"></param>
+        /// <returns></returns>
+        public async Task<bool> DownloadModuleFiles(LcuInfo lcu, MachineInfo machine, ModuleInfo module)
+        {
+            bool ret;
+
+            //バージョン情報からパスのみを取り出してリスト化
+            List<string> folders = module.UnitVersions.Select(x => x.Path).ToList();
+
+            //LCU上にフォルダを作成する(装置からファイルを取得するフォルダ)
+            string lcuRoot = $"LCU_{module.Pos}\\MCFiles\\";
+            //string lcuRoot = "/MCFiles/";
+            ret = lcu.LcuCtrl.CreateFtpFolders(folders, lcuRoot);
+            if( ret == false)
+            {
+                Debug.WriteLine("CreateFtpFolders Error");
+                return ret;
+            }
+
+            //装置からLCUにファイルを取得する
+            string mcUser = "Administrator";
+            string mcPass = "password";
+            string retMsg = await lcu.LcuCtrl.LCU_Command(GetMcFile.Command(machine.Name, module.Pos, mcUser, mcPass,folders, lcuRoot));
+
+            if (retMsg == "" || retMsg == "Internal Server Error")
+            {
+                Debug.WriteLine("GetMCFile Error");
+                return false;
+            }
+            // LCU からFTPでファイルを取得
+            ret = lcu.LcuCtrl.DownloadFiles(lcuRoot, Define.LOCAL_BACKUP_PATH, folders);
+
+            //LCU 上に作成したファイルを削除
+            ret = lcu.LcuCtrl.ClearFtpFolders(lcuRoot);
+
+            return ret;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="lcu"></param>
+        /// <param name="machine"></param>
+        /// <param name="module"></param>
+        /// <returns></returns>
+        public async Task<bool> UploadModuleFiles(LcuInfo lcu, MachineInfo machine, ModuleInfo module)
+        {
+            bool ret;
+
+            // UpdateCommon.inf の Path のフォルダにファイルを転送する
+            //   ※ UpdateCommon.inf に記載されているデータは存在するものとする
+            //       指定されたフォルダにあるUpdateCommon.inf を読み込んでいるので
+            //
+            //バージョン情報からパスのみを取り出してリスト化
+            List<string> folders = module.UnitVersions.Select(x => x.Path).ToList();
+
+            //LCU上にフォルダを作成する(ファイルを送るフォルダ)
+            string lcuRoot = $"LCU_{module.Pos}\\MCFiles\\";
+            //string lcuRoot = "/MCFiles/";
+            ret = lcu.LcuCtrl.CreateFtpFolders(folders, lcuRoot);
+            if( ret == false)
+            {
+                Debug.WriteLine("CreateFtpFolders Error");
+                return ret;
+            }
+             // LCUに FTPでファイルを送信
+            ret = lcu.LcuCtrl.UploadFiles(lcuRoot, Define.LOCAL_BACKUP_PATH, folders);
+
+            //LCUから装置にファイルを送信するコマンド
+            string mcUser = "Administrator";
+            string mcPass = "password";
+            string retMsg = await lcu.LcuCtrl.LCU_Command(PostMcFile.Command(machine.Name, module.Pos, mcUser, mcPass,folders, lcuRoot));
+
+            if (retMsg == "" || retMsg == "Internal Server Error")
+            {
+                Debug.WriteLine("GetMCFile Error");
+                return false;
+            }
+            return true;
+        }
         /// <summary>
         ///  転送中止
         /// </summary>
@@ -343,7 +459,7 @@ namespace WpfApp1_cmd.ViewModel
                                         if (ret != null )
                                         {
                                             module.UnitVersions = ret;
-                                            viewModeTable.Add($"ModuleView_{item.Name}", new ModuleViewModel(module.UnitVersions));
+                                            viewModeTable.Add($"ModuleView_{item.Name}", new ModuleViewModel(module.UnitVersions, Updates));
                                         }
                                         else
                                         {
@@ -374,23 +490,24 @@ namespace WpfApp1_cmd.ViewModel
         /// <returns></returns>
         public async Task<ObservableCollection<UnitVersion>?> CreateVersionInfo(LcuInfo lcu, MachineInfo machine, ModuleInfo module)
         {
+            bool ret;
+
             if( lcu.LcuCtrl == null || lcu.IsSelected == false)
             {
                 return null;
             }
 
-            //string tmpFile = Path.GetTempFileName();
             string tmpDir = Path.GetTempPath();
-            //bool ret = await lcu.LcuCtrl.GetMachineFile(lcu.Name, machine.Name, module.Pos, "Peripheral/UpdateCommon_mini.inf", tmpFile);
+
+            string infoFile = Define.MC_PERIPHERAL_PATH + Define.UPDATE_INFO_FILE;
+            string lcuRoot = $"LCU_{module.Pos}\\MCFiles\\";
+            //string lcuPath = "/MCFiles/ "+ Define.MC_PERIPHERAL_PATH;
 
             // UpdateCommon.inf を取得するフォルダを作成
-            string infoFile = Define.MC_PERIPHERAL_PATH + Define.UPDATE_INFO_FILE;
-            string lcuPath = $"LCU_{module.Pos}/MCFiles/";
-            //string lcuPath = "/MCFiles/";
-            bool ret = lcu.LcuCtrl.CreateFtpFolders(new List<string> { infoFile }, lcuPath);
+            ret = lcu.LcuCtrl.CreateFtpFolders(new List<string> { infoFile }, lcuRoot);
 
             //装置から UpdateCommon.inf を取得してテンポラリに保存
-            ret = await lcu.LcuCtrl.GetMachineFile(lcu.Name, machine.Name, module.Pos, infoFile, tmpDir);
+            ret = await lcu.LcuCtrl.GetMachineFile(lcu.Name, machine.Name, module.Pos, infoFile,lcuRoot,tmpDir);
 
             if( ret == false)
             {
@@ -416,7 +533,7 @@ namespace WpfApp1_cmd.ViewModel
                     Attribute = parser.GetValue(unit, "Attribute"),
                     Path = parser.GetValue(unit, "Path"),
                     CurVersion = parser.GetValue(unit, "Version"),
-                    NewVersion = parser.GetValue(unit, "Version") + "New", // 暫定
+                    NewVersion = "N/A",
                     Parent = module
                 };
                 versions.Add(version);
@@ -467,6 +584,14 @@ namespace WpfApp1_cmd.ViewModel
         /// </summary>
         private async void LoadLineInfo()
         {
+            /*
+            NeximDataControl.NeximDataControlApi nexim = new();
+
+            List<object> lines = new List<object>();
+            
+            NeximDataControl.Common.NeximDataControlApiCode r = nexim.GetLines(null, ref lines);
+            */
+
             TreeViewItems = new ObservableCollection<LcuInfo>
             {
                 // Add Localhost[Debuge用 -> localhost:9000で仮想LCU(WebAPIサーバーを起動して確認する)]
