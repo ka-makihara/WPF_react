@@ -140,7 +140,7 @@
                 <TreeView.ItemTemplate>
                     <HierarchicalDataTemplate ItemsSource="{Binding Children}">
                         <StackPanel Orientation="Horizontal">
-                            <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"  HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <CheckBox IsChecked="{Binding IsSelected.Value, Mode=TwoWay}"  HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             <TextBlock Text="{Binding Name}" Margin="5,0,0,0" FontSize="16"/>
                         </StackPanel>
                     </HierarchicalDataTemplate>

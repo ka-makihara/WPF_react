@@ -1,7 +1,9 @@
 ﻿using Reactive.Bindings;
+using Reactive.Bindings.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -12,57 +14,8 @@ using WpfLcuCtrlLib;
 
 namespace WpfApp1_cmd
 {
-    public class CheckableItem : ViewModelBase
+    public class CheckableItem// : ViewModelBase
     {
-        private string? _name;
-        public string? Name
-        {
-            get => _name;
-            set => SetProperty(ref _name, value);
-        }
-
-        public bool? _isSelected;
-        public virtual bool? IsSelected
-        {
-            get => _isSelected;
-            set
-            {
-                if (_isSelected != value)
-                {
-                    _isSelected = value;
-                    OnPropertyChanged(nameof(IsSelected));
-                }
-            }
-        }
-
-        private MachineType? _itemType;
-        public MachineType? ItemType { get => _itemType; set => SetProperty(ref _itemType, value); }
-    }
-
-    public class LcuInfo : CheckableItem
-    {
-        public override bool? IsSelected
-        {
-            get => base.IsSelected;
-            set
-            {
-                if (base.IsSelected != value)
-                {
-                    base.IsSelected = value;
-                    OnPropertyChanged(nameof(IsSelected));
-
-                    if (Children != null )
-                    {
-                        foreach (var machine in Children)
-                        {
-                            machine.IsSelected = value;
-                        }
-                    }
-
-                }
-            }
-        }
-        /*
         private string? _name;
         public string? Name
         {
@@ -71,63 +24,71 @@ namespace WpfApp1_cmd
         }
         private MachineType? _itemType;
         public MachineType? ItemType { get => _itemType; set => _itemType = value; }
-        */
 
-        //public ReactivePropertySlim<bool?> IsSelected { get; set; } = new ReactivePropertySlim<bool?>(true);
+        public ReactivePropertySlim<bool?> IsSelected { get; set; } = new ReactivePropertySlim<bool?>(true);
 
+        public CheckableItem()
+        {
+        }
+    }
+
+    public class LcuInfo : CheckableItem
+    {
         public void Update(bool? value)
         {
-            if (IsSelected != value)
+            if (IsSelected.Value != value)
             {
                 if (Children != null)
                 {
-                    int cnt1 = Children.Where(x => x.IsSelected == true).ToList().Count();
-                    int cnt2 = Children.Where(x => x.IsSelected == null).ToList().Count();
+                    int cnt1 = Children.Where(x => x.IsSelected.Value == true).ToList().Count();
+                    int cnt2 = Children.Where(x => x.IsSelected.Value == null).ToList().Count();
                     if (cnt1 == 0 && cnt2 == 0)
                     {
-                        base._isSelected = false;
-                        //IsSelected.Value = false;
+                        IsSelected.Value = false;
                     }
                     else
                     {
                         if (cnt1 == Children.Count())
                         {
-                            base._isSelected = true;
-                            //IsSelected.Value = true;
+                            IsSelected.Value = true;
                         }
                         else
                         {
-                            base._isSelected = null;
-                            //IsSelected.Value = null;
+                            IsSelected.Value = null;
                         }
                     }
                 }
                 else
                 {
-                    base._isSelected = value;
-                    //IsSelected.Value = value;
+                    IsSelected.Value = value;
                 }
-                OnPropertyChanged(nameof(IsSelected));
             }
         }
 
         private string? _ftpUser;
-        //public string? FtpUser { get => _ftpUser; set => SetProperty(ref _ftpUser, value); }
         public string? FtpUser { get => _ftpUser; set => _ftpUser= value; }
 
         private string? _ftpPassword;
-        //public string? FtpPassword { get => _ftpPassword; set => SetProperty(ref _ftpPassword, value); }
         public string? FtpPassword { get => _ftpPassword; set => _ftpPassword= value; }
 
-        private ObservableCollection<MachineInfo>? _machines;
-        public ObservableCollection<MachineInfo>? Children { get => _machines; set => SetProperty(ref _machines, value); }
-        /*
-        public ObservableCollection<MachineInfo>? Children
+        private ReactiveCollection<MachineInfo> _machines = [];
+        public ReactiveCollection<MachineInfo> Children
         {
             get => _machines;
             set => _machines = value;
         }
-        */
+        private void AddMachine(MachineInfo machine)
+        {
+            machine.Parent = this;
+            Debug.WriteLine($"AddMachine: {machine.Name}");
+        }
+
+        public LcuInfo()
+        {
+            _machines.ObserveAddChanged().Subscribe(x => AddMachine(x));
+            IsSelected.Subscribe(x => Update(x));
+        }
+
 
         public string Version { get; set; } = "V1.00";
         private LcuCtrl? _lcuCtrl;
@@ -136,49 +97,41 @@ namespace WpfApp1_cmd
 
     public class MachineInfo : CheckableItem
     {
-        public override bool? IsSelected
-        {
-            get => base.IsSelected;
-            set
-            {
-                if(base.IsSelected != value)
-                {
-                    base.IsSelected = value;
-                    OnPropertyChanged(nameof(IsSelected));
-                    if (Children != null && value != null)
-                    {
-                        foreach (var child in Children)
-                        {
-                            child.Update(value);
-                        }
-                    }
-                    if(Parent != null)
-                    {
-                        Parent.Update(value);
-                    }
-                }
-            }
-        }
         public void Update(bool? value)
         {
-            if (IsSelected != value)
+            if (IsSelected.Value != value)
             {
                 if (Children != null)
                 {
-                    int cnt = Children.Where(x => x.IsSelected == true).ToList().Count();
-                    if (cnt == 0) {
-                        base._isSelected = false;
+                    int cnt = Children.Where(x => x.IsSelected.Value == true).ToList().Count();
+                    if (cnt == 0)
+                    {
+                        IsSelected.Value = false;
                     }
                     else if (cnt == Children.Count)
                     {
-                        base._isSelected = true;
+                        IsSelected.Value = true;
                     }
                     else
                     {
-                        base._isSelected = null;
+                        IsSelected.Value = null;
                     }
                 }
-                OnPropertyChanged(nameof(IsSelected));
+                if (Parent != null)
+                {
+                    Parent.Update(value);
+                }
+            }
+            else
+            {
+                if (Children != null)
+                {
+                    if (value == null) { return; }
+                    foreach (var child in Children)
+                    {
+                        child.IsSelected.Value = value;
+                    }
+                }
                 if( Parent != null)
                 {
                     Parent.Update(value);
@@ -186,81 +139,67 @@ namespace WpfApp1_cmd
             }
         }
         private Machine? _machine;
-        public Machine? Machine { get => _machine; set => SetProperty(ref _machine, value); }
+        public Machine? Machine { get => _machine; set => _machine = value; }
 
         public LcuInfo? Parent { get; set; }
 
-        private ObservableCollection<BaseInfo>? _bases;
-        public ObservableCollection<BaseInfo>?  Bases
+        private ReactiveCollection<BaseInfo> _bases = [];
+        public ReactiveCollection<BaseInfo> Bases
         {
             get => _bases;
-            set
-            {
-                _bases = value;
-                SetProperty(ref _bases, value);
-            }
+            set => _bases = value;
         }
-        private ObservableCollection<ModuleInfo>? _modules;
-        public ObservableCollection<ModuleInfo>? Children
+        private ReactiveCollection<ModuleInfo> _modules = [];
+        public ReactiveCollection<ModuleInfo> Children
         {
-            get
-            {
-                return _modules;
-            }
-            set
-            {
-                _modules = value;
-            }
+            get => _modules;
+            set => _modules = value;
         }
+
         public string ModelName { get => Machine.ModelName; }
         public string MachineType { get => Machine.MachineType; }
+
+        private void AddBase(BaseInfo baseInfo)
+        {
+            baseInfo.Parent = this;
+            Debug.WriteLine($"AddBase: {baseInfo.Name}");
+        }
+        private void AddModule(ModuleInfo module)
+        {
+            module.Parent = this;
+            Debug.WriteLine($"AddModule: {module.Name}");
+        }
+        public MachineInfo()
+        {
+            _bases.ObserveAddChanged().Subscribe(x => AddBase(x));
+            _modules.ObserveAddChanged().Subscribe(x => AddModule(x));
+            IsSelected.Subscribe(x => Update(x));
+        }
+
+        public bool? IsParentSelected => Parent.IsSelected.Value;
     } 
 
     public class  BaseInfo : CheckableItem
     {
-        public override bool? IsSelected
-        {
-            get => base.IsSelected;
-            set
-            {
-                if (base.IsSelected != value)
-                {
-                    base.IsSelected = value;
-                    OnPropertyChanged(nameof(IsSelected));
-                    if (Children != null)
-                    {
-                        foreach (var child in Children)
-                        {
-                            child.Update(value);
-                        }
-                    }
-                    if(Parent != null)
-                    {
-                        Parent.Update( value);
-                    }
-                }
-            }
-        }
         public void Update(bool? value)
         {
-            if (IsSelected != value)
+            if (IsSelected.Value != value)
             {
                 if (Children != null)
                 {
-                    int cnt = Children.Where(x => x.IsSelected != true).ToList().Count();
+                    int cnt = Children.Where(x => x.IsSelected.Value != true).ToList().Count();
                     if (cnt == 0) {
-                        base._isSelected = false;
+                        IsSelected.Value = false;
                     }
                     else if (cnt == Children.Count)
                     {
-                        base._isSelected = false;
+                        IsSelected.Value = false;
                     }
                     else
                     {
-                        base._isSelected = null;
+                        IsSelected.Value = null;
                     }
                 }
-                OnPropertyChanged(nameof(IsSelected));
                 if( Parent != null)
                 {
                     Parent.Update(value);
@@ -269,85 +208,81 @@ namespace WpfApp1_cmd
         }
 
         private Base? _base;
-        public Base? Base { get => _base; set => SetProperty(ref _base, value); }
+        public Base? Base { get => _base; set => _base = value; }
 
         private int _baseId;
-        public int BaseId { get => _baseId; set => SetProperty(ref _baseId, value); }
+        public int BaseId { get => _baseId; set => _baseId = value; }
 
         private int _baseType;
-        public int BaseType { get => _baseType; set => SetProperty(ref _baseType, value); }
+        public int BaseType { get => _baseType; set => _baseType = value; }
 
         private string? _ipAddress;
-        public string? IPAddress { get => _ipAddress; set => SetProperty(ref _ipAddress, value); }
+        public string? IPAddress { get => _ipAddress; set => _ipAddress = value; }
 
         private int _position;
-        public int Position { get => _position; set => SetProperty(ref _position, value); }
+        public int Position { get => _position; set => _position = value; }
 
         private string? _conveyor;
-        public string? Conveyor { get => _conveyor; set => SetProperty(ref _conveyor, value); }
+        public string? Conveyor { get => _conveyor; set => _conveyor = value; }
 
         public MachineInfo? Parent { get; set; }
 
-        private ObservableCollection<ModuleInfo>? _modules;
-        public ObservableCollection<ModuleInfo>? Children
+        private ReactiveCollection<ModuleInfo> _modules = [];
+        public ReactiveCollection<ModuleInfo> Children
         {
             get => _modules;
-            set { _modules = value; SetProperty(ref _modules, value); }
+            set => _modules = value;
+        }
+        private void AddModule(ModuleInfo module)
+        {
+            module.Parent = this.Parent;
+            Debug.WriteLine($"AddModule: {module.Name}");
+        }   
+        public BaseInfo()
+        {
+            Children.ObserveAddChanged().Subscribe(x => AddModule(x));
+            IsSelected.Subscribe(x => Update(x));
         }
     }
 
     public class ModuleInfo : CheckableItem
     {
-        public override bool? IsSelected
-        {
-            get => base.IsSelected;
-            set
-            {
-                if (base.IsSelected != value)
-                {
-                    base.IsSelected = value;
-                    OnPropertyChanged(nameof(IsSelected));
-                    if (Parent != null)
-                    {
-                        Parent.Update(value);
-                    }
-
-                    // ツリー側の選択状態をユニットの選択状態に反映させるのなら
-                    if(UnitVersions != null)
-                    {
-                        foreach (var unit in UnitVersions)
-                        {
-                            unit.IsSelected = value;
-                        }
-                    }
-                }
-            }
-        }
         public void Update(bool? value)
         {
-            if (IsSelected != value)
+            if( Parent != null )
             {
-                base._isSelected = value;
-                OnPropertyChanged(nameof(IsSelected));
+                Parent.Update(value);
             }
         }
 
         private Module? _module;
-        public Module? Module { get => _module; set => SetProperty(ref _module, value); }
+        public Module? Module { get => _module; set => _module = value; }
 
         public MachineInfo? Parent { get; set; }
 
         // Treeで表示するためには Children が必要(表示させないためにプロパティを UnitVersions としている)
-        private ObservableCollection<UnitVersion>? _unitVersions;
-        public ObservableCollection<UnitVersion>? UnitVersions
+        private ReactiveCollection<UnitVersion> _unitVersions = [];
+        public ReactiveCollection<UnitVersion> UnitVersions 
         {
             get => _unitVersions;
-            set { _unitVersions = value; SetProperty(ref _unitVersions, value); }
+            set => _unitVersions = value;
         }
 
         public int ID {get => Module.ModuleId; }
         public int Pos { get => Module.LogicalPos; }
         public string IPAddress { get; set; } = ""; // 本来Moduleにはない情報だが、アクセスの利便性のために追加
+
+        private void AddUnitVersion(UnitVersion unitVersion)
+        {
+            unitVersion.Parent = this;
+            Debug.WriteLine($"AddUnitVersion: {unitVersion.Name}");
+        }
+
+        public ModuleInfo()
+        {
+            UnitVersions.ObserveAddChanged().Subscribe(x => AddUnitVersion(x));
+            IsSelected.Subscribe(x => Update(x));
+        }
     }
 
     public class UnitInfo : CheckableItem
@@ -355,17 +290,17 @@ namespace WpfApp1_cmd
         private string _version;
         public string Version
         {
-            get => _version; set => SetProperty(ref _version, value);
+            get => _version; set => _version = value;
         }
         private int _attribute;
         public int Attribute
         {
-            get => _attribute; set => SetProperty(ref _attribute, value);
+            get => _attribute; set => _attribute = value;
         }
         private string _path;
         public string Path
         {
-            get => _path; set => SetProperty(ref _path, value);
+            get => _path; set => _path = value;
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Reactive.Bindings;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -23,8 +24,8 @@ namespace WpfApp1_cmd.ViewModel
         }
         */
 
-        public ObservableCollection<UnitVersion> UnitVersions { get; set; }
-        public ModuleViewModel(ObservableCollection<UnitVersion> unitVersions, ObservableCollection<UpdateInfo> updates)
+        public ReactiveCollection<UnitVersion> UnitVersions { get; set; }
+        public ModuleViewModel(ReactiveCollection<UnitVersion> unitVersions, ReactiveCollection<UpdateInfo> updates)
         {
             //LoadUnitVersions();
             UnitVersions = unitVersions;
@@ -32,6 +33,7 @@ namespace WpfApp1_cmd.ViewModel
             // IsSelected プロパティが変更されたときに、IsAllSelected プロパティを更新する
             foreach (var item in UnitVersions)
             {
+                /*
                 item.PropertyChanged += (sender, e) =>
                 {
                     if (e.PropertyName == nameof(UnitVersion.IsSelected))
@@ -39,6 +41,7 @@ namespace WpfApp1_cmd.ViewModel
                         OnPropertyChanged(nameof(IsAllSelected));
                     }
                 };
+                */
                 if (updates != null)
                 {
                     try {
@@ -47,24 +50,24 @@ namespace WpfApp1_cmd.ViewModel
                         if(newVer != item.CurVersion)
                         {
                             item.NewVersion = newVer;
-                            item.IsSelected = true;
+                            item.IsSelected.Value = true;
                         }
                         else
                         {
                             item.NewVersion = newVer;
-                            item.IsSelected = false;
+                            item.IsSelected.Value = false;
                         }
                     }
                     catch (Exception e)
                     {
                         item.NewVersion = "N/A";
-                        item.IsSelected = false;
+                        item.IsSelected.Value = false;
                     }
                 }
             }
         }
 
-        public void UpdateVersions(ObservableCollection<UpdateInfo> updates)
+        public void UpdateVersions(ReactiveCollection<UpdateInfo> updates)
         {
             foreach (var item in UnitVersions)
             {
@@ -74,37 +77,37 @@ namespace WpfApp1_cmd.ViewModel
                     if(newVer != item.CurVersion)
                     {
                         item.NewVersion = newVer;
-                        item.IsSelected = true;
+                        item.IsSelected.Value = true;
                     }
                     else
                     {
                         item.NewVersion = newVer;
-                        item.IsSelected = false;
+                        item.IsSelected.Value = false;
                     }
                 }
                 catch (Exception e)
                 {
                     item.NewVersion = "N/A";
-                    item.IsSelected = false;
+                    item.IsSelected.Value = false;
                 }
             }
         }
 
         private void LoadUnitVersions()
         {
-            UnitVersions = new ObservableCollection<UnitVersion>
+            UnitVersions = new ReactiveCollection<UnitVersion>
             {
-                new UnitVersion { IsSelected = true,  Name = "Unit1", CurVersion = "1.0.0", NewVersion = "1.0.1" },
-                new UnitVersion { IsSelected = false, Name = "Unit2", CurVersion = "1.0.0", NewVersion = "1.0.1" },
-                new UnitVersion { IsSelected = true,  Name = "Unit3", CurVersion = "1.0.0", NewVersion = "1.0.1" },
-                new UnitVersion { IsSelected = false, Name = "Unit4", CurVersion = "1.0.0", NewVersion = "1.0.1" },
-                new UnitVersion { IsSelected = true,  Name = "Unit5", CurVersion = "1.0.0", NewVersion = "1.0.1" },
+                new UnitVersion { Name = "Unit1", CurVersion = "1.0.0", NewVersion = "1.0.1" },
+                new UnitVersion { Name = "Unit2", CurVersion = "1.0.0", NewVersion = "1.0.1" },
+                new UnitVersion { Name = "Unit3", CurVersion = "1.0.0", NewVersion = "1.0.1" },
+                new UnitVersion { Name = "Unit4", CurVersion = "1.0.0", NewVersion = "1.0.1" },
+                new UnitVersion { Name = "Unit5", CurVersion = "1.0.0", NewVersion = "1.0.1" },
             };
         }
         public bool? IsAllSelected
         {
             get {
-                var selected = UnitVersions.Select(item => item.IsSelected).Distinct().ToList();
+                var selected = UnitVersions.Select(item => item.IsSelected.Value).Distinct().ToList();
                 return selected.Count == 1 ? selected.Single() : (bool?)null;
             }
             set {
@@ -117,7 +120,7 @@ namespace WpfApp1_cmd.ViewModel
         private static void SelectAll(bool select, IEnumerable<UnitVersion> models)
         {
             foreach (var model in models) {
-                model.IsSelected = select;
+                model.IsSelected.Value = select;
             }
         }
     }

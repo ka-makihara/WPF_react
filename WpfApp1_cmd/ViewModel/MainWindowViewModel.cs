@@ -50,7 +50,8 @@ namespace WpfApp1_cmd.ViewModel
         }
 
         // ツリービューのアイテム
-        public ObservableCollection<LcuInfo> TreeViewItems { get; set; }
+        //public ObservableCollection<LcuInfo> TreeViewItems { get; set; }
+        public ReactiveCollection<LcuInfo>  TreeViewItems { get; set; }
 
         // ツリービューの選択項目に対応するビューモデル
         private Dictionary<string, ViewModelBase> viewModeTable { get; }
@@ -71,8 +72,8 @@ namespace WpfApp1_cmd.ViewModel
                 }
             }
         }
-        private ObservableCollection<UpdateInfo> _upDates;
-        private ObservableCollection<UpdateInfo>? Updates
+        private ReactiveCollection<UpdateInfo> _upDates;
+        private ReactiveCollection<UpdateInfo>? Updates
         {
             get => _upDates;
             set {
@@ -102,7 +103,7 @@ namespace WpfApp1_cmd.ViewModel
         public ReactiveProperty<bool> FlagProperty2 { get; } = new ReactiveProperty<bool>(false);
         public ReactiveProperty<bool> FlagProperty3 { get; } = new ReactiveProperty<bool>(true);
 
-        public ReactiveCommand TreeViewSelectedItemChangedCommand { get; } = new ReactiveCommand();
+        public ReactiveCommand<RoutedPropertyChangedEventArgs<object>> TreeViewSelectedItemChangedCommand { get; }
 
         public string DialogTitle { get; set; } = "Dialog Title";
         public string DialogText { get; set; } = "Dialog Text";
@@ -111,9 +112,6 @@ namespace WpfApp1_cmd.ViewModel
         public ReactiveCommand StartTransferCommand { get; } = new ReactiveCommand();
         public ReactiveCommand StopTransferCommand { get; } = new ReactiveCommand();
         public ReactiveCommand QuitApplicationCommand { get; } = new ReactiveCommand();
-
-        //public ReactivePropertySlim<bool> IsExpanded { get; set; }
-        public ReactivePropertySlim<bool> IsSelected { get; set; }
 
         // TreeView を Enable/Disable しようとしたがうまく動作しない
         //  MainWindow から設定するとOK
@@ -209,7 +207,8 @@ namespace WpfApp1_cmd.ViewModel
             CopyCommand.Subscribe(() => { Debug.WriteLine("Copy"); });
             PasteCommand.Subscribe(() => { Debug.WriteLine("Paste"); });
 
-            TreeViewSelectedItemChangedCommand.Subscribe(args => TreeViewSelectedItemChanged(args as RoutedPropertyChangedEventArgs<object>));
+            TreeViewSelectedItemChangedCommand = new ReactiveCommand<RoutedPropertyChangedEventArgs<object>>();
+            TreeViewSelectedItemChangedCommand.Subscribe(args => TreeViewSelectedItemChanged(args));
 
             // 転送制御ボタン
             StartTransferCommand = FlagProperty1.ToReactiveCommand();
@@ -222,7 +221,7 @@ namespace WpfApp1_cmd.ViewModel
             QuitApplicationCommand.Subscribe(() => ApplicationShutDown() );
 
             //IsExpanded = new ReactivePropertySlim<bool>(true);
-            IsSelected = new ReactivePropertySlim<bool>(true);
+            //IsSelected = new ReactivePropertySlim<bool>(true);
         }
 
         public void FileOpenCommandExec()
@@ -281,9 +280,9 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
         /// </summary>
         /// <param name="path">UpdateCommon.inf ファイルのパス</param>
         /// <returns></returns>
-        private ObservableCollection<UpdateInfo> ReadUpdateCommon(string path)
+        private ReactiveCollection<UpdateInfo> ReadUpdateCommon(string path)
         {
-            ObservableCollection<UpdateInfo> updates = [];
+            ReactiveCollection<UpdateInfo> updates = [];
             IniFileParser parser = new(path);
             IList<string> sec = parser.SectionCount();
 
@@ -328,11 +327,13 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                     break;
             }
             */
+            /*
             ModuleInfo module = SelectedItem as ModuleInfo;
             MachineInfo machine = module.Parent;
             LcuInfo lcu = machine.Parent;
 
             await DownloadModuleFiles(lcu, machine, module);
+            */
             //await TransferExecute();
 
             FlagProperty1.Value = true;
@@ -355,13 +356,15 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                 }
                 foreach (var machine in lcu.Children)
                 {
-                    if( machine.Children == null || machine.Name == null || machine.IsSelected == false)
+                    //if( machine.Children == null || machine.Name == null || machine.IsSelected == false)
+                    if( machine.Children == null || machine.Name == null || machine.IsSelected.Value == false)
                     {
                         continue;
                     }
                     foreach(var module in machine.Children)
                     {
-                        if( module.IsSelected == false || module.UnitVersions == null )
+                        //if( module.IsSelected == false || module.UnitVersions == null )
+                        if( module.IsSelected.Value == false || module.UnitVersions == null )
                         {
                             continue;
                         }
@@ -502,8 +505,6 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
         {
             CheckableItem? item = e.NewValue as CheckableItem;
 
-           // LcuInfo inf = e.NewValue as LcuInfo;
-
             if ( item == null)
             {
                 return;
@@ -558,7 +559,7 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                                     {
                                         continue;
                                     }
-                                    if (module.UnitVersions == null)
+                                    if (module.UnitVersions.Count == 0)
                                     {
                                         //初めての場合はバージョン情報を取得する
                                         IsTreeEnabled = false;
@@ -588,9 +589,7 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                         ModuleViewModel vm = viewModeTable[$"ModuleView_{item.Name}"] as ModuleViewModel;
 
                         vm.UpdateVersions(Updates);
-                        /*
-                        viewModeTable[$"ModuleView_{item.Name}"] = new ModuleViewModel(vm.UnitVersions, Updates);
-                        */
+                        //viewModeTable[$"ModuleView_{item.Name}"] = new ModuleViewModel(vm.UnitVersions, Updates);
 
                         ActiveView = viewModeTable[$"ModuleView_{item.Name}"];
                     }
@@ -605,12 +604,12 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
         /// <param name="machine"></param>
         /// <param name="module"></param>
         /// <returns></returns>
-        public async Task<ObservableCollection<UnitVersion>?> CreateVersionInfo(LcuInfo lcu, MachineInfo machine, ModuleInfo module)
+        public async Task<ReactiveCollection<UnitVersion>?> CreateVersionInfo(LcuInfo lcu, MachineInfo machine, ModuleInfo module)
         {
             bool ret;
 
-            if( lcu.LcuCtrl == null || lcu.IsSelected == false)
-            //if( lcu.LcuCtrl == null || lcu.IsSelected.Value == false)
+            //if( lcu.LcuCtrl == null || lcu.IsSelected == false)
+            if( lcu.LcuCtrl == null || lcu.IsSelected.Value == false)
             {
                 return null;
             }
@@ -640,13 +639,12 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
             IList<string> sec = parser.SectionCount();
 
             //バージョン情報を生成
-            ObservableCollection<UnitVersion> versions = [];
+            ReactiveCollection<UnitVersion> versions = [];
 
             foreach (var unit in sec)
             {
                 UnitVersion version = new()
                 {
-                    IsSelected = true,
                     Name = unit,
                     Attribute = parser.GetValue(unit, "Attribute"),
                     Path = parser.GetValue(unit, "Path"),
@@ -710,16 +708,22 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
             NeximDataControl.Common.NeximDataControlApiCode r = nexim.GetLines(null, ref lines);
             */
 
+            TreeViewItems = new ReactiveCollection<LcuInfo>
+            {
+                new (){ Name = "localhost:9000",  ItemType=MachineType.LCU},
+            };
+            TreeViewItems.ObserveAddChanged().Subscribe( x => Debug.WriteLine(x.Name));
+
+            /*
             TreeViewItems = new ObservableCollection<LcuInfo>
             {
                 // Add Localhost[Debuge用 -> localhost:9000で仮想LCU(WebAPIサーバーを起動して確認する)]
                 new (){ Name = "localhost:9000",  ItemType=MachineType.LCU},
-                /*
-                new (){ Name = "localhost:9000", IsSelected = true,  ItemType=MachineType.LCU},
-                new (){ Name = "DESKTOP-P98TLDK",IsSelected = true,  ItemType=MachineType.LCU},
-                new (){ Name = "ch-lcu33",       IsSelected = false, ItemType=MachineType.LCU},
-                */
+                //new (){ Name = "localhost:9000", IsSelected = true,  ItemType=MachineType.LCU},
+                //new (){ Name = "DESKTOP-P98TLDK",IsSelected = true,  ItemType=MachineType.LCU},
+                //new (){ Name = "ch-lcu33",       IsSelected = false, ItemType=MachineType.LCU},
             };
+        */
             // 起動時に情報取得する場合
             foreach (var lcu in TreeViewItems)
             {
@@ -765,11 +769,6 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                 lcu.Version = versionInfo.Where(x => x.itemName == "Fuji LCU Communication Server Service").First().itemVersion;
             }
 
-            if( lcu.Children == null)
-            {
-                lcu.Children = [];
-            }
-
             //装置情報が未取得の場合
             if ( lcu.Children.Count == 0)
             {
@@ -803,12 +802,8 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                     {
                         Name = mc.MachineName,
                         ItemType = MachineType.Machine,
-                        IsSelected = lcu.IsSelected,
-                        //IsSelected = lcu.IsSelected.Value,
                         Machine = mc,
                         Parent = lcu,
-                        Bases = [],
-                        Children = []
                     };
                     foreach (var base_ in mc.Bases)
                     {
@@ -816,10 +811,8 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                         {
                             Name = "",
                             ItemType = MachineType.Base,
-                            IsSelected = machine.IsSelected,
                             Base = base_,
                             Parent = machine,
-                            Children = []
                         };
                         machine.Bases.Add(baseInfo);
 
@@ -829,7 +822,6 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                             {
                                 Name = module.DispModule,
                                 ItemType = MachineType.Module,
-                                IsSelected = machine.IsSelected,
                                 Module = module,
                                 Parent = machine,
                                 IPAddress = base_.IpAddr,

@@ -23,13 +23,16 @@
                   IsReadOnly="False"
                   >
             <DataGrid.Columns>
-                <DataGridCheckBoxColumn Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}"
+                <DataGridCheckBoxColumn Binding="{Binding IsSelected.Value, UpdateSourceTrigger=PropertyChanged}"
                                         EditingElementStyle="{StaticResource MaterialDesignDataGridCheckBoxColumnEditingStyle}"
                                         ElementStyle="{StaticResource MaterialDesignDataGridCheckBoxColumnStyle}"
                                         >
                     <DataGridCheckBoxColumn.Header>
                         <Border Background="Transparent">
+                            <!--
                             <CheckBox Content="All" IsChecked="{Binding DataContext.IsAllSelected, Source={x:Reference DataContextProxy}}" />
+                            -->
+                            <CheckBox Content="All" IsChecked="{Binding IsAllSelected, Source={x:Reference DataContextProxy}}" />
                         </Border> 
                     </DataGridCheckBoxColumn.Header>
                     <DataGridCheckBoxColumn.HeaderStyle>

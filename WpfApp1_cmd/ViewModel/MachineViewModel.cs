@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Reactive.Bindings;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -21,14 +22,15 @@ namespace WpfApp1_cmd.ViewModel
             }
         }
         */
-        public ObservableCollection<ModuleInfo> Modules { get; set; }
+        public ReactiveCollection<ModuleInfo> Modules { get; set; }
 
-        public MachineViewModel(ObservableCollection<ModuleInfo> modules)
+        public MachineViewModel(ReactiveCollection<ModuleInfo> modules)
         {
             //LoadMachineInfo();
             Modules = modules;
 
             // IsSelected プロパティが変更されたときに、IsAllSelected プロパティを更新する
+            /*
             foreach (var item in Modules)
             {
                 item.PropertyChanged += (sender, e) =>
@@ -39,19 +41,22 @@ namespace WpfApp1_cmd.ViewModel
                     }
                 };
             }
+            */
         }
 
         private void LoadMachineInfo()
         {
             Modules =
             [
-                new (){Name="Module1", IsSelected=true}
+                //new (){Name="Module1", IsSelected=true}
+                new (){Name="Module1", }
             ];
         }
         public bool? IsAllSelected
         {
             get {
-                var selected = Modules.Select(item => item.IsSelected).Distinct().ToList();
+                //var selected = Modules.Select(item => item.IsSelected).Distinct().ToList();
+                var selected = Modules.Select(item => item.IsSelected.Value).Distinct().ToList();
                 return selected.Count == 1 ? selected.Single() : (bool?)null;
             }
             set {
@@ -64,7 +69,8 @@ namespace WpfApp1_cmd.ViewModel
         private static void SelectAll(bool select, IEnumerable<ModuleInfo> models)
         {
             foreach (var model in models) {
-                model.IsSelected = select;
+                //model.IsSelected = select;
+                model.IsSelected.Value = select;
             }
         }
 

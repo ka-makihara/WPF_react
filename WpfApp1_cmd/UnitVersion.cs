@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Reactive.Bindings;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,13 +9,15 @@ using WpfApp1_cmd.ViewModel;
 
 namespace WpfApp1_cmd
 {
-    public class UnitVersion : ViewModelBase
+    public class UnitVersion// : ViewModelBase
     {
-        private bool? _isSelected;
         private string? _name;
         private string? _curVersion;
         private string? _newVersion;
 
+         public ReactivePropertySlim<bool?> IsSelected { get; set; } = new ReactivePropertySlim<bool?>(true);
+        /*
+        private bool? _isSelected;
         public bool? IsSelected
         {
             get => _isSelected;
@@ -35,20 +38,24 @@ namespace WpfApp1_cmd
                 }
             }
         }
+        */
         public string? Name 
         {
             get => _name;
-            set => SetProperty(ref _name, value);
+            //set => SetProperty(ref _name, value);
+            set => _name = value;
         }
         public string? CurVersion
         {
             get => _curVersion;
-            set => SetProperty(ref _curVersion, value);
+            //set => SetProperty(ref _curVersion, value);
+            set => _curVersion = value;
         }
         public string? NewVersion
         {
             get => _newVersion;
-            set => SetProperty(ref _newVersion, value);
+            //set => SetProperty(ref _newVersion, value);
+            set => _newVersion = value;
         }
 
         public string? Path { get; set; }
@@ -56,20 +63,22 @@ namespace WpfApp1_cmd
         public ModuleInfo? Parent { get; set; }
     }
 
-    public class UpdateInfo : ViewModelBase
+    public class UpdateInfo// : ViewModelBase
     {
         private string? _name;
         public string? Name
         {
             get => _name;
-            set  {_name = value; SetProperty(ref _name, value); }
+            //set  {_name = value; SetProperty(ref _name, value); }
+            set => _name = value; 
         }
         public string? Attribute { get; set; }
         private string? _version;
         public string? Version
         {
             get => _version;
-            set { _version = value; SetProperty(ref _version, value); }
+            //set { _version = value; SetProperty(ref _version, value); }
+            set => _version = value;
         }
         public string? Path { get; set; }
     }

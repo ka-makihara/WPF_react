@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Reactive.Bindings;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -17,17 +18,25 @@ namespace WpfApp1_cmd.ViewModel
             set => SetProperty(ref _lcuData, value);
         }
         */
-        private ObservableCollection<MachineInfo> _machineInfos;
-        public ObservableCollection<MachineInfo> MachineInfos
+        private ReactiveCollection<MachineInfo> _machineInfos;
+        public ReactiveCollection<MachineInfo> MachineInfos
         {
             get => _machineInfos;
             set => SetProperty(ref _machineInfos, value);
         }
-        public LcuViewModel( ObservableCollection<MachineInfo> machineInfos)
+        public LcuViewModel( ReactiveCollection<MachineInfo> machineInfos)
         {
             MachineInfos = machineInfos;
 
             // IsSelected プロパティが変更されたときに、IsAllSelected プロパティを更新する
+            foreach(var item in MachineInfos)
+            {
+                item.IsSelected.Subscribe(_ =>
+                {
+                    OnPropertyChanged(nameof(IsAllSelected));
+                });
+            }
+            /*
             foreach (var item in MachineInfos)
             {
                 item.PropertyChanged += (sender, e) =>
@@ -38,11 +47,13 @@ namespace WpfApp1_cmd.ViewModel
                     }
                 };
             }
+            */
         }
         public bool? IsAllSelected
         {
             get {
-                var selected = MachineInfos.Select(item => item.IsSelected).Distinct().ToList();
+                //var selected = MachineInfos.Select(item => item.IsSelected).Distinct().ToList();
+                var selected = MachineInfos.Select(item => item.IsSelected.Value == true).Distinct().ToList();
                 return selected.Count == 1 ? selected.Single() : (bool?)null;
             }
             set {
@@ -55,7 +66,8 @@ namespace WpfApp1_cmd.ViewModel
         private static void SelectAll(bool select, IEnumerable<MachineInfo> models)
         {
             foreach (var model in models) {
-                model.IsSelected = select;
+                //model.IsSelected = select;
+                model.IsSelected.Value = select;
             }
         }
     }
