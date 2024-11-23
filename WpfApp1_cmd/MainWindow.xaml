@@ -65,6 +65,7 @@
         </Grid.RowDefinitions>
         <Menu IsMainMenu="True" Grid.ColumnSpan="2">
             <MenuItem Header="_File">
+                <MenuItem Header="Open" Icon="{materialDesign:PackIcon Kind=PresentOpen}" Command="{Binding FileOpenCommand}" />
                 <MenuItem Header="Save" Icon="{materialDesign:PackIcon Kind=ContentSave}" />
                 <MenuItem Header="Save As.." />
                 <MenuItem Header="Exit" Icon="{materialDesign:PackIcon Kind=ExitToApp}" InputGestureText="Ctrl+E" />
@@ -112,7 +113,7 @@
                     <Button Content="CView" Command="{Binding ScreenTransitionCommand}" CommandParameter="CView" Margin="5" />
                     <Button Content="GridView" Command="{Binding ScreenTransitionCommand}" CommandParameter="GView" Margin="5" />
                     <Button Content="Machineiew" Command="{Binding ScreenTransitionCommand}" CommandParameter="MachineView" Margin="5" />
-                    <Button Content="LcuView" Command="{Binding ScreenTransitionCommand}" CommandParameter="LcuView" Margin="5" />
+                    <Button Content="VersionView" Command="{Binding ScreenTransitionCommand}" CommandParameter="UpdateVersionView" Margin="5" />
                     <Button Margin="20,20,20,5" Command="{Binding ButtonCommand}" Content="Click" />
                     <Button Margin="20,10,20,5" Command="{Binding ButtonCommand2}" Content="ReactiveClick" />
                 </StackPanel>
@@ -123,6 +124,14 @@
                   ItemsSource="{Binding TreeViewItems}"
                   IsEnabled="{Binding IsTreeEnabled, Mode=TwoWay}"
                   >
+                 <!--
+                <TreeView.Resources>
+                    <Style TargetType="TreeViewItem">
+                        <Setter Property="IsSelected" Value="{Binding IsSelected.Value, Mode=TwoWay}" />
+                    </Style> 
+                </TreeView.Resources>
+                -->
+                
                 <i:Interaction.Triggers>
                     <i:EventTrigger EventName="SelectedItemChanged">
                         <rp:EventToReactiveCommand Command="{Binding TreeViewSelectedItemChangedCommand}" />
@@ -140,7 +149,7 @@
 
             <GridSplitter Grid.Column="3" Style="{StaticResource VerticalGridSplitter}" />
 
-            <Grid Grid.Column="4" >
+            <Grid Grid.Column="4" VerticalAlignment="Top">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="Auto" />
@@ -159,6 +168,9 @@
                     <DataTemplate DataType="{x:Type vm:GViewModel}">
                         <view:GView />
                     </DataTemplate>
+                    <DataTemplate DataType="{x:Type vm:UpdateVersionViewModel}">
+                        <view:UpdateVersionView />
+                    </DataTemplate>
                     <DataTemplate DataType="{x:Type vm:MachineViewModel}">
                         <view:MachineView />
                     </DataTemplate>
@@ -171,23 +183,19 @@
                 </Grid.Resources>
 
                 <materialDesign:DialogHost DialogTheme="Inherit" CloseOnClickAway="true" VerticalAlignment="Top">
-                    <mahApps:TransitioningContentControl Content="{Binding ActiveView}" Transition="RightReplace" Height="342" />
+                    <mahApps:TransitioningContentControl Content="{Binding ActiveView}" Transition="RightReplace" Height="330"  />
                 </materialDesign:DialogHost>
 
                 <GridSplitter Grid.Row="1" Height="5" Style="{StaticResource HorizontalGridSplitter}" />    
-                <StackPanel Grid.Row="2" Orientation="Vertical">
-                    <TextBlock Text="実行ログ" FontSize="16" FontWeight="Bold" Margin="5,10,1,1"/>
+                <StackPanel Grid.Row="2" Orientation="Vertical" Margin="0,10,0,0" >
+                    <TextBlock Text="実行ログ" FontSize="16" FontWeight="Bold" Margin="5,1,1,1"/>
                     <Border BorderThickness="1" BorderBrush="White"/>
-                    <TextBox x:Name="log" AcceptsReturn="True"
-                            MinHeight="260"
-                            FontSize="16"
-                            Margin="5"
-                            TextWrapping="Wrap"
-                            IsReadOnly="True"
+                    <TextBox x:Name="log" AcceptsReturn="True" Height="250" FontSize="16" Margin="5" TextWrapping="Wrap" IsReadOnly="True"
                             BorderBrush="{DynamicResource MaterialDesignShadowBrush}" BorderThickness="1"
                             VerticalScrollBarVisibility="Auto"
-                            HorizontalScrollBarVisibility="Auto" />
-                    <StackPanel Orientation="Horizontal" Margin="5,10,1,1" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                            Text="{Binding LogData}"
+                            HorizontalScrollBarVisibility="Auto"  />
+                    <StackPanel Orientation="Horizontal" Margin="5,10,1,1" HorizontalAlignment="Right" VerticalAlignment="Bottom" >
                         <Button Height="30" materialDesign:ButtonAssist.CornerRadius="5"
                                 Command="{Binding StartTransferCommand}"
                                 Style="{StaticResource MaterialDesignRaisedLightButton}"

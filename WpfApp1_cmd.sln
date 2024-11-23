@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.11.35327.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WpfApp1_cmd", "WpfApp1_cmd\WpfApp1_cmd.csproj", "{B1947DC4-DFB5-4EF9-BB2D-3E622D5CE72F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{BE0FF112-F87A-4F98-BEA9-B61E1673F7C2} = {BE0FF112-F87A-4F98-BEA9-B61E1673F7C2}
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WpfLcuCtrlLib", "..\WPF_LcuCtrlLib\WpfLcuCtrlLib\WpfLcuCtrlLib.csproj", "{2432A460-E49B-4F5A-AF67-0F6CF52AAED7}"
 EndProject

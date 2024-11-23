@@ -18,7 +18,22 @@ namespace WpfApp1_cmd
         public bool? IsSelected
         {
             get => _isSelected;
-            set => SetProperty(ref _isSelected, value);
+            set
+            {
+                if (_isSelected != value )
+                {
+                    if (_newVersion != null && _newVersion == "N/A")
+                    {
+                        _isSelected = false;
+                        SetProperty(ref _isSelected, false);
+                    }
+                    else
+                    {
+                        _isSelected = value;
+                        SetProperty(ref _isSelected, value);
+                    }
+                }
+            }
         }
         public string? Name 
         {
@@ -39,5 +54,23 @@ namespace WpfApp1_cmd
         public string? Path { get; set; }
         public string? Attribute { get; set; }
         public ModuleInfo? Parent { get; set; }
+    }
+
+    public class UpdateInfo : ViewModelBase
+    {
+        private string? _name;
+        public string? Name
+        {
+            get => _name;
+            set  {_name = value; SetProperty(ref _name, value); }
+        }
+        public string? Attribute { get; set; }
+        private string? _version;
+        public string? Version
+        {
+            get => _version;
+            set { _version = value; SetProperty(ref _version, value); }
+        }
+        public string? Path { get; set; }
     }
 }

@@ -64,6 +64,32 @@ namespace WpfApp1_cmd.ViewModel
             }
         }
 
+        public void UpdateVersions(ObservableCollection<UpdateInfo> updates)
+        {
+            foreach (var item in UnitVersions)
+            {
+                try {
+                    // 要素が見つからない場合は例外が発生する
+                    string newVer = updates.First(x => x.Name == item.Name).Version;
+                    if(newVer != item.CurVersion)
+                    {
+                        item.NewVersion = newVer;
+                        item.IsSelected = true;
+                    }
+                    else
+                    {
+                        item.NewVersion = newVer;
+                        item.IsSelected = false;
+                    }
+                }
+                catch (Exception e)
+                {
+                    item.NewVersion = "N/A";
+                    item.IsSelected = false;
+                }
+            }
+        }
+
         private void LoadUnitVersions()
         {
             UnitVersions = new ObservableCollection<UnitVersion>

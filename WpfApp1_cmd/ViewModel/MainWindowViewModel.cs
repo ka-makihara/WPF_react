@@ -22,6 +22,9 @@ using System.Runtime.InteropServices;
 using WpfLcuCtrlLib;
 //using NeximDataControl;
 using ControlzEx.Standard;
+using Microsoft.WindowsAPICodePack.Dialogs;
+using Oracle.ManagedDataAccess.Client;
+using System.Windows.Controls;
 
 namespace WpfApp1_cmd.ViewModel
 {
@@ -29,6 +32,22 @@ namespace WpfApp1_cmd.ViewModel
     {
         [DllImport("mcAccount.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         static extern int getMcUser(StringBuilder s, Int32 len);
+
+        private string _logData = "";
+        public string LogData
+        {
+            get => _logData;
+            set
+            {
+                _logData = value;
+                OnPropertyChanged(nameof(LogData));
+            }
+        }
+        public void AddLog(string log)
+        {
+            LogData += "\n";
+            LogData += log;
+        }
 
         // ツリービューのアイテム
         public ObservableCollection<LcuInfo> TreeViewItems { get; set; }
@@ -52,8 +71,15 @@ namespace WpfApp1_cmd.ViewModel
                 }
             }
         }
-        private ObservableCollection<UpdateInfo>? Updates { get;set; }
-
+        private ObservableCollection<UpdateInfo> _upDates;
+        private ObservableCollection<UpdateInfo>? Updates
+        {
+            get => _upDates;
+            set {
+                _upDates = value;
+                OnPropertyChanged(nameof(Updates));
+            }
+        }
 
         private bool flag = true;
         public bool Flag
@@ -63,6 +89,7 @@ namespace WpfApp1_cmd.ViewModel
         }
 
         public DelegateCommand<string> ScreenTransitionCommand { get; }
+        public ReactiveCommand FileOpenCommand { get; } = new ReactiveCommand();
 
         public DelegateCommand ButtonCommand { get; }
         public ReactiveCommand ButtonCommand2 { get; } = new ReactiveCommand();
@@ -85,6 +112,9 @@ namespace WpfApp1_cmd.ViewModel
         public ReactiveCommand StopTransferCommand { get; } = new ReactiveCommand();
         public ReactiveCommand QuitApplicationCommand { get; } = new ReactiveCommand();
 
+        //public ReactivePropertySlim<bool> IsExpanded { get; set; }
+        public ReactivePropertySlim<bool> IsSelected { get; set; }
+
         // TreeView を Enable/Disable しようとしたがうまく動作しない
         //  MainWindow から設定するとOK
         private bool _isTreeEnabled = true;
@@ -105,10 +135,19 @@ namespace WpfApp1_cmd.ViewModel
             if(dataFolder != "")
             {
                Updates = ReadUpdateCommon(dataFolder + "\\UpdateCommon.inf");
+                AddLog($"Read {dataFolder}/UpdateCommon.inf");
             }
-            StringBuilder sb = new StringBuilder(1024);
-            Int32 len = getMcUser(sb, sb.Capacity);
-            Debug.WriteLine($"user={sb.ToString()} len={len}");
+            try
+            {
+                // DLL内の関数呼び出し。 DLLが無い場合は例外が発生する
+                StringBuilder sb = new StringBuilder(1024);
+                Int32 len = getMcUser(sb, sb.Capacity);
+                Debug.WriteLine($"user={sb.ToString()} len={len}");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
 
             //ビューの生成
             viewModeTable = new Dictionary<string, ViewModelBase>
@@ -116,11 +155,15 @@ namespace WpfApp1_cmd.ViewModel
                 { "AView", new AViewModel() },
                 { "BView", new BViewModel() },
                 { "CView", new CViewModel() },
+                { "UpdateVersionView", new UpdateVersionViewModel(Updates) }
             };
-            ActiveView = viewModeTable["AView"];
+            //ActiveView = viewModeTable["AView"];
+            ActiveView = viewModeTable["UpdateVersionView"];
 
             //ライン情報読み込み
             LoadLineInfo();
+
+            FileOpenCommand.Subscribe(() => FileOpenCommandExec());
 
             ButtonCommand = new DelegateCommand(async () =>
             {
@@ -128,7 +171,7 @@ namespace WpfApp1_cmd.ViewModel
                 var r = DialogHost.Show(new MyMessageBox());
                 await Task.Delay(2000);
                 Flag = true;
-                DialogHost.CloseDialogCommand.Execute(null, null);
+                //DialogHost.CloseDialogCommand.Execute(null, null);
             }, canExecuteCommand);
 
             ScreenTransitionCommand = new DelegateCommand<string>(screenTransitionExecute);
@@ -177,6 +220,59 @@ namespace WpfApp1_cmd.ViewModel
 
             QuitApplicationCommand = FlagProperty3.ToReactiveCommand();
             QuitApplicationCommand.Subscribe(() => ApplicationShutDown() );
+
+            //IsExpanded = new ReactivePropertySlim<bool>(true);
+            IsSelected = new ReactivePropertySlim<bool>(true);
+        }
+
+        public void FileOpenCommandExec()
+        {
+            using (var cofd = new CommonOpenFileDialog()
+            {
+                Title= "フォルダを選択してください",
+                InitialDirectory = @"C:\Users\ka.makihara\develop",
+                //フォルダ選択モード
+                IsFolderPicker = true,
+            })
+            {
+                if (cofd.ShowDialog() == CommonFileDialogResult.Ok)
+                {
+                    AddLog($"FileOpenCommand={cofd.FileName}");
+                    if( Path.Exists(cofd.FileName + "\\UpdateCommon.inf") == false)
+                    {
+                        AddLog("UpdateCommon.inf が見つかりません");
+                        return;
+                    }
+                    Updates = ReadUpdateCommon(cofd.FileName + "\\UpdateCommon.inf");
+
+                    viewModeTable["UpdateVersionView"] = new UpdateVersionViewModel(Updates);
+                    ActiveView = viewModeTable["UpdateVersionView"];
+                }
+            }
+
+            /*
+            string connStr = "User Id=fujisuperuser;Password=em2g86fzjt945p73;Data Source=10.0.51.64:1521/neximdb";
+            using(OracleConnection conn = new(connStr))
+            {
+                try
+                {
+                    conn.Open();
+                    OracleCommand cmd = new("select * from LINE", conn);
+                    OracleDataReader reader = cmd.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        AddLog(reader.GetString(0));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex.Message);
+                }
+            }
+            */
+            /*
+             * SELECT * FROM LINE WHERE JOBID=0 AND ACTIVEFLAG=1 AND LCUID!=0
+SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
 
         }
 
@@ -252,7 +348,8 @@ namespace WpfApp1_cmd.ViewModel
         {
             foreach(var lcu in TreeViewItems)
             {
-                if (lcu.Children == null || lcu.LcuCtrl == null || lcu.IsSelected == false)
+                //if (lcu.Children == null || lcu.LcuCtrl == null || lcu.IsSelected == false)
+                if (lcu.Children == null || lcu.LcuCtrl == null || lcu.IsSelected.Value == false)
                 {
                     continue;
                 }
@@ -382,8 +479,18 @@ namespace WpfApp1_cmd.ViewModel
         /// <summary>
         ///  アプリ終了
         /// </summary>
-        private void ApplicationShutDown()
+        private async void ApplicationShutDown()
         {
+            DialogTitle = "確認";
+            DialogText = "アプリケーションを終了しますか？";
+            var r = await DialogHost.Show(new MyMessageBox());
+            DialogHost.CloseDialogCommand.Execute(null, null);
+
+            if(r == null || r.ToString() == "CANCEL")
+            {
+                return;
+            }
+
             Application.Current.Shutdown();
         }
 
@@ -394,7 +501,10 @@ namespace WpfApp1_cmd.ViewModel
         public async void TreeViewSelectedItemChanged(RoutedPropertyChangedEventArgs<object> e)
         {
             CheckableItem? item = e.NewValue as CheckableItem;
-            if( item == null)
+
+           // LcuInfo inf = e.NewValue as LcuInfo;
+
+            if ( item == null)
             {
                 return;
             }
@@ -475,6 +585,13 @@ namespace WpfApp1_cmd.ViewModel
                     }
                     else
                     {
+                        ModuleViewModel vm = viewModeTable[$"ModuleView_{item.Name}"] as ModuleViewModel;
+
+                        vm.UpdateVersions(Updates);
+                        /*
+                        viewModeTable[$"ModuleView_{item.Name}"] = new ModuleViewModel(vm.UnitVersions, Updates);
+                        */
+
                         ActiveView = viewModeTable[$"ModuleView_{item.Name}"];
                     }
                     break;
@@ -493,6 +610,7 @@ namespace WpfApp1_cmd.ViewModel
             bool ret;
 
             if( lcu.LcuCtrl == null || lcu.IsSelected == false)
+            //if( lcu.LcuCtrl == null || lcu.IsSelected.Value == false)
             {
                 return null;
             }
@@ -595,9 +713,12 @@ namespace WpfApp1_cmd.ViewModel
             TreeViewItems = new ObservableCollection<LcuInfo>
             {
                 // Add Localhost[Debuge用 -> localhost:9000で仮想LCU(WebAPIサーバーを起動して確認する)]
+                new (){ Name = "localhost:9000",  ItemType=MachineType.LCU},
+                /*
                 new (){ Name = "localhost:9000", IsSelected = true,  ItemType=MachineType.LCU},
                 new (){ Name = "DESKTOP-P98TLDK",IsSelected = true,  ItemType=MachineType.LCU},
                 new (){ Name = "ch-lcu33",       IsSelected = false, ItemType=MachineType.LCU},
+                */
             };
             // 起動時に情報取得する場合
             foreach (var lcu in TreeViewItems)
@@ -683,6 +804,7 @@ namespace WpfApp1_cmd.ViewModel
                         Name = mc.MachineName,
                         ItemType = MachineType.Machine,
                         IsSelected = lcu.IsSelected,
+                        //IsSelected = lcu.IsSelected.Value,
                         Machine = mc,
                         Parent = lcu,
                         Bases = [],
@@ -721,5 +843,6 @@ namespace WpfApp1_cmd.ViewModel
             }
             return true;
         }
+
     }
 }

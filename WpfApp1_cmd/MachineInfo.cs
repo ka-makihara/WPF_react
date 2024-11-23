@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Reactive.Bindings;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -61,6 +62,19 @@ namespace WpfApp1_cmd
                 }
             }
         }
+        /*
+        private string? _name;
+        public string? Name
+        {
+            get => _name;
+            set => _name = value;
+        }
+        private MachineType? _itemType;
+        public MachineType? ItemType { get => _itemType; set => _itemType = value; }
+        */
+
+        //public ReactivePropertySlim<bool?> IsSelected { get; set; } = new ReactivePropertySlim<bool?>(true);
+
         public void Update(bool? value)
         {
             if (IsSelected != value)
@@ -72,35 +86,48 @@ namespace WpfApp1_cmd
                     if (cnt1 == 0 && cnt2 == 0)
                     {
                         base._isSelected = false;
+                        //IsSelected.Value = false;
                     }
                     else
                     {
                         if (cnt1 == Children.Count())
                         {
                             base._isSelected = true;
+                            //IsSelected.Value = true;
                         }
                         else
                         {
                             base._isSelected = null;
+                            //IsSelected.Value = null;
                         }
                     }
                 }
                 else
                 {
                     base._isSelected = value;
+                    //IsSelected.Value = value;
                 }
                 OnPropertyChanged(nameof(IsSelected));
             }
         }
 
         private string? _ftpUser;
-        public string? FtpUser { get => _ftpUser; set => SetProperty(ref _ftpUser, value); }
+        //public string? FtpUser { get => _ftpUser; set => SetProperty(ref _ftpUser, value); }
+        public string? FtpUser { get => _ftpUser; set => _ftpUser= value; }
 
         private string? _ftpPassword;
-        public string? FtpPassword { get => _ftpPassword; set => SetProperty(ref _ftpPassword, value); }
+        //public string? FtpPassword { get => _ftpPassword; set => SetProperty(ref _ftpPassword, value); }
+        public string? FtpPassword { get => _ftpPassword; set => _ftpPassword= value; }
 
         private ObservableCollection<MachineInfo>? _machines;
         public ObservableCollection<MachineInfo>? Children { get => _machines; set => SetProperty(ref _machines, value); }
+        /*
+        public ObservableCollection<MachineInfo>? Children
+        {
+            get => _machines;
+            set => _machines = value;
+        }
+        */
 
         public string Version { get; set; } = "V1.00";
         private LcuCtrl? _lcuCtrl;
