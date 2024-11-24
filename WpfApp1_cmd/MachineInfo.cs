@@ -14,7 +14,7 @@ using WpfLcuCtrlLib;
 
 namespace WpfApp1_cmd
 {
-    public class CheckableItem// : ViewModelBase
+    public class CheckableItem : ViewModelBase
     {
         private string? _name;
         public string? Name
@@ -61,6 +61,17 @@ namespace WpfApp1_cmd
                 else
                 {
                     IsSelected.Value = value;
+                }
+            }
+            else
+            {
+                if (Children != null)
+                {
+                    if (value == null) { return; }
+                    foreach (var child in Children)
+                    {
+                        child.IsSelected.Value = value;
+                    }
                 }
             }
         }
@@ -261,8 +272,10 @@ namespace WpfApp1_cmd
         public MachineInfo? Parent { get; set; }
 
         // Treeで表示するためには Children が必要(表示させないためにプロパティを UnitVersions としている)
-        private ReactiveCollection<UnitVersion> _unitVersions = [];
-        public ReactiveCollection<UnitVersion> UnitVersions 
+        //private ReactiveCollection<UnitVersion> _unitVersions = [];
+        //public ReactiveCollection<UnitVersion> UnitVersions
+        private ObservableCollection<UnitVersion> _unitVersions = [];
+        public ObservableCollection<UnitVersion> UnitVersions
         {
             get => _unitVersions;
             set => _unitVersions = value;
@@ -280,8 +293,8 @@ namespace WpfApp1_cmd
 
         public ModuleInfo()
         {
-            UnitVersions.ObserveAddChanged().Subscribe(x => AddUnitVersion(x));
             IsSelected.Subscribe(x => Update(x));
+            UnitVersions.ObserveAddChanged().Subscribe(x => AddUnitVersion(x));
         }
     }
 

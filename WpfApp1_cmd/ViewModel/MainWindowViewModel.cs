@@ -604,7 +604,8 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
         /// <param name="machine"></param>
         /// <param name="module"></param>
         /// <returns></returns>
-        public async Task<ReactiveCollection<UnitVersion>?> CreateVersionInfo(LcuInfo lcu, MachineInfo machine, ModuleInfo module)
+        //public async Task<ReactiveCollection<UnitVersion>?> CreateVersionInfo(LcuInfo lcu, MachineInfo machine, ModuleInfo module)
+        public async Task<ObservableCollection<UnitVersion>?> CreateVersionInfo(LcuInfo lcu, MachineInfo machine, ModuleInfo module)
         {
             bool ret;
 
@@ -639,7 +640,8 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
             IList<string> sec = parser.SectionCount();
 
             //バージョン情報を生成
-            ReactiveCollection<UnitVersion> versions = [];
+            //ReactiveCollection<UnitVersion> versions = [];
+            ObservableCollection<UnitVersion> versions = [];
 
             foreach (var unit in sec)
             {

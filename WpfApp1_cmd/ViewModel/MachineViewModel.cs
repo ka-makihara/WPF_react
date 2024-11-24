@@ -10,7 +10,6 @@ namespace WpfApp1_cmd.ViewModel
 {
     class MachineViewModel : ViewModelBase
     {
-        /*
         private ObservableCollection<ModuleInfo> _modules;
         public ObservableCollection<ModuleInfo> Modules
         {
@@ -21,16 +20,13 @@ namespace WpfApp1_cmd.ViewModel
                 SetProperty(ref _modules, value);
             }
         }
-        */
-        public ReactiveCollection<ModuleInfo> Modules { get; set; }
-
-        public MachineViewModel(ReactiveCollection<ModuleInfo> modules)
+        //public ReactiveCollection<ModuleInfo> Modules { get; set; }
+        public MachineViewModel(ObservableCollection<ModuleInfo> modules)
         {
             //LoadMachineInfo();
             Modules = modules;
 
             // IsSelected プロパティが変更されたときに、IsAllSelected プロパティを更新する
-            /*
             foreach (var item in Modules)
             {
                 item.PropertyChanged += (sender, e) =>
@@ -41,7 +37,6 @@ namespace WpfApp1_cmd.ViewModel
                     }
                 };
             }
-            */
         }
 
         private void LoadMachineInfo()

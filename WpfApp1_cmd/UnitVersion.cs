@@ -9,14 +9,13 @@ using WpfApp1_cmd.ViewModel;
 
 namespace WpfApp1_cmd
 {
-    public class UnitVersion// : ViewModelBase
+    public class UnitVersion : ViewModelBase
     {
         private string? _name;
         private string? _curVersion;
         private string? _newVersion;
 
-         public ReactivePropertySlim<bool?> IsSelected { get; set; } = new ReactivePropertySlim<bool?>(true);
-        /*
+        //public ReactivePropertySlim<bool?> IsSelected { get; set; } = new ReactivePropertySlim<bool?>(true);
         private bool? _isSelected;
         public bool? IsSelected
         {
@@ -27,18 +26,18 @@ namespace WpfApp1_cmd
                 {
                     if (_newVersion != null && _newVersion == "N/A")
                     {
-                        _isSelected = false;
+                        //_isSelected = false;
                         SetProperty(ref _isSelected, false);
                     }
                     else
                     {
-                        _isSelected = value;
+                        //_isSelected = value;
                         SetProperty(ref _isSelected, value);
                     }
                 }
             }
         }
-        */
+       
         public string? Name 
         {
             get => _name;
@@ -61,6 +60,7 @@ namespace WpfApp1_cmd
         public string? Path { get; set; }
         public string? Attribute { get; set; }
         public ModuleInfo? Parent { get; set; }
+
     }
 
     public class UpdateInfo// : ViewModelBase
