@@ -10,8 +10,10 @@ namespace WpfApp1_cmd.ViewModel
 {
     class MachineViewModel : ViewModelBase
     {
-        private ObservableCollection<ModuleInfo> _modules;
-        public ObservableCollection<ModuleInfo> Modules
+        //private ObservableCollection<ModuleInfo> _modules;
+        //public ObservableCollection<ModuleInfo> Modules
+        private ReactiveCollection<ModuleInfo> _modules;
+        public ReactiveCollection<ModuleInfo> Modules
         {
             get => _modules;
             set
@@ -21,7 +23,8 @@ namespace WpfApp1_cmd.ViewModel
             }
         }
         //public ReactiveCollection<ModuleInfo> Modules { get; set; }
-        public MachineViewModel(ObservableCollection<ModuleInfo> modules)
+        //public MachineViewModel(ObservableCollection<ModuleInfo> modules)
+        public MachineViewModel(ReactiveCollection<ModuleInfo> modules)
         {
             //LoadMachineInfo();
             Modules = modules;
@@ -29,6 +32,7 @@ namespace WpfApp1_cmd.ViewModel
             // IsSelected プロパティが変更されたときに、IsAllSelected プロパティを更新する
             foreach (var item in Modules)
             {
+                /*
                 item.PropertyChanged += (sender, e) =>
                 {
                     if (e.PropertyName == nameof(UnitVersion.IsSelected))
@@ -36,6 +40,12 @@ namespace WpfApp1_cmd.ViewModel
                         OnPropertyChanged(nameof(IsAllSelected));
                     }
                 };
+                */
+
+                item.IsSelected.Subscribe(_ =>
+                {
+                    OnPropertyChanged(nameof(IsAllSelected));
+                });
             }
         }
 

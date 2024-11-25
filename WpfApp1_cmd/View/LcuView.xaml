@@ -29,10 +29,7 @@
                                         >
                     <DataGridCheckBoxColumn.Header>
                         <Border Background="Transparent">
-                            <!--
                             <CheckBox Content="All" IsChecked="{Binding DataContext.IsAllSelected, Source={x:Reference DataContextProxy}}" />
-                            -->
-                            <CheckBox Content="All" IsChecked="{Binding IsAllSelected, Source={x:Reference DataContextProxy}}" />
                         </Border> 
                     </DataGridCheckBoxColumn.Header>
                     <DataGridCheckBoxColumn.HeaderStyle>

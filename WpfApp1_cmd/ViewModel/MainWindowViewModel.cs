@@ -72,6 +72,8 @@ namespace WpfApp1_cmd.ViewModel
                 }
             }
         }
+        private string DataFolder { get; set; } = "";
+        public long DataSize { get; set; } = 0;
         private ReactiveCollection<UpdateInfo> _upDates;
         private ReactiveCollection<UpdateInfo>? Updates
         {
@@ -91,6 +93,8 @@ namespace WpfApp1_cmd.ViewModel
 
         public DelegateCommand<string> ScreenTransitionCommand { get; }
         public ReactiveCommand FileOpenCommand { get; } = new ReactiveCommand();
+        public ReactiveCommand LcuNetworkChkCommand { get; } = new ReactiveCommand();
+        public ReactiveCommand LcuDiskChkCommand { get; } = new ReactiveCommand();
 
         public DelegateCommand ButtonCommand { get; }
         public ReactiveCommand ButtonCommand2 { get; } = new ReactiveCommand();
@@ -102,6 +106,8 @@ namespace WpfApp1_cmd.ViewModel
         public ReactiveProperty<bool> FlagProperty1 { get; } = new ReactiveProperty<bool>(true);
         public ReactiveProperty<bool> FlagProperty2 { get; } = new ReactiveProperty<bool>(false);
         public ReactiveProperty<bool> FlagProperty3 { get; } = new ReactiveProperty<bool>(true);
+
+        public ReactiveProperty<bool> CanExecuteLcuCommand { get; } = new ReactiveProperty<bool>(false);
 
         public ReactiveCommand<RoutedPropertyChangedEventArgs<object>> TreeViewSelectedItemChangedCommand { get; }
 
@@ -132,7 +138,8 @@ namespace WpfApp1_cmd.ViewModel
             string dataFolder = Options.GetOption("--dataFolder", "");
             if(dataFolder != "")
             {
-               Updates = ReadUpdateCommon(dataFolder + "\\UpdateCommon.inf");
+                DataFolder = dataFolder;
+                Updates = ReadUpdateCommon(dataFolder + "\\UpdateCommon.inf");
                 AddLog($"Read {dataFolder}/UpdateCommon.inf");
             }
             try
@@ -155,13 +162,18 @@ namespace WpfApp1_cmd.ViewModel
                 { "CView", new CViewModel() },
                 { "UpdateVersionView", new UpdateVersionViewModel(Updates) }
             };
-            //ActiveView = viewModeTable["AView"];
             ActiveView = viewModeTable["UpdateVersionView"];
 
             //ライン情報読み込み
             LoadLineInfo();
 
-            FileOpenCommand.Subscribe(() => FileOpenCommandExec());
+            // メニューコマンドの設定 
+            FileOpenCommand.Subscribe(() => FileOpenCmd());
+            LcuNetworkChkCommand.Subscribe(() => { LcuNetworkChkCmd(); });
+            LcuDiskChkCommand.Subscribe(() => { LcuDiskChkCmd(); });
+            // メニュー実行制御
+            LcuNetworkChkCommand = CanExecuteLcuCommand.ToReactiveCommand();
+            LcuDiskChkCommand = CanExecuteLcuCommand.ToReactiveCommand();
 
             ButtonCommand = new DelegateCommand(async () =>
             {
@@ -220,11 +232,12 @@ namespace WpfApp1_cmd.ViewModel
             QuitApplicationCommand = FlagProperty3.ToReactiveCommand();
             QuitApplicationCommand.Subscribe(() => ApplicationShutDown() );
 
-            //IsExpanded = new ReactivePropertySlim<bool>(true);
-            //IsSelected = new ReactivePropertySlim<bool>(true);
         }
 
-        public void FileOpenCommandExec()
+        /// <summary>
+        ///  ユニットアップデートデータのフォルダを選択して読み込む
+        /// </summary>
+        public void FileOpenCmd()
         {
             using (var cofd = new CommonOpenFileDialog()
             {
@@ -276,6 +289,22 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
         }
 
         /// <summary>
+        ///  LCU の接続状態を確認する
+        /// </summary>
+        void LcuNetworkChkCmd()
+        {
+
+        }
+
+        /// <summary>
+        /// LCU のディスク容量を確認する
+        /// </summary>
+        void LcuDiskChkCmd()
+        {
+
+        }
+
+        /// <summary>
         ///  UpdateCommon.inf を読み込み、UpdateInfo のリストを返す
         /// </summary>
         /// <param name="path">UpdateCommon.inf ファイルのパス</param>
@@ -297,7 +326,48 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                 };
                 updates.Add(update);
             }
+
+            DataSize = GetPeripheradSize(DataFolder);
+
             return updates;
+        }
+
+        /// <summary>
+        /// フォルダのサイズを取得する
+        /// </summary>
+        /// <param name="dirInfo">サイズを取得するフォルダ</param>
+        /// <returns>フォルダのサイズ（バイト）</returns>
+        public static long GetDirectorySize(DirectoryInfo dirInfo)
+        {
+            long size = 0;
+
+            //フォルダ内の全ファイルの合計サイズを計算する
+            foreach (FileInfo fi in dirInfo.GetFiles())
+                size += fi.Length;
+
+            //サブフォルダのサイズを合計していく
+            foreach (DirectoryInfo di in dirInfo.GetDirectories())
+                size += GetDirectorySize(di);
+
+            //結果を返す
+            return size;
+        }
+        private long GetPeripheradSize(string path)
+        {
+            long size = 0;
+            DirectoryInfo di = new(path);
+
+           FileInfo[] files = di.GetFiles("Peripheral.bin");
+            if (files.Length != 0)
+            {
+                //圧縮ファイルのサイズを取得
+                size = files[0].Length;
+            }
+            else
+            {
+                size = GetDirectorySize(di);
+            }
+            return size;
         }
 
         /// <summary>
@@ -520,6 +590,7 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                         viewModeTable.Add($"LcuView_{item.Name}", new LcuViewModel(TreeViewItems.Where(x => x.Name == item.Name).First().Children));
                     }
                      ActiveView = viewModeTable[$"LcuView_{item.Name}"];
+                    CanExecuteLcuCommand.Value = true;
                     break;
                 case MachineType.Machine:
                     if (viewModeTable.ContainsKey($"MachineView_{item.Name}") == false)
@@ -535,9 +606,11 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                             break;
                         }
                     }
+                    CanExecuteLcuCommand.Value = false; // LCU コマンドを実行可にする
                     ActiveView = viewModeTable[$"MachineView_{item.Name}"];
                     break;
                 case MachineType.Module:
+                    CanExecuteLcuCommand.Value = false; //LCU コマンドを実行不可にする
                     if (viewModeTable.ContainsKey($"ModuleView_{item.Name}") == false)
                     {
                         string lcuName = (item as ModuleInfo).Parent.Parent.Name;
@@ -604,8 +677,8 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
         /// <param name="machine"></param>
         /// <param name="module"></param>
         /// <returns></returns>
-        //public async Task<ReactiveCollection<UnitVersion>?> CreateVersionInfo(LcuInfo lcu, MachineInfo machine, ModuleInfo module)
-        public async Task<ObservableCollection<UnitVersion>?> CreateVersionInfo(LcuInfo lcu, MachineInfo machine, ModuleInfo module)
+        public async Task<ReactiveCollection<UnitVersion>?> CreateVersionInfo(LcuInfo lcu, MachineInfo machine, ModuleInfo module)
+        //public async Task<ObservableCollection<UnitVersion>?> CreateVersionInfo(LcuInfo lcu, MachineInfo machine, ModuleInfo module)
         {
             bool ret;
 
@@ -640,8 +713,8 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
             IList<string> sec = parser.SectionCount();
 
             //バージョン情報を生成
-            //ReactiveCollection<UnitVersion> versions = [];
-            ObservableCollection<UnitVersion> versions = [];
+            ReactiveCollection<UnitVersion> versions = [];
+            //ObservableCollection<UnitVersion> versions = [];
 
             foreach (var unit in sec)
             {
@@ -712,7 +785,8 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
 
             TreeViewItems = new ReactiveCollection<LcuInfo>
             {
-                new (){ Name = "localhost:9000",  ItemType=MachineType.LCU},
+                new (){ Name = "localhost:9000", ItemType=MachineType.LCU},
+                new (){ Name = "ch-lcu33",       ItemType=MachineType.LCU},
             };
             TreeViewItems.ObserveAddChanged().Subscribe( x => Debug.WriteLine(x.Name));
 

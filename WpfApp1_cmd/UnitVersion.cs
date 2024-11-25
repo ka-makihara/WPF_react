@@ -15,7 +15,8 @@ namespace WpfApp1_cmd
         private string? _curVersion;
         private string? _newVersion;
 
-        //public ReactivePropertySlim<bool?> IsSelected { get; set; } = new ReactivePropertySlim<bool?>(true);
+        public ReactivePropertySlim<bool?> IsSelected { get; set; } = new ReactivePropertySlim<bool?>(true);
+        /*
         private bool? _isSelected;
         public bool? IsSelected
         {
@@ -37,11 +38,12 @@ namespace WpfApp1_cmd
                 }
             }
         }
-       
-        public string? Name 
+        */
+
+        public string? Name
         {
             get => _name;
-            //set => SetProperty(ref _name, value);
+            //set => SetProperty(ref _name, value);// 生成後は変更しないので
             set => _name = value;
         }
         public string? CurVersion
@@ -61,8 +63,18 @@ namespace WpfApp1_cmd
         public string? Attribute { get; set; }
         public ModuleInfo? Parent { get; set; }
 
+        private void Update(bool? value)
+        {
+            if( Parent != null )
+            {
+                Parent.SetCheck(value);
+            }
+        }
+        public UnitVersion()
+        {
+            IsSelected.Subscribe(x => Update(x));
+        }
     }
-
     public class UpdateInfo// : ViewModelBase
     {
         private string? _name;

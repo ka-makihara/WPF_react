@@ -264,8 +264,18 @@ namespace WpfApp1_cmd
             {
                 Parent.Update(value);
             }
+
+            // 装置の選択で装置下の全モジュールの選択を変更する
+            if (UpdateVersionInfo)
+            {
+                foreach (var unit in UnitVersions)
+                {
+                    unit.IsSelected.Value = value;
+                }
+            }
         }
 
+        private bool UpdateVersionInfo { get; set; } = true;
         private Module? _module;
         public Module? Module { get => _module; set => _module = value; }
 
@@ -273,12 +283,36 @@ namespace WpfApp1_cmd
 
         // Treeで表示するためには Children が必要(表示させないためにプロパティを UnitVersions としている)
         //private ReactiveCollection<UnitVersion> _unitVersions = [];
-        //public ReactiveCollection<UnitVersion> UnitVersions
+        public ReactiveCollection<UnitVersion> UnitVersions = [];
+        /*
         private ObservableCollection<UnitVersion> _unitVersions = [];
         public ObservableCollection<UnitVersion> UnitVersions
         {
             get => _unitVersions;
             set => _unitVersions = value;
+        }
+        */
+        public void SetCheck(bool? value)
+        {
+            int cnt = UnitVersions.Where(x => x.IsSelected.Value == true).ToList().Count();
+
+            //モジュールの選択から、呼ばれるので、UpdateVersionInfoをfalseにしておく
+            //   false にして、IsSelect の Subscribe のUpdate で UnitVersion の更新が行われないようにする
+            //   これをしないと、UnitVersion の更新が行われて、また、この関数がよばれて、無限ループとなる
+            UpdateVersionInfo = false;
+
+            if (cnt == 0) {
+                  IsSelected.Value = false;
+            }
+            else if (cnt == UnitVersions.Count)
+            {
+                IsSelected.Value = true;
+            }
+            else
+            {
+                IsSelected.Value = null;
+            }
+            UpdateVersionInfo = true;
         }
 
         public int ID {get => Module.ModuleId; }

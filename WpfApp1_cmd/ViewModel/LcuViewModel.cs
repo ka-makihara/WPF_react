@@ -36,18 +36,6 @@ namespace WpfApp1_cmd.ViewModel
                     OnPropertyChanged(nameof(IsAllSelected));
                 });
             }
-            /*
-            foreach (var item in MachineInfos)
-            {
-                item.PropertyChanged += (sender, e) =>
-                {
-                    if (e.PropertyName == nameof(MachineInfo.IsSelected))
-                    {
-                        OnPropertyChanged(nameof(IsAllSelected));
-                    }
-                };
-            }
-            */
         }
         public bool? IsAllSelected
         {
@@ -66,7 +54,6 @@ namespace WpfApp1_cmd.ViewModel
         private static void SelectAll(bool select, IEnumerable<MachineInfo> models)
         {
             foreach (var model in models) {
-                //model.IsSelected = select;
                 model.IsSelected.Value = select;
             }
         }

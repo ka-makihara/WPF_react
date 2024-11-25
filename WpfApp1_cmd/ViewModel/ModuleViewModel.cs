@@ -11,6 +11,7 @@ namespace WpfApp1_cmd.ViewModel
 {
     internal class ModuleViewModel : ViewModelBase
     {
+        /*
         private ObservableCollection<UnitVersion> _unitVersions;
         public ObservableCollection<UnitVersion> UnitVersions
         {
@@ -21,9 +22,11 @@ namespace WpfApp1_cmd.ViewModel
                 SetProperty(ref _unitVersions, value);
             } 
         }
+        */
 
-        //public ObservableCollection<UnitVersion> UnitVersions { get; set; }
-        public ModuleViewModel(ObservableCollection<UnitVersion> unitVersions, ObservableCollection<UpdateInfo> updates)
+        public ReactiveCollection<UnitVersion> UnitVersions { get; set; }
+        //public ModuleViewModel(ObservableCollection<UnitVersion> unitVersions, ObservableCollection<UpdateInfo> updates)
+        public ModuleViewModel(ReactiveCollection<UnitVersion> unitVersions, ObservableCollection<UpdateInfo> updates)
         {
             //LoadUnitVersions();
             UnitVersions = unitVersions;
@@ -31,6 +34,7 @@ namespace WpfApp1_cmd.ViewModel
             // IsSelected プロパティが変更されたときに、IsAllSelected プロパティを更新する
             foreach (var item in UnitVersions)
             {
+                /*
                 item.PropertyChanged += (sender, e) =>
                 {
                     if (e.PropertyName == nameof(UnitVersion.IsSelected))
@@ -38,6 +42,12 @@ namespace WpfApp1_cmd.ViewModel
                         OnPropertyChanged(nameof(IsAllSelected));
                     }
                 };
+                */
+                item.IsSelected.Subscribe(_ =>
+                {
+                    OnPropertyChanged(nameof(IsAllSelected));
+                });
+
                 if (updates != null)
                 {
                     try {
@@ -46,18 +56,18 @@ namespace WpfApp1_cmd.ViewModel
                         if(newVer != item.CurVersion)
                         {
                             item.NewVersion = newVer;
-                            item.IsSelected = true;
+                            item.IsSelected.Value = true;
                         }
                         else
                         {
                             item.NewVersion = newVer;
-                            item.IsSelected = false;
+                            item.IsSelected.Value = false;
                         }
                     }
                     catch (Exception e)
                     {
                         item.NewVersion = "N/A";
-                        item.IsSelected = false;
+                        item.IsSelected.Value = false;
                     }
                 }
             }
@@ -73,18 +83,18 @@ namespace WpfApp1_cmd.ViewModel
                     if(newVer != item.CurVersion)
                     {
                         item.NewVersion = newVer;
-                        item.IsSelected = true;
+                        item.IsSelected.Value = true;
                     }
                     else
                     {
                         item.NewVersion = newVer;
-                        item.IsSelected = false;
+                        item.IsSelected.Value = false;
                     }
                 }
                 catch (Exception e)
                 {
                     item.NewVersion = "N/A";
-                    item.IsSelected = false;
+                    item.IsSelected.Value = false;
                 }
             }
         }
@@ -103,7 +113,7 @@ namespace WpfApp1_cmd.ViewModel
         public bool? IsAllSelected
         {
             get {
-                var selected = UnitVersions.Select(item => item.IsSelected).Distinct().ToList();
+                var selected = UnitVersions.Select(item => item.IsSelected.Value).Distinct().ToList();
                 return selected.Count == 1 ? selected.Single() : (bool?)null;
             }
             set {
@@ -114,7 +124,7 @@ namespace WpfApp1_cmd.ViewModel
         private static void SelectAll(bool? select, IEnumerable<UnitVersion> models)
         {
             foreach (var model in models) {
-                model.IsSelected = select;
+                model.IsSelected.Value = select;
             }
         }
     }

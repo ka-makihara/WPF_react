@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Reactive.Bindings;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -11,9 +12,8 @@ namespace WpfApp1_cmd.ViewModel
 {
     internal class UpdateVersionViewModel : ViewModelBase
     {
-
-        private ObservableCollection<UpdateInfo> _updates;
-        public ObservableCollection<UpdateInfo> Updates
+        private ReactiveCollection<UpdateInfo> _updates;
+        public ReactiveCollection<UpdateInfo> Updates
         {
             get => _updates;
             set
@@ -22,11 +22,11 @@ namespace WpfApp1_cmd.ViewModel
                 SetProperty(ref _updates, value);
             }
         }
-        public UpdateVersionViewModel(ObservableCollection<UpdateInfo> updates)
+        public UpdateVersionViewModel(ReactiveCollection<UpdateInfo> updates)
         {
             Updates = updates;
         }
-        public void UpdateItems(ObservableCollection<UpdateInfo> updates)
+        public void UpdateItems(ReactiveCollection<UpdateInfo> updates)
         {
             if( Updates != null)
             {

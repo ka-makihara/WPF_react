@@ -55,7 +55,7 @@ namespace WpfApp1_cmd.ViewModel
         public bool? IsAllSelected
         {
             get {
-                var selected = UnitVersions.Select(item => item.IsSelected).Distinct().ToList();
+                var selected = UnitVersions.Select(item => item.IsSelected.Value).Distinct().ToList();
                 return selected.Count == 1 ? selected.Single() : (bool?)null;
             }
             set {
@@ -68,7 +68,7 @@ namespace WpfApp1_cmd.ViewModel
         private static void SelectAll(bool select, IEnumerable<UnitVersion> models)
         {
             foreach (var model in models) {
-                model.IsSelected = select;
+                model.IsSelected.Value = select;
             }
         }
     }
