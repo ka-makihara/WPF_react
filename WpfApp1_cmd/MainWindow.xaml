@@ -21,6 +21,22 @@
         TitleCharacterCasing="Normal"
         Style="{StaticResource MaterialDesignWindow}"
         Title="TransferTool" Height="800" Width="1050">
+
+    <Window.Resources>
+      <local:RichTextItemsToDocumentConverter x:Key="RichTextItemsToDocumentConverter" />
+      <!--
+        <DataTemplate DataType="{x:Type vm:MaterialDialogViewModel}">
+            <view:MaterialDialog/>
+        </DataTemplate>
+        -->
+   </Window.Resources>
+
+    <i:Interaction.Triggers>
+        <i:EventTrigger EventName="Loaded">
+            <rp:EventToReactiveCommand Command="{Binding WindowLoadedCommand}" />
+        </i:EventTrigger>
+    </i:Interaction.Triggers>
+
     <Window.DataContext>
         <vm:MainWindowViewModel />
     </Window.DataContext>
@@ -33,27 +49,15 @@
             </Button>
         </mah:WindowCommands>
     </mah:MetroWindow.LeftWindowCommands>
-
+     -->
     <mah:MetroWindow.RightWindowCommands>
         <mah:WindowCommands>
-            <Button Click="DeployCupCakes" Content="Deploy CupCakes">
-                <Button.ContentTemplate>
-                    <DataTemplate>
-                        <StackPanel Orientation="Horizontal">
-                            <iconPacks:PackIconModern Width="22"
-                                        Height="22"
-                                        VerticalAlignment="Center"
-                                        Kind="FoodCupcake" />
-                            <TextBlock Margin="4 0 0 0"
-                         VerticalAlignment="Center"
-                         Text="{Binding}" />
-                        </StackPanel>
-                    </DataTemplate>
-                </Button.ContentTemplate>
-            </Button>
+            <Button Content="{iconPacks:FontAwesome Kind=HouseChimneySolid, Width=24,Height=24}"
+                    Command="{Binding HomeCommand}"
+                    ToolTip="Show Version" />
         </mah:WindowCommands>
     </mah:MetroWindow.RightWindowCommands>
-    -->
+  
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="83*"/>
@@ -111,10 +115,7 @@
             </GroupBox>
             <GridSplitter Grid.Column="1" Style="{StaticResource VerticalGridSplitter}" />
             -->
-            <TreeView x:Name="lineView" Grid.Column="0"
-                  ItemsSource="{Binding TreeViewItems}"
-                  IsEnabled="{Binding IsTreeEnabled, Mode=TwoWay}"
-                  >
+            <TreeView x:Name="lineView" Grid.Column="0" ItemsSource="{Binding TreeViewItems}" IsEnabled="{Binding IsTreeEnabled.Value, Mode=TwoWay}" >
                 <i:Interaction.Triggers>
                     <i:EventTrigger EventName="SelectedItemChanged">
                         <rp:EventToReactiveCommand Command="{Binding TreeViewSelectedItemChangedCommand}" />
@@ -123,8 +124,8 @@
                 <TreeView.ItemTemplate>
                     <HierarchicalDataTemplate ItemsSource="{Binding Children}">
                         <StackPanel Orientation="Horizontal">
-                            <CheckBox IsChecked="{Binding IsSelected.Value, Mode=TwoWay}"  HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding Name}" Margin="5,0,0,0" FontSize="16"/>
+                            <CheckBox IsChecked="{Binding IsSelected.Value, Mode=TwoWay}"  HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding Name}" Margin="5,0,0,0" FontSize="16" IsEnabled="False"/>
                         </StackPanel>
                     </HierarchicalDataTemplate>
                 </TreeView.ItemTemplate>
@@ -173,11 +174,31 @@
                 <StackPanel Grid.Row="2" Orientation="Vertical" Margin="0,10,0,0" >
                     <TextBlock Text="Execution Log" FontSize="16" FontWeight="Bold" Margin="5,1,1,1"/>
                     <Border BorderThickness="1" BorderBrush="White"/>
-                    <TextBox x:Name="log" AcceptsReturn="True" Height="250" FontSize="16" Margin="5" TextWrapping="Wrap" IsReadOnly="True"
+
+                    <TextBox x:Name="logMessage" AcceptsReturn="True" Height="250" FontSize="16" Margin="5" TextWrapping="Wrap"
                             BorderBrush="{DynamicResource MaterialDesignShadowBrush}" BorderThickness="1"
                             VerticalScrollBarVisibility="Auto"
                             Text="{Binding LogData}"
-                            HorizontalScrollBarVisibility="Auto"  />
+                             IsReadOnly="True"
+                            TextChanged="logMessage_TextChanged"
+                            HorizontalScrollBarVisibility="Auto">
+                            <!--
+                        <i:Interaction.Triggers>
+                            <i:EventTrigger EventName="TextChanged">
+                                <rp:EventToReactiveCommand Command="{Binding LogMessageChangedCommand}" />
+                            </i:EventTrigger>
+                        </i:Interaction.Triggers>
+                        -->
+                    </TextBox>
+                    <!-- RichTextBox をログに使用しようとしたが、思うようにスクロールできなかったので、TextBoxに変更 -->
+                    <!--
+                    <local:BindableRichTextBox Document="{Binding LogMessage, Converter={StaticResource RichTextItemsToDocumentConverter}}"
+                                               Height="250" Margin="5"     
+                                               Block.LineHeight="1"
+                                               AcceptsReturn="True"
+                                               VerticalScrollBarVisibility="Visible"
+                                               HorizontalScrollBarVisibility="Auto"/>
+                    -->
                     <StackPanel Orientation="Horizontal" Margin="5,10,1,1" HorizontalAlignment="Right" VerticalAlignment="Bottom" >
                         <Button Height="30" materialDesign:ButtonAssist.CornerRadius="5"
                                 Command="{Binding StartTransferCommand}"

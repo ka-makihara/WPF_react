@@ -41,13 +41,15 @@
                 Content="OK"
                 IsCancel="True"
                 IsDefault="True"
-                Style="{StaticResource MaterialDesignFlatButton}" />
+                materialDesign:ButtonAssist.CornerRadius="10"
+                Style="{StaticResource MaterialDesignPaperDarkButton}" />
             <Button
                 Margin="8,0,0,0"
                 Command="{x:Static materialDesign:DialogHost.CloseDialogCommand}"
                 CommandParameter="CANCEL"
                 Content="キャンセル"
-                Style="{StaticResource MaterialDesignFlatButton}" />
+                materialDesign:ButtonAssist.CornerRadius="10"
+                Style="{StaticResource MaterialDesignPaperDarkButton}" />
         </StackPanel>
     </Grid>
 </UserControl>

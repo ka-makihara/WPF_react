@@ -32,5 +32,18 @@ namespace WpfApp1_cmd
             // deploy some CupCakes...
             lineView.IsEnabled = false;
         }
+
+        /// <summary>
+        ///  Log領域の最終行にスクロールする
+        ///     イベントを Command に割り当てて ReactiveCommand(in ViewModel) で実行しようと考えたが例外が発生したので
+        ///     ここで実装してしまった。画面のスクロールだけなので・・・
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void logMessage_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            // TextBox を最終行にスクロールする
+            logMessage.ScrollToEnd();
+        }
     }
 }

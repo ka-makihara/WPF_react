@@ -1,5 +1,7 @@
 ﻿using System.Configuration;
 using System.Data;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Windows;
 
 namespace WpfApp1_cmd
@@ -10,6 +12,23 @@ namespace WpfApp1_cmd
         Machine = 1,
         Base = 2,
         Module = 3,
+    }
+
+    [Flags]
+    public enum MsgDlgType
+    {
+        OK = 1,
+        CANCEL = 1 << 1,
+        OK_CANCEL = OK | CANCEL,
+        YES = 1 << 2,
+        NO = 1 << 3,
+        YES_NO = YES | NO,
+        YES_NO_CANCEL = YES | NO | CANCEL,
+
+        ICON_ERROR = 0x10,
+        ICON_WARNING = ICON_ERROR << 1,
+        ICON_INFO =  ICON_ERROR << 2,
+        ICON_CAUTION = ICON_ERROR << 3,
     }
 
     public static class Define
@@ -51,13 +70,13 @@ namespace WpfApp1_cmd
                         if (key == false)
                         {
                             optKey = opt[0];
-                            key = true;
                         }
                         else
                         {
                             optSwitches.Add(optKey);
-                            key = false;
+                            optKey = opt[0];
                         }
+                        key = true;
                     }
                 }
                 else
@@ -138,7 +157,9 @@ namespace WpfApp1_cmd
                     return bool.Parse(OptionsDic[opt]);
                 }
             }
-            return value;
+            // --opt=true/false 以外に　--opt だけの場合は true とする
+            return HasSwitch(opt);
+            //return value;
         }
     }
 
@@ -147,8 +168,37 @@ namespace WpfApp1_cmd
     /// </summary>
     public partial class App : Application
     {
+        [DllImport("user32.dll")]
+        private static extern bool SetForegroundWindow(IntPtr hWnd);
+        [DllImport("user32.dll")]
+        private static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);
+        [DllImport("user32.dll")]
+        private static extern bool IsIconic(IntPtr hWnd);
+
+        private static Mutex mutex;
+
         private void Application_Startup(object sender, StartupEventArgs e)
         {
+            // 二重起動を防止
+            bool createdNew;
+            mutex = new Mutex(true, "WpfApp1_cmd", out createdNew);
+
+            if( !createdNew)
+            {
+                Process prevProcess = GetPreviousProcess();
+                if (prevProcess != null)
+                {
+                    IntPtr hWnd = prevProcess.MainWindowHandle;
+                    if (IsIconic(hWnd))
+                    {
+                        ShowWindowAsync(hWnd, 9);
+                    }
+                    SetForegroundWindow(hWnd);
+                }
+                this.Shutdown();
+                return;
+            }
+
             if (e.Args.Length > 0)
             {
                 Options.ParseArgs(e.Args);
@@ -156,6 +206,37 @@ namespace WpfApp1_cmd
             MainWindow mainWindow = new MainWindow();
             mainWindow.Show();
         }
-    }
 
+        public static Process GetPreviousProcess()
+        {
+            Process curProcess = Process.GetCurrentProcess();
+            string currentPath = curProcess.MainModule.FileName;
+
+            Process[] processes = Process.GetProcessesByName(curProcess.ProcessName);
+
+            foreach (Process checkProcess in processes)
+            {
+                if (checkProcess.Id != curProcess.Id)
+                {
+                    string checkPath;
+                    try
+                    {
+                        checkPath = checkProcess.MainModule.FileName;
+                    }
+                    catch (System.ComponentModel.Win32Exception)
+                    {
+                        //アクセス権限がない場合は無視
+                        continue;
+                    }
+
+                    // プロセスのフルパス名を比較して同じアプリケーションかどうかを判定
+                    if (String.Compare(checkPath, currentPath, true) == 0)
+                    {
+                        return checkProcess;
+                    }
+                }
+            }
+            return null;
+        }
+    }
 }

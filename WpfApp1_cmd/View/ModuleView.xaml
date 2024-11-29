@@ -23,6 +23,25 @@
                   IsReadOnly="False"
                   >
             <DataGrid.Columns>
+                
+                <materialDesign:DataGridTextColumn 
+                        EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnPopupEditingStyle}"
+                        ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"
+                        Header="Unit" FontSize="16" FontFamily="Arial" Width="200" MinWidth="200" Binding="{Binding Name}" IsReadOnly="True">
+                </materialDesign:DataGridTextColumn>
+
+                <materialDesign:DataGridTextColumn
+                        EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnPopupEditingStyle}"
+                        ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"
+                        Header="PreviousVersion" FontSize="16" FontFamily="Arial" Width="180" MinWidth="180" Binding="{Binding CurVersion}" IsReadOnly="True">
+                </materialDesign:DataGridTextColumn>
+
+                <materialDesign:DataGridTextColumn
+                        EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnPopupEditingStyle}"
+                        ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"
+                        Header="UpdateVersion" FontSize="16" FontFamily="Arial" Width="180" MinWidth="180" Binding="{Binding NewVersion}" IsReadOnly="True">
+                </materialDesign:DataGridTextColumn>
+                
                 <DataGridCheckBoxColumn Binding="{Binding IsSelected.Value, UpdateSourceTrigger=PropertyChanged}"
                                         EditingElementStyle="{StaticResource MaterialDesignDataGridCheckBoxColumnEditingStyle}"
                                         ElementStyle="{StaticResource MaterialDesignDataGridCheckBoxColumnStyle}"
@@ -39,23 +58,6 @@
                     </DataGridCheckBoxColumn.HeaderStyle>
                 </DataGridCheckBoxColumn>
 
-                 <materialDesign:DataGridTextColumn 
-                        EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnPopupEditingStyle}"
-                        ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"
-                        Header="UnitName" FontSize="16" FontFamily="Arial" Width="200" MinWidth="200" Binding="{Binding Name}" IsReadOnly="True">
-                </materialDesign:DataGridTextColumn>
-
-                <materialDesign:DataGridTextColumn
-                        EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnPopupEditingStyle}"
-                        ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"
-                        Header="CurVersion" FontSize="16" FontFamily="Arial" Width="150" MinWidth="150" Binding="{Binding CurVersion}" IsReadOnly="True">
-                </materialDesign:DataGridTextColumn>
-
-                <materialDesign:DataGridTextColumn
-                        EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnPopupEditingStyle}"
-                        ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"
-                        Header="NewVersion" FontSize="16" FontFamily="Arial" Width="150" MinWidth="150" Binding="{Binding NewVersion}" IsReadOnly="True">
-                </materialDesign:DataGridTextColumn>
             </DataGrid.Columns> 
         </DataGrid> 
     </Grid>

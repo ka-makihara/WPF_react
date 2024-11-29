@@ -52,11 +52,13 @@
                         Header="Version" FontSize="16" FontFamily="Arial" Width="150" MinWidth="150" Binding="{Binding Version}" IsReadOnly="True">
                 </materialDesign:DataGridTextColumn>
 
+                <!-- 最終的には消去する
                 <materialDesign:DataGridTextColumn
                         EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnPopupEditingStyle}"
                         ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"
                         Header="Path" FontSize="10" FontFamily="Arial" Width="150" MinWidth="150" Binding="{Binding Path}" IsReadOnly="True">
                 </materialDesign:DataGridTextColumn>
+                -->
 
             </DataGrid.Columns> 
         </DataGrid> 

@@ -11,42 +11,40 @@ namespace WpfApp1_cmd.ViewModel
 {
     internal class ModuleViewModel : ViewModelBase
     {
-        /*
-        private ObservableCollection<UnitVersion> _unitVersions;
-        public ObservableCollection<UnitVersion> UnitVersions
+        private ObservableCollection<UpdateInfo>? _updates = null;
+        private void IsSelectedChk(UnitVersion item, bool? value)
         {
-            get => _unitVersions;
-            set
+            // バージョンが違うものしかチェックが更新できないようにする
+            try
             {
-                //_unitVersions = value;
-                SetProperty(ref _unitVersions, value);
-            } 
+                string newVer = _updates.First(x => x.Name == item.Name).Version;
+                if (newVer != item.CurVersion)
+                {
+                    item.IsSelected.Value = value;
+                }
+                else
+                {
+                    item.IsSelected.Value = false;
+                }
+            }
+            catch(Exception e)
+            {
+                item.IsSelected.Value = false;
+            }
+            // IsSelected プロパティが変更されたときに、IsAllSelected プロパティを更新する
+            OnPropertyChanged(nameof(IsAllSelected));
         }
-        */
 
         public ReactiveCollection<UnitVersion> UnitVersions { get; set; }
-        //public ModuleViewModel(ObservableCollection<UnitVersion> unitVersions, ObservableCollection<UpdateInfo> updates)
         public ModuleViewModel(ReactiveCollection<UnitVersion> unitVersions, ObservableCollection<UpdateInfo> updates)
         {
-            //LoadUnitVersions();
             UnitVersions = unitVersions;
+            _updates = updates;
 
-            // IsSelected プロパティが変更されたときに、IsAllSelected プロパティを更新する
             foreach (var item in UnitVersions)
             {
-                /*
-                item.PropertyChanged += (sender, e) =>
-                {
-                    if (e.PropertyName == nameof(UnitVersion.IsSelected))
-                    {
-                        OnPropertyChanged(nameof(IsAllSelected));
-                    }
-                };
-                */
-                item.IsSelected.Subscribe(_ =>
-                {
-                    OnPropertyChanged(nameof(IsAllSelected));
-                });
+                // IsSelected プロパティが変更されたときに、IsSelectedChk メソッドを呼び出す
+                item.IsSelected.Subscribe(x => IsSelectedChk(item,x));
 
                 if (updates != null)
                 {
@@ -99,17 +97,6 @@ namespace WpfApp1_cmd.ViewModel
             }
         }
 
-        private void LoadUnitVersions()
-        {
-            UnitVersions = new ReactiveCollection<UnitVersion>
-            {
-                new UnitVersion { Name = "Unit1", CurVersion = "1.0.0", NewVersion = "1.0.1" },
-                new UnitVersion { Name = "Unit2", CurVersion = "1.0.0", NewVersion = "1.0.1" },
-                new UnitVersion { Name = "Unit3", CurVersion = "1.0.0", NewVersion = "1.0.1" },
-                new UnitVersion { Name = "Unit4", CurVersion = "1.0.0", NewVersion = "1.0.1" },
-                new UnitVersion { Name = "Unit5", CurVersion = "1.0.0", NewVersion = "1.0.1" },
-            };
-        }
         public bool? IsAllSelected
         {
             get {

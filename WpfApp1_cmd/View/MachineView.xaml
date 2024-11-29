@@ -56,11 +56,13 @@
                         Header="Pos" FontSize="14" FontFamily="Arial" Width="80" MinWidth="80" Binding="{Binding Pos}" IsReadOnly="True">
                 </materialDesign:DataGridTextColumn>
 
+                <!--
                 <materialDesign:DataGridTextColumn
                         EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnPopupEditingStyle}"
                         ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"
                         Header="IPAddress" FontSize="16" FontFamily="Arial" Width="140" MinWidth="140" Binding="{Binding IPAddress}" IsReadOnly="True">
                 </materialDesign:DataGridTextColumn>
+                -->
             </DataGrid.Columns> 
         </DataGrid>         
     </Grid>

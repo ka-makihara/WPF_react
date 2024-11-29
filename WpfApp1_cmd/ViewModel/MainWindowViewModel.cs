@@ -25,6 +25,9 @@ using ControlzEx.Standard;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using Oracle.ManagedDataAccess.Client;
 using System.Windows.Controls;
+using System.Windows.Media;
+using MahApps.Metro.Controls;
+using MahApps.Metro.Controls.Dialogs;
 
 namespace WpfApp1_cmd.ViewModel
 {
@@ -32,6 +35,27 @@ namespace WpfApp1_cmd.ViewModel
     {
         [DllImport("mcAccount.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         static extern int getMcUser(StringBuilder s, Int32 len);
+        [DllImport("mcAccount.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
+        static extern int getMcPass(StringBuilder s, Int32 len);
+
+        public MetroWindow Metro { get; set; } = System.Windows.Application.Current.MainWindow as MetroWindow;
+
+        public CancellationTokenSource Cts { get; set; } = new CancellationTokenSource();
+        public CancellationToken Token => Cts.Token;
+
+        public ReactiveCommand WindowLoadedCommand { get; } = new ReactiveCommand();
+        /*
+        private ObservableCollection<RichTextItem> _logMessage = [];// new RichTextItem() { Text = "original", Color = Colors.Wheat };
+        public ObservableCollection<RichTextItem> LogMessage
+        {
+            get => _logMessage;
+            set
+            {
+                _logMessage = value;
+                OnPropertyChanged(nameof(LogMessage));
+            }
+        }
+        */
 
         private string _logData = "";
         public string LogData
@@ -43,11 +67,23 @@ namespace WpfApp1_cmd.ViewModel
                 OnPropertyChanged(nameof(LogData));
             }
         }
-        public void AddLog(string log)
+        public void AddLog(string str)
         {
             LogData += "\n";
-            LogData += log;
+            LogData += str;
+
+            /*
+            RichTextItem item = new RichTextItem()
+            {
+                Text = log,
+                Color = Colors.White
+            };
+            LogMessage.Add(item);
+            */
+            //OnPropertyChanged(nameof(LogMessage));
+            Debug.WriteLine(str);
         }
+
 
         // ツリービューのアイテム
         //public ObservableCollection<LcuInfo> TreeViewItems { get; set; }
@@ -72,8 +108,9 @@ namespace WpfApp1_cmd.ViewModel
                 }
             }
         }
-        private string DataFolder { get; set; } = "";
-        public long DataSize { get; set; } = 0;
+        private string DataFolder { get; set; } = "";   // UpdateCommon.inf のフォルダ
+        public long DataSize { get; set; } = 0;         // UpdateCommon.inf のフォルダのサイズ
+
         private ReactiveCollection<UpdateInfo> _upDates;
         private ReactiveCollection<UpdateInfo>? Updates
         {
@@ -83,55 +120,118 @@ namespace WpfApp1_cmd.ViewModel
                 OnPropertyChanged(nameof(Updates));
             }
         }
-
+/*
         private bool flag = true;
         public bool Flag
         {
             get { return flag; }
             set { flag = value; ButtonCommand.DelegateCanExecute(); }
         }
-
+*/
         public DelegateCommand<string> ScreenTransitionCommand { get; }
+
         public ReactiveCommand FileOpenCommand { get; } = new ReactiveCommand();
         public ReactiveCommand LcuNetworkChkCommand { get; } = new ReactiveCommand();
         public ReactiveCommand LcuDiskChkCommand { get; } = new ReactiveCommand();
-
+/*
         public DelegateCommand ButtonCommand { get; }
         public ReactiveCommand ButtonCommand2 { get; } = new ReactiveCommand();
 
         public ReactiveCommand CutCommand { get; private set; } = new ReactiveCommand();
         public ReactiveCommand CopyCommand { get; } = new ReactiveCommand();
         public ReactiveCommand PasteCommand { get; } = new ReactiveCommand();
+*/
 
-        public ReactiveProperty<bool> FlagProperty1 { get; } = new ReactiveProperty<bool>(true);
-        public ReactiveProperty<bool> FlagProperty2 { get; } = new ReactiveProperty<bool>(false);
-        public ReactiveProperty<bool> FlagProperty3 { get; } = new ReactiveProperty<bool>(true);
+        // 「Transfer」「Stop」「App Quit」のフラグ
+        public ReactiveProperty<bool> CanTransferStartFlag { get; } = new ReactiveProperty<bool>(true);
+        public ReactiveProperty<bool> CanTransferStopFlag { get; } = new ReactiveProperty<bool>(false);
+        public ReactiveProperty<bool> CanAppQuitFlag { get; } = new ReactiveProperty<bool>(true);
 
+        private CancellationTokenSource? _cancellationTokenSource;
+        public CancellationTokenSource? CancelTokenSrc { get => _cancellationTokenSource; set => _cancellationTokenSource = value; }
+
+        // 「メニュー」の LCU コマンドの実行可否
         public ReactiveProperty<bool> CanExecuteLcuCommand { get; } = new ReactiveProperty<bool>(false);
 
+        // TreeView の選択項目が変更されたときのコマンド
         public ReactiveCommand<RoutedPropertyChangedEventArgs<object>> TreeViewSelectedItemChangedCommand { get; }
+//        public ReactiveCommand<RoutedPropertyChangedEventArgs<object>> LogMessageChangedCommand { get; }
 
         public string DialogTitle { get; set; } = "Dialog Title";
         public string DialogText { get; set; } = "Dialog Text";
 
         // 転送制御ボタン
-        public ReactiveCommand StartTransferCommand { get; } = new ReactiveCommand();
-        public ReactiveCommand StopTransferCommand { get; } = new ReactiveCommand();
-        public ReactiveCommand QuitApplicationCommand { get; } = new ReactiveCommand();
+        public ReactiveCommandSlim StartTransferCommand { get; } = new ReactiveCommandSlim();
+        public ReactiveCommandSlim StopTransferCommand { get; } = new ReactiveCommandSlim();
+        public ReactiveCommandSlim QuitApplicationCommand { get; } = new ReactiveCommandSlim();
 
-        // TreeView を Enable/Disable しようとしたがうまく動作しない
-        //  MainWindow から設定するとOK
-        private bool _isTreeEnabled = true;
-        public bool IsTreeEnabled
+        public ReactiveCommandSlim HomeCommand { get; } = new ReactiveCommandSlim();
+
+        // TreeViewを操作可能か
+        public ReactiveProperty<bool> IsTreeEnabled { get; } = new ReactiveProperty<bool>(true);
+
+        /// <summary>
+        ///  装置のFTPユーザー名を取得する(from DLL)
+        /// </summary>
+        /// <returns></returns>
+        public static string GetMcUser()
         {
-            get => _isTreeEnabled;
-            set
+            try
             {
-                _isTreeEnabled = value;
-                SetProperty(ref _isTreeEnabled, value);
+                // DLL内の関数呼び出し。 DLLが無い場合は例外が発生する
+                StringBuilder sb = new StringBuilder(1024);
+                Int32 len = getMcUser(sb, sb.Capacity);
+                return "Administrator";
+                //return sb.ToString();
+            }
+            catch (Exception ex)
+            {
+                return "";
             }
         }
 
+        /// <summary>
+        /// 装置のFTPパスワードを取得する(from DLL)
+        /// </summary>
+        /// <returns></returns>
+        public static string GetMcPass()
+        {
+            try
+            {
+                // DLL内の関数呼び出し。 DLLが無い場合は例外が発生する
+                StringBuilder sb = new StringBuilder(1024);
+                Int32 len = getMcPass(sb, sb.Capacity);
+                return "password";
+                //return sb.ToString();
+            }
+            catch(Exception ex)
+            {
+                return "";
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private async void LoadLineInfo_Start()
+        {
+            var controller = await Metro.ShowProgressAsync("please wait...", "message");
+            
+            for(var i = 0; i < 10; i++)
+            {
+                controller.SetProgress(1.0 / 10 * i);
+                controller.SetMessage($"message {i}");
+                await Task.Delay(1000);
+            }
+            
+            //var r = DialogHost.Show(new WaitProgress("ユニット情報読み込み中"));    //時間がかかるので、クルクルを表示
+            LoadLineInfo();
+            //DialogHost.CloseDialogCommand.Execute(null, null);
+
+            OnPropertyChanged(nameof(TreeViewItems));
+
+            await controller.CloseAsync();
+        }
         public MainWindowViewModel()
         {
             //オプション処理
@@ -141,17 +241,6 @@ namespace WpfApp1_cmd.ViewModel
                 DataFolder = dataFolder;
                 Updates = ReadUpdateCommon(dataFolder + "\\UpdateCommon.inf");
                 AddLog($"Read {dataFolder}/UpdateCommon.inf");
-            }
-            try
-            {
-                // DLL内の関数呼び出し。 DLLが無い場合は例外が発生する
-                StringBuilder sb = new StringBuilder(1024);
-                Int32 len = getMcUser(sb, sb.Capacity);
-                Debug.WriteLine($"user={sb.ToString()} len={len}");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex.Message);
             }
 
             //ビューの生成
@@ -165,36 +254,49 @@ namespace WpfApp1_cmd.ViewModel
             ActiveView = viewModeTable["UpdateVersionView"];
 
             //ライン情報読み込み
-            LoadLineInfo();
+            WindowLoadedCommand.Subscribe(() => LoadLineInfo_Start());
+
+            // メニュー実行制御(Subscribe() するより先に設定する)
+            LcuNetworkChkCommand = CanExecuteLcuCommand.ToReactiveCommand();
+            LcuDiskChkCommand = CanExecuteLcuCommand.ToReactiveCommand();
 
             // メニューコマンドの設定 
             FileOpenCommand.Subscribe(() => FileOpenCmd());
             LcuNetworkChkCommand.Subscribe(() => { LcuNetworkChkCmd(); });
             LcuDiskChkCommand.Subscribe(() => { LcuDiskChkCmd(); });
-            // メニュー実行制御
-            LcuNetworkChkCommand = CanExecuteLcuCommand.ToReactiveCommand();
-            LcuDiskChkCommand = CanExecuteLcuCommand.ToReactiveCommand();
 
-            ButtonCommand = new DelegateCommand(async () =>
+            HomeCommand.Subscribe(() =>
             {
-                Flag = false;
-                var r = DialogHost.Show(new MyMessageBox());
-                await Task.Delay(2000);
-                Flag = true;
-                //DialogHost.CloseDialogCommand.Execute(null, null);
-            }, canExecuteCommand);
-
-            ScreenTransitionCommand = new DelegateCommand<string>(screenTransitionExecute);
-
-            ButtonCommand2.Subscribe(async () =>
-            {
-                Flag = false;
-                await Task.Delay(1000);
-                Flag = true;
-
-                FlagProperty2.Value = true;
+                ActiveView = viewModeTable["UpdateVersionView"];
+                /*
+                ModuleInfo item = SelectedItem as ModuleInfo;
+                if (item != null)
+                {
+                    MachineInfo mc = item.Parent as MachineInfo;
+                }
+                */
             });
+            /*
+                        ButtonCommand = new DelegateCommand(async () =>
+                        {
+                            Flag = false;
+                            var r = DialogHost.Show(new MyMessageBox());
+                            await Task.Delay(2000);
+                            Flag = true;
+                            //DialogHost.CloseDialogCommand.Execute(null, null);
+                        }, canExecuteCommand);
 
+                        ScreenTransitionCommand = new DelegateCommand<string>(screenTransitionExecute);
+
+                        ButtonCommand2.Subscribe(async () =>
+                        {
+                            Flag = false;
+                            await Task.Delay(1000);
+                            Flag = true;
+
+                            FlagProperty2.Value = true;
+                        });
+            */
             /*
             //FlagProperty1 が true になったら CutCommand を実行可とする
             CutCommand = FlagProperty1.ToReactiveCommand();
@@ -211,25 +313,32 @@ namespace WpfApp1_cmd.ViewModel
                 //.CombineLatestValuesAreAllFalse().ToReactiveCommand();
             */
             //フラグが一つでも true になったら CutCommand を実行不可とする
-            CutCommand = new[] { FlagProperty1, FlagProperty2, FlagProperty3 }
-                .CombineLatest(x => x.Any(y => y)).ToReactiveCommand();
+            /*
+                        CutCommand = new[] { FlagProperty1, FlagProperty2, FlagProperty3 }
+                            .CombineLatest(x => x.Any(y => y)).ToReactiveCommand();
 
-            CutCommand.Subscribe(() => CutCmdExecute());
+                        CutCommand.Subscribe(() => CutCmdExecute());
 
-            CopyCommand.Subscribe(() => { Debug.WriteLine("Copy"); });
-            PasteCommand.Subscribe(() => { Debug.WriteLine("Paste"); });
+                        CopyCommand.Subscribe(() => { Debug.WriteLine("Copy"); });
+                        PasteCommand.Subscribe(() => { Debug.WriteLine("Paste"); });
 
+
+                        LogMessageChangedCommand = new ReactiveCommand<RoutedPropertyChangedEventArgs<object>>();
+                        //LogMessageChangedCommand.Subscribe(args => LogMessageChanged(args));
+            */
+
+            // ツリービューの選択項目が変更されたときのコマンド
             TreeViewSelectedItemChangedCommand = new ReactiveCommand<RoutedPropertyChangedEventArgs<object>>();
             TreeViewSelectedItemChangedCommand.Subscribe(args => TreeViewSelectedItemChanged(args));
 
             // 転送制御ボタン
-            StartTransferCommand = FlagProperty1.ToReactiveCommand();
-            StartTransferCommand.Subscribe(() => StartTransferExecute() );
+            StartTransferCommand = CanTransferStartFlag.ToReactiveCommandSlim();
+            StartTransferCommand.Subscribe(() => StartTransfer() );
 
-            StopTransferCommand = FlagProperty2.ToReactiveCommand();
+            StopTransferCommand = CanTransferStopFlag.ToReactiveCommandSlim();
             StopTransferCommand.Subscribe(() => StopTransferExecute() );
 
-            QuitApplicationCommand = FlagProperty3.ToReactiveCommand();
+            QuitApplicationCommand = CanAppQuitFlag.ToReactiveCommandSlim();
             QuitApplicationCommand.Subscribe(() => ApplicationShutDown() );
 
         }
@@ -291,17 +400,58 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
         /// <summary>
         ///  LCU の接続状態を確認する
         /// </summary>
-        void LcuNetworkChkCmd()
+        async void LcuNetworkChkCmd()
         {
+            var result = await MsgBox.Show("Error","ErrorCode=E001","IP Address Error","サーバーに接続できませんでした",(int)(MsgDlgType.OK| MsgDlgType.ICON_ERROR));
 
+            if( (string)result == "OK")
+            {
+                Debug.WriteLine("Click OK");
+            }
+            else
+            {
+                Debug.WriteLine("Click out");
+            }
+            /*
+            await Metro.ShowMessageAsync("Error", "ErrorCode=E001", MessageDialogStyle.Affirmative, new MetroDialogSettings() { AffirmativeButtonText = "OK" });
+
+            var controller = await Metro.ShowProgressAsync("please wait...", "message");
+            for(var i = 0; i < 10; i++)
+            {
+                controller.SetProgress(1.0 / 10 * i);
+                controller.SetMessage($"message {i}");
+                await Task.Delay(1000);
+            }
+            await controller.CloseAsync();
+            */
         }
 
         /// <summary>
         /// LCU のディスク容量を確認する
         /// </summary>
-        void LcuDiskChkCmd()
+        public async void LcuDiskChkCmd()
         {
+            LcuInfo lcu = SelectedItem as LcuInfo;
+            if(lcu == null || lcu.LcuCtrl == null)
+            {
+                return;
+            }
+            CancelTokenSrc = new CancellationTokenSource();
+            CancellationToken token = CancelTokenSrc.Token;
 
+            AddLog($"{lcu.Name}::Check Disk Space");
+            List<LcuDiskInfo>? info = await lcu.LcuCtrl.LCU_DiskInfo(token);
+            if( info == null)
+            {
+                AddLog($"{lcu.Name}::Don't get disk space information.");
+                CancelTokenSrc.Dispose();
+                return;
+            }
+            foreach (var item in info)
+            {
+                AddLog($"Drive: {item.driveLetter}, Total: {item.total}, Use: {item.use}, Free: {item.free}");
+            }
+            CancelTokenSrc.Dispose();
         }
 
         /// <summary>
@@ -371,182 +521,69 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
         }
 
         /// <summary>
-        /// 転送開始コマンド
+        /// 転送開始(StartTransferCommand から呼び出される)
         /// </summary>
-        private async void StartTransferExecute()
+        private async void StartTransfer()
         {
-            Debug.WriteLine("StartTransfer");
-            FlagProperty1.Value = false;
-            FlagProperty2.Value = true;
-            FlagProperty3.Value = false;
+            bool ret = true;
 
             /*
-            switch(SelectedItem.ItemType)
+            var result = await MsgBox.Show("確認","Start Transfer","","",(int)(MsgDlgType.OK_CANCEL| MsgDlgType.ICON_INFO));
+            if( result != null && (string)result == "CANCEL")
             {
-                case MachineType.LCU:
-                    LcuInfo lcu = SelectedItem as LcuInfo;
-                    List<string> folders = [
-                        "Fuji/System3/Program/Peripheral/UpdateCommon.inf",
-                        ]; 
-                    lcu.LcuCtrl.CreateFtpFolders(folders,"MCFiles\\");
-                    lcu.LcuCtrl.ClearFtpFolders("MCFiles\\");
-                    break;
-                case MachineType.Machine:
-                    break;
-                case MachineType.Module:
-                    break;
+                return;
             }
             */
-            /*
-            ModuleInfo module = SelectedItem as ModuleInfo;
-            MachineInfo machine = module.Parent;
-            LcuInfo lcu = machine.Parent;
+            
+            DialogTitle = "確認";
+            DialogText = "転送を開始しますか？";
+            var r = await DialogHost.Show(new MyMessageBox());
+            DialogHost.CloseDialogCommand.Execute(null, null);
 
-            await DownloadModuleFiles(lcu, machine, module);
-            */
-            //await TransferExecute();
+            if(r == null || r.ToString() == "CANCEL")
+            {
+                return;
+            }
 
-            FlagProperty1.Value = true;
-            FlagProperty3.Value = true;
-            FlagProperty2.Value = false;
+            AddLog("StartTransfer");
+
+            CanTransferStartFlag.Value = false;
+            CanTransferStopFlag.Value = true;
+            CanAppQuitFlag.Value = false;
+
+            if (Options.HasSwitch("--backup") == true)
+            {
+                ret = await BackupUnitData();
+            }
+
+            if (ret == true)
+            {
+                //ret = await TransferExecute();
+            }
+
+            CanTransferStartFlag.Value = true;
+            CanTransferStopFlag.Value = false;
+            CanAppQuitFlag.Value = true;
         }
 
-        /// <summary>
-        /// データ転送
-        /// </summary>
-        /// <returns></returns>
-        public async Task<bool> TransferExecute()
-        {
-            foreach(var lcu in TreeViewItems)
-            {
-                //if (lcu.Children == null || lcu.LcuCtrl == null || lcu.IsSelected == false)
-                if (lcu.Children == null || lcu.LcuCtrl == null || lcu.IsSelected.Value == false)
-                {
-                    continue;
-                }
-                foreach (var machine in lcu.Children)
-                {
-                    //if( machine.Children == null || machine.Name == null || machine.IsSelected == false)
-                    if( machine.Children == null || machine.Name == null || machine.IsSelected.Value == false)
-                    {
-                        continue;
-                    }
-                    foreach(var module in machine.Children)
-                    {
-                        //if( module.IsSelected == false || module.UnitVersions == null )
-                        if( module.IsSelected.Value == false || module.UnitVersions == null )
-                        {
-                            continue;
-                        }
-
-                        // UpdateCommon.inf の Path のフォルダにファイルを転送する
-                        //   ※ UpdateCommon.inf に記載されているデータは存在するものとする
-                        //       指定されたフォルダにあるUpdateCommon.inf を読み込んでいるので
-                        //
-                        bool ret = await UploadModuleFiles(lcu, machine, module);
-
-                        // LCU 上に作成、転送したファイルを削除する
-                        lcu.LcuCtrl.ClearFtpFolders(Define.LCU_ROOT_PATH);
-                    }
-                }
-            }
-            return true;
-        }
-
-        /// <summary>
-        ///  バージョン情報にあるデータを装置から取得する
-        /// </summary>
-        /// <param name="lcu"></param>
-        /// <param name="machine"></param>
-        /// <param name="module"></param>
-        /// <returns></returns>
-        public async Task<bool> DownloadModuleFiles(LcuInfo lcu, MachineInfo machine, ModuleInfo module)
-        {
-            bool ret;
-
-            //バージョン情報からパスのみを取り出してリスト化
-            List<string> folders = module.UnitVersions.Select(x => x.Path).ToList();
-
-            //LCU上にフォルダを作成する(装置からファイルを取得するフォルダ)
-            string lcuRoot = $"LCU_{module.Pos}\\MCFiles\\";
-            //string lcuRoot = "/MCFiles/";
-            ret = lcu.LcuCtrl.CreateFtpFolders(folders, lcuRoot);
-            if( ret == false)
-            {
-                Debug.WriteLine("CreateFtpFolders Error");
-                return ret;
-            }
-
-            //装置からLCUにファイルを取得する
-            string mcUser = "Administrator";
-            string mcPass = "password";
-            string retMsg = await lcu.LcuCtrl.LCU_Command(GetMcFile.Command(machine.Name, module.Pos, mcUser, mcPass,folders, lcuRoot));
-
-            if (retMsg == "" || retMsg == "Internal Server Error")
-            {
-                Debug.WriteLine("GetMCFile Error");
-                return false;
-            }
-            // LCU からFTPでファイルを取得
-            ret = lcu.LcuCtrl.DownloadFiles(lcuRoot, Define.LOCAL_BACKUP_PATH, folders);
-
-            //LCU 上に作成したファイルを削除
-            ret = lcu.LcuCtrl.ClearFtpFolders(lcuRoot);
-
-            return ret;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="lcu"></param>
-        /// <param name="machine"></param>
-        /// <param name="module"></param>
-        /// <returns></returns>
-        public async Task<bool> UploadModuleFiles(LcuInfo lcu, MachineInfo machine, ModuleInfo module)
-        {
-            bool ret;
-
-            // UpdateCommon.inf の Path のフォルダにファイルを転送する
-            //   ※ UpdateCommon.inf に記載されているデータは存在するものとする
-            //       指定されたフォルダにあるUpdateCommon.inf を読み込んでいるので
-            //
-            //バージョン情報からパスのみを取り出してリスト化
-            List<string> folders = module.UnitVersions.Select(x => x.Path).ToList();
-
-            //LCU上にフォルダを作成する(ファイルを送るフォルダ)
-            string lcuRoot = $"LCU_{module.Pos}\\MCFiles\\";
-            //string lcuRoot = "/MCFiles/";
-            ret = lcu.LcuCtrl.CreateFtpFolders(folders, lcuRoot);
-            if( ret == false)
-            {
-                Debug.WriteLine("CreateFtpFolders Error");
-                return ret;
-            }
-             // LCUに FTPでファイルを送信
-            ret = lcu.LcuCtrl.UploadFiles(lcuRoot, Define.LOCAL_BACKUP_PATH, folders);
-
-            //LCUから装置にファイルを送信するコマンド
-            string mcUser = "Administrator";
-            string mcPass = "password";
-            string retMsg = await lcu.LcuCtrl.LCU_Command(PostMcFile.Command(machine.Name, module.Pos, mcUser, mcPass,folders, lcuRoot));
-
-            if (retMsg == "" || retMsg == "Internal Server Error")
-            {
-                Debug.WriteLine("GetMCFile Error");
-                return false;
-            }
-            return true;
-        }
         /// <summary>
         ///  転送中止
         /// </summary>
         private void StopTransferExecute()
         {
-            Debug.WriteLine("StopTransfer");
-            FlagProperty1.Value = true;
-            FlagProperty2.Value = false;
-            FlagProperty3.Value = true;
+            AddLog("StopTransfer Command");
+
+            //CancellationToken.ThrowIfCancellationRequested();
+
+            if(CancelTokenSrc != null)
+            {
+                CancelTokenSrc.Cancel();
+            }
+/*
+            CanTransferStartFlag.Value = true;
+            CanTransferStopFlag.Value = false;
+            CanAppQuitFlag.Value = true;
+*/
         }
 
         /// <summary>
@@ -566,6 +603,240 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
 
             Application.Current.Shutdown();
         }
+        /// <summary>
+        ///  選択状態にある装置のデータをバックアップする
+        /// </summary>
+        /// <returns></returns>
+        public async Task<bool> BackupUnitData()
+        {
+            CancelTokenSrc = new CancellationTokenSource();
+            CancellationToken token = CancelTokenSrc.Token;
+
+            foreach (var lcu in TreeViewItems)
+            {
+                if (lcu.Children == null || lcu.LcuCtrl == null || lcu.IsSelected.Value == false)
+                {
+                    continue;
+                }
+                foreach (var machine in lcu.Children)
+                {
+                    if( machine.Children == null || machine.Name == null || machine.IsSelected.Value == false)
+                    {
+                        continue;
+                    }
+                    foreach (var module in machine.Children)
+                    {
+                        if (module.IsSelected.Value == false || module.UnitVersions == null)
+                        {
+                            continue;
+                        }
+
+                        // UpdateCommon.inf の Path のフォルダにファイルを転送する
+                        //   ※ UpdateCommon.inf に記載されているデータは存在するものとする
+                        //       指定されたフォルダにあるUpdateCommon.inf を読み込んでいるので
+                        //
+                        try
+                        {
+                            AddLog($"{lcu.Name}::{machine.Name}::{module.Name}::Backup Start");
+
+                            bool ret = await DownloadModuleFiles(lcu, machine, module, Define.LOCAL_BACKUP_PATH,token);
+                            //await Task.Delay(3000,token);
+
+                            AddLog($"{lcu.Name}::{machine.Name}::{module.Name}::Backup End");
+
+                            // LCU 上に作成、転送したファイルを削除する
+                            //lcu.LcuCtrl.ClearFtpFolders(Define.LCU_ROOT_PATH);
+                        }
+                        catch (Exception ex)
+                        {
+                            //if (CanTransferStopFlag.Value == false)
+                            //{
+                                //「Stop」ボタンが押された
+                                DialogTitle = "確認";
+                                DialogText = "転送を中止しますか？";
+                                var r = await DialogHost.Show(new MyMessageBox());
+                                DialogHost.CloseDialogCommand.Execute(null, null);
+
+                                CancelTokenSrc.Dispose();
+                                if (r != null && r.ToString() == "OK")
+                                {
+                                    return false;
+                                }
+                                CancelTokenSrc = new CancellationTokenSource();
+                                token = CancelTokenSrc.Token;
+                            //}
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+        /// <summary>
+        /// データ転送
+        /// </summary>
+        /// <returns></returns>
+        public async Task<bool> TransferExecute()
+        {
+            CancelTokenSrc = new CancellationTokenSource();
+            CancellationToken token = CancelTokenSrc.Token;
+
+            foreach(var lcu in TreeViewItems)
+            {
+                if (lcu.Children == null || lcu.LcuCtrl == null || lcu.IsSelected.Value == false)
+                {
+                    continue;
+                }
+                foreach (var machine in lcu.Children)
+                {
+                    if( machine.Children == null || machine.Name == null || machine.IsSelected.Value == false)
+                    {
+                        continue;
+                    }
+                    foreach(var module in machine.Children)
+                    {
+                        if( module.IsSelected.Value == false || module.UnitVersions == null )
+                        {
+                            continue;
+                        }
+
+                        // UpdateCommon.inf の Path のフォルダにファイルを転送する
+                        //   ※ UpdateCommon.inf に記載されているデータは存在するものとする
+                        //       指定されたフォルダにあるUpdateCommon.inf を読み込んでいるので
+                        //
+                        bool ret = await UploadModuleFiles(lcu, machine, module, token);
+
+                        // LCU 上に作成、転送したファイルを削除する
+                        lcu.LcuCtrl.ClearFtpFolders(Define.LCU_ROOT_PATH);
+                    }
+                }
+            }
+            CancelTokenSrc.Dispose();
+            return true;
+        }
+
+        /// <summary>
+        ///  バージョン情報にあるデータを装置から取得する
+        /// </summary>
+        /// <param name="lcu"></param>
+        /// <param name="machine"></param>
+        /// <param name="module"></param>
+        /// <returns></returns>
+        public async Task<bool> DownloadModuleFiles(LcuInfo lcu, MachineInfo machine, ModuleInfo module, string backupPath, CancellationToken token)
+        {
+            bool ret;
+
+            if( Updates == null)
+            {
+                return false;
+            }
+
+            //装置から取得したUpdateCommon.inf のパスのみを取り出してリスト化(重複を削除)
+            //    ※パスはファイル名を含むので、ファイル名を削除してフォルダのみを取り出す
+            List<string> folders = module.UnitVersions.Select(x => Path.GetDirectoryName(x.Path)).ToList().Distinct().ToList();
+
+            //LCU上にフォルダを作成する(装置からファイルを取得するフォルダ)
+            string lcuRoot = $"LCU_{module.Pos}\\MCFiles\\";
+            //string lcuRoot = "/MCFiles/";
+            ret = lcu.LcuCtrl.CreateFtpFolders(folders, lcuRoot);
+            if( ret == false)
+            {
+                AddLog($"{lcu.Name}::CreateFtpFolders Error");
+                return ret;
+            }
+
+            try
+            {
+                AddLog($"{lcu.Name}::{machine.Name}::{module.Name} GetMcFileList");
+                List<string> fileList = [];
+
+                string mcUser = GetMcUser();
+                string mcPass = GetMcPass();
+                foreach (var folder in folders)
+                {
+                    AddLog($"GetMCFileList::{folder}");
+                    string cmdRet = await lcu.LcuCtrl.LCU_Command(GetMcFileList.Command(machine.Name, module.Pos, mcUser, mcPass, folder),token);
+                    GetMcFileList? list = GetMcFileList.FromJson(cmdRet);
+
+                    // 取得結果から、フォルダとファイルのリストを作成
+                    if (list != null)
+                    {
+                        if (list.ftp != null && list.ftp.data != null)
+                        {
+                            foreach (var item in list.ftp.data)
+                            {
+                                foreach (var file in item.list)
+                                {
+                                    fileList.Add(item.mcPath + "/" + file.name);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                //装置からLCUにファイルを取得する
+                string retMsg = await lcu.LcuCtrl.LCU_Command(GetMcFile.Command(machine.Name, module.Pos, mcUser, mcPass, fileList, lcuRoot),token);
+
+                if (retMsg == "" || retMsg == "Internal Server Error")
+                {
+                    AddLog($"{lcu.Name}::{machine.Name}::{module.Name}::GetMCFile Error");
+                    return false;
+                }
+                // LCU からFTPでファイルを取得 
+                ret = await lcu.LcuCtrl.DownloadFiles(lcuRoot, backupPath, fileList, token);
+
+                //LCU 上に作成したファイルを削除
+                ret = lcu.LcuCtrl.ClearFtpFolders(lcuRoot);
+            }
+            catch (Exception e)
+            {
+                AddLog("DownloadModuleFiles Error");
+                throw;
+            }
+            return ret;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="lcu"></param>
+        /// <param name="machine"></param>
+        /// <param name="module"></param>
+        /// <returns></returns>
+        public async Task<bool> UploadModuleFiles(LcuInfo lcu, MachineInfo machine, ModuleInfo module, CancellationToken token)
+        {
+            bool ret;
+
+            // UpdateCommon.inf の Path のフォルダにファイルを転送する
+            //   ※ UpdateCommon.inf に記載されているデータは存在するものとする
+            //       指定されたフォルダにあるUpdateCommon.inf を読み込んでいるので
+            //
+            //バージョン情報からパスのみを取り出してリスト化
+            List<string> folders = module.UnitVersions.Select(x => Path.GetDirectoryName(x.Path)).ToList();
+
+            //LCU上にフォルダを作成する(ファイルを送るフォルダ)
+            string lcuRoot = $"LCU_{module.Pos}\\MCFiles\\";
+            //string lcuRoot = "/MCFiles/";
+            ret = lcu.LcuCtrl.CreateFtpFolders(folders, lcuRoot);
+            if( ret == false)
+            {
+                Debug.WriteLine("CreateFtpFolders Error");
+                return ret;
+            }
+             // LCUに FTPでファイルを送信
+            ret = lcu.LcuCtrl.UploadFiles(lcuRoot, Define.LOCAL_BACKUP_PATH, folders);
+
+            //LCUから装置にファイルを送信するコマンド
+            string mcUser = GetMcUser();
+            string mcPass = GetMcPass();
+            string retMsg = await lcu.LcuCtrl.LCU_Command(PostMcFile.Command(machine.Name, module.Pos, mcUser, mcPass,folders, lcuRoot),token);
+
+            if (retMsg == "" || retMsg == "Internal Server Error")
+            {
+                Debug.WriteLine("GetMCFile Error");
+                return false;
+            }
+            return true;
+        }
 
         /// <summary>
         ///  ツリーの選択状態が変更されたときの処理
@@ -580,7 +851,7 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                 return;
             }
             SelectedItem = item;
-            Debug.WriteLine($"TreeViewSelectedItemChanged={item.Name}:{item.ItemType}");
+            AddLog($"TreeViewSelectedItemChanged={item.Name}:{item.ItemType}");
 
             switch (item.ItemType)
             {
@@ -606,7 +877,7 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                             break;
                         }
                     }
-                    CanExecuteLcuCommand.Value = false; // LCU コマンドを実行可にする
+                    CanExecuteLcuCommand.Value = false; // LCU コマンドを実行不可にする
                     ActiveView = viewModeTable[$"MachineView_{item.Name}"];
                     break;
                 case MachineType.Module:
@@ -635,10 +906,16 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                                     if (module.UnitVersions.Count == 0)
                                     {
                                         //初めての場合はバージョン情報を取得する
-                                        IsTreeEnabled = false;
+                                        IsTreeEnabled.Value = false;
                                         var r = DialogHost.Show(new WaitProgress("ユニット情報読み込み中"));    //時間がかかるので、クルクルを表示
-                                        var ret = await CreateVersionInfo(lcu, machine, module);
+
+                                        CancellationTokenSource tokenSource = new();
+
+                                        var ret = await CreateVersionInfo(lcu, machine, module, tokenSource.Token);
                                         DialogHost.CloseDialogCommand.Execute(null, null);
+                                        IsTreeEnabled.Value = true;
+
+                                        tokenSource.Dispose();
 
                                         if (ret != null )
                                         {
@@ -650,6 +927,10 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                                             // LCU からの情報取得に失敗した場合
                                             return;
                                         }
+                                    }
+                                    else
+                                    {
+                                        viewModeTable.Add($"ModuleView_{item.Name}", new ModuleViewModel(module.UnitVersions, Updates));
                                     }
                                     ActiveView = viewModeTable[$"ModuleView_{item.Name}"];
                                     return;
@@ -677,12 +958,11 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
         /// <param name="machine"></param>
         /// <param name="module"></param>
         /// <returns></returns>
-        public async Task<ReactiveCollection<UnitVersion>?> CreateVersionInfo(LcuInfo lcu, MachineInfo machine, ModuleInfo module)
+        public async Task<ReactiveCollection<UnitVersion>?> CreateVersionInfo(LcuInfo lcu, MachineInfo machine, ModuleInfo module, CancellationToken token)
         //public async Task<ObservableCollection<UnitVersion>?> CreateVersionInfo(LcuInfo lcu, MachineInfo machine, ModuleInfo module)
         {
             bool ret;
 
-            //if( lcu.LcuCtrl == null || lcu.IsSelected == false)
             if( lcu.LcuCtrl == null || lcu.IsSelected.Value == false)
             {
                 return null;
@@ -695,14 +975,14 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
             //string lcuPath = "/MCFiles/ "+ Define.MC_PERIPHERAL_PATH;
 
             // UpdateCommon.inf を取得するフォルダを作成
-            ret = lcu.LcuCtrl.CreateFtpFolders(new List<string> { infoFile }, lcuRoot);
+            ret = lcu.LcuCtrl.CreateFtpFolders(new List<string> { Path.GetDirectoryName(infoFile) }, lcuRoot);
 
             //装置から UpdateCommon.inf を取得してテンポラリに保存
-            ret = await lcu.LcuCtrl.GetMachineFile(lcu.Name, machine.Name, module.Pos, infoFile,lcuRoot,tmpDir);
+            ret = await lcu.LcuCtrl.GetMachineFile(lcu.Name, machine.Name, module.Pos, infoFile,lcuRoot,tmpDir, token);
 
             if( ret == false)
             {
-                Debug.WriteLine("GetMachineFile Error");
+                AddLog($"{lcu.Name}:{machine.Name}:{module.Pos}={infoFile} Get error");
                 return null;
             }
             IniFileParser parser = new(tmpDir + Define.UPDATE_INFO_FILE);
@@ -714,32 +994,62 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
 
             //バージョン情報を生成
             ReactiveCollection<UnitVersion> versions = [];
-            //ObservableCollection<UnitVersion> versions = [];
+
+            // ユニット一覧作成時のオプション
+            //   --matchUnit が指定されている場合は、UpdateCommon.inf に記載されているユニットのみを対象とする
+            bool opt  = Options.GetOptionBool("--matchUnit", false);
+            bool only = Options.GetOptionBool("--diffOnly", false);
 
             foreach (var unit in sec)
             {
-                UnitVersion version = new()
+                //バージョンアップの中に該当するユニットのインデックスを取得(ない場合は -1)
+                int idx = -1;
+                string newVer = "N/A";
+
+                if (Updates != null )
                 {
-                    Name = unit,
-                    Attribute = parser.GetValue(unit, "Attribute"),
-                    Path = parser.GetValue(unit, "Path"),
-                    CurVersion = parser.GetValue(unit, "Version"),
-                    NewVersion = "N/A",
-                    Parent = module
-                };
-                versions.Add(version);
+                    idx = Updates.Select((v, i) => new { Value = v, Index = i }).FirstOrDefault(x => x.Value.Name == unit)?.Index ?? -1;
+                }
+
+                if (idx != -1)
+                {
+                    newVer = Updates[idx].Version;
+                    if( only == true && parser.GetValue(unit, "Version") == newVer)
+                    {
+                        //同じバージョンは対象外とするオプション指定の場合
+                        continue;
+                    }
+                    UnitVersion version = new()
+                    {
+                        Name = unit,
+                        Attribute = parser.GetValue(unit, "Attribute"),
+                        Path = parser.GetValue(unit, "Path"),
+                        CurVersion = parser.GetValue(unit, "Version"),
+                        NewVersion = newVer,
+                        Parent = module
+                    };
+                    versions.Add(version);
+                }
+                else
+                {
+                    //アップデートデータ内に対象ユニットが無い場合
+                    if( opt == false)
+                    {
+                        //存在するユニット以外も対しようとする場合(--matchUnit==false)
+                        UnitVersion version = new()
+                        {
+                            Name = unit,
+                            Attribute = parser.GetValue(unit, "Attribute"),
+                            Path = parser.GetValue(unit, "Path"),
+                            CurVersion = parser.GetValue(unit, "Version"),
+                            NewVersion = newVer,
+                            Parent = module
+                        };
+                        versions.Add(version);
+                    }
+                }
             }
             return versions;
-        }
-
-
-        private void CutCmdExecute()
-        {
-            Debug.WriteLine("Cut");
-        }
-        private bool canExecuteCommand()
-        {
-            return Flag;
         }
 
         private void screenTransitionExecute(string screenName)
@@ -754,27 +1064,12 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
             set => SetProperty(ref _textValue,value);
         }
 
- /*
-        public void ToggleTheme(bool isDark)
-        {
-            ToggleMetroTheme(isDark);
-            ToggleMdTheme(isDark);
-        }
-
-        private void ToggleMdTheme(bool isDark)
-        {
-            var pallet = new PaletteHelper();
-            var theme = pallet.GetTheme();
-        }
-
-        private void ToggleMetroTheme(bool isDark)
-            => ThemeManager.Current.ChangeTheme(Application.Current, isDark ? "Dark.Blue" : "Light.Blue");
-*/
         /// <summary>
         /// ライン情報を取得する
         /// </summary>
         private async void LoadLineInfo()
         {
+            AddLog("LoadLineInfo");
             /*
             NeximDataControl.NeximDataControlApi nexim = new();
 
@@ -786,32 +1081,24 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
             TreeViewItems = new ReactiveCollection<LcuInfo>
             {
                 new (){ Name = "localhost:9000", ItemType=MachineType.LCU},
-                new (){ Name = "ch-lcu33",       ItemType=MachineType.LCU},
+                //new (){ Name = "ch-lcu33",       ItemType=MachineType.LCU},
             };
             TreeViewItems.ObserveAddChanged().Subscribe( x => Debug.WriteLine(x.Name));
 
-            /*
-            TreeViewItems = new ObservableCollection<LcuInfo>
-            {
-                // Add Localhost[Debuge用 -> localhost:9000で仮想LCU(WebAPIサーバーを起動して確認する)]
-                new (){ Name = "localhost:9000",  ItemType=MachineType.LCU},
-                //new (){ Name = "localhost:9000", IsSelected = true,  ItemType=MachineType.LCU},
-                //new (){ Name = "DESKTOP-P98TLDK",IsSelected = true,  ItemType=MachineType.LCU},
-                //new (){ Name = "ch-lcu33",       IsSelected = false, ItemType=MachineType.LCU},
-            };
-        */
-            // 起動時に情報取得する場合
+            // LCU, LCU下のライン 情報を取得
+            CancellationTokenSource tokenSource = new();
             foreach (var lcu in TreeViewItems)
             {
-                bool ret = await UpdateLcuInfo(lcu);
+                bool ret = await UpdateLcuInfo(lcu, tokenSource.Token);
             }
+            tokenSource.Dispose();
         }
 
         /// <summary>
         /// LCUの情報を更新する
         /// </summary>
         /// <param name="LcuInfo">LCU情報</param>
-        public async Task<bool> UpdateLcuInfo(LcuInfo lcu) 
+        public async Task<bool> UpdateLcuInfo(LcuInfo lcu, CancellationToken token) 
         {
             if( lcu.LcuCtrl == null)
             {
@@ -821,7 +1108,7 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
             if (lcu.LcuCtrl.FtpUser == null)
             {
                 // FTPアカウント情報を取得
-                var str = await lcu.LcuCtrl.LCU_Command(FtpData.Command());
+                var str = await lcu.LcuCtrl.LCU_Command(FtpData.Command(),token);
                 FtpData? data = FtpData.FromJson(str);
                 if(data == null)
                 {
@@ -840,7 +1127,7 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                 lcu.LcuCtrl.FtpPassword = lcu.FtpPassword;
 
                 // LCU バージョン取得
-                str = await lcu.LcuCtrl.LCU_Command(LcuVersion.Command());
+                str = await lcu.LcuCtrl.LCU_Command(LcuVersion.Command(),token);
                 IList<LcuVersion> versionInfo = LcuVersion.FromJson(str);
                 lcu.Version = versionInfo.Where(x => x.itemName == "Fuji LCU Communication Server Service").First().itemVersion;
             }
@@ -904,6 +1191,12 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                             };
                             baseInfo.Children.Add(moduleItem);
                             machine.Children.Add(moduleItem);
+
+                            var ret = await CreateVersionInfo(lcu, machine, moduleItem, token);
+                            if(ret != null)
+                            {
+                                moduleItem.UnitVersions = ret;
+                            }   
                         }
                     }
                     lcu.Children.Add(machine);

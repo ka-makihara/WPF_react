@@ -266,13 +266,16 @@ namespace WpfApp1_cmd
             }
 
             // 装置の選択で装置下の全モジュールの選択を変更する
-            if (UpdateVersionInfo)
+            if (Options.GetOptionBool("--module_selection_unit",false) == true)
             {
-                foreach (var unit in UnitVersions)
+                if (UpdateVersionInfo)
                 {
-                    unit.IsSelected.Value = value;
+                    foreach (var unit in UnitVersions)
+                    {
+                        unit.IsSelected.Value = value;
+                    }
                 }
-            }
+            } 
         }
 
         private bool UpdateVersionInfo { get; set; } = true;

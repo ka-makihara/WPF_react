@@ -21,8 +21,6 @@ namespace WpfApp1_cmd.ViewModel
 
         private async void LcuCommandTestExec()
         {
-            bool ret = await lcuCtrl.LCU_Version();
-
             Console.WriteLine("LcuCommandTestExec");
         }
 
