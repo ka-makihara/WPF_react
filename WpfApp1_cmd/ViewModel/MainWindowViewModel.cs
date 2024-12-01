@@ -213,19 +213,41 @@ namespace WpfApp1_cmd.ViewModel
         /// <summary>
         /// 
         /// </summary>
+        public bool _lineInfoLoaded = false;
         private async void LoadLineInfo_Start()
         {
-            var controller = await Metro.ShowProgressAsync("please wait...", "message");
-            
+            ProgressDialogController controller = await Metro.ShowProgressAsync("please wait...", "Read Machine information.");
+
+            Task task = Task.Run(() => { LoadLineInfo(controller); });
+
+            Debug.WriteLine($"{nameof(task.IsCompleted)} ; {task.IsCompleted}");
+            for (var i = 0; i < 1000; i++)
+            {
+                Debug.WriteLine($"{nameof(task.IsCompleted)} ; {task.IsCompleted}");
+                if (task.IsCompleted)
+                {
+                    if (_lineInfoLoaded == true)
+                    {
+                        break;
+                    }
+                }
+                controller.SetProgress(1.0 / 1000 * i);
+                //controller.SetMessage($"message {i}");
+                await Task.Delay(500);
+            }
+/*
             for(var i = 0; i < 10; i++)
             {
                 controller.SetProgress(1.0 / 10 * i);
                 controller.SetMessage($"message {i}");
                 await Task.Delay(1000);
             }
-            
+*/
+            //DialogService dialogService = new DialogService("DialogHost");
+            //bool r = await dialogService.Question("転送を開始しますか？");
+
             //var r = DialogHost.Show(new WaitProgress("ユニット情報読み込み中"));    //時間がかかるので、クルクルを表示
-            LoadLineInfo();
+            //LoadLineInfo();
             //DialogHost.CloseDialogCommand.Execute(null, null);
 
             OnPropertyChanged(nameof(TreeViewItems));
@@ -906,6 +928,7 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                                     if (module.UnitVersions.Count == 0)
                                     {
                                         //初めての場合はバージョン情報を取得する
+                                        /*
                                         IsTreeEnabled.Value = false;
                                         var r = DialogHost.Show(new WaitProgress("ユニット情報読み込み中"));    //時間がかかるので、クルクルを表示
 
@@ -927,6 +950,7 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                                             // LCU からの情報取得に失敗した場合
                                             return;
                                         }
+                                        */
                                     }
                                     else
                                     {
@@ -958,7 +982,7 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
         /// <param name="machine"></param>
         /// <param name="module"></param>
         /// <returns></returns>
-        public async Task<ReactiveCollection<UnitVersion>?> CreateVersionInfo(LcuInfo lcu, MachineInfo machine, ModuleInfo module, CancellationToken token)
+        public async Task<ReactiveCollection<UnitVersion>?> CreateVersionInfo(LcuInfo lcu, MachineInfo machine, ModuleInfo module, ProgressDialogController ctrl, CancellationToken token)
         //public async Task<ObservableCollection<UnitVersion>?> CreateVersionInfo(LcuInfo lcu, MachineInfo machine, ModuleInfo module)
         {
             bool ret;
@@ -967,6 +991,8 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
             {
                 return null;
             }
+
+            ctrl.SetMessage($"{lcu.Name}::{machine.Name}::{module.Name} Get Update Info");
 
             string tmpDir = Path.GetTempPath();
 
@@ -1028,6 +1054,7 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                         NewVersion = newVer,
                         Parent = module
                     };
+                    ctrl.SetMessage($"{lcu.Name}::{machine.Name}::{module.Name}::{unit}={version.CurVersion}");
                     versions.Add(version);
                 }
                 else
@@ -1045,6 +1072,7 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                             NewVersion = newVer,
                             Parent = module
                         };
+                        ctrl.SetMessage($"{lcu.Name}::{machine.Name}::{module.Name}::{unit}={version.CurVersion}");
                         versions.Add(version);
                     }
                 }
@@ -1067,9 +1095,9 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
         /// <summary>
         /// ライン情報を取得する
         /// </summary>
-        private async void LoadLineInfo()
+        private async Task<bool> LoadLineInfo(ProgressDialogController ctrl)
         {
-            AddLog("LoadLineInfo");
+            AddLog("LoadLineInfo Start");
             /*
             NeximDataControl.NeximDataControlApi nexim = new();
 
@@ -1089,16 +1117,22 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
             CancellationTokenSource tokenSource = new();
             foreach (var lcu in TreeViewItems)
             {
-                bool ret = await UpdateLcuInfo(lcu, tokenSource.Token);
+                ctrl.SetMessage($"reading {lcu.Name}");
+                bool ret = await UpdateLcuInfo(lcu, ctrl, tokenSource.Token);
             }
             tokenSource.Dispose();
+
+            AddLog("LoadLineInfo End");
+            _lineInfoLoaded = true;
+
+            return true;
         }
 
         /// <summary>
         /// LCUの情報を更新する
         /// </summary>
         /// <param name="LcuInfo">LCU情報</param>
-        public async Task<bool> UpdateLcuInfo(LcuInfo lcu, CancellationToken token) 
+        public async Task<bool> UpdateLcuInfo(LcuInfo lcu,ProgressDialogController ctrl, CancellationToken token) 
         {
             if( lcu.LcuCtrl == null)
             {
@@ -1130,6 +1164,8 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                 str = await lcu.LcuCtrl.LCU_Command(LcuVersion.Command(),token);
                 IList<LcuVersion> versionInfo = LcuVersion.FromJson(str);
                 lcu.Version = versionInfo.Where(x => x.itemName == "Fuji LCU Communication Server Service").First().itemVersion;
+
+                ctrl.SetMessage($"LCU:{lcu.Name} Version={lcu.Version}");
             }
 
             //装置情報が未取得の場合
@@ -1168,6 +1204,7 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                         Machine = mc,
                         Parent = lcu,
                     };
+                    ctrl.SetMessage($"Machine={mc.MachineName}");
                     foreach (var base_ in mc.Bases)
                     {
                         BaseInfo baseInfo = new()
@@ -1189,10 +1226,11 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                                 Parent = machine,
                                 IPAddress = base_.IpAddr,
                             };
+                            ctrl.SetMessage($"Module={module.DispModule}");
                             baseInfo.Children.Add(moduleItem);
                             machine.Children.Add(moduleItem);
 
-                            var ret = await CreateVersionInfo(lcu, machine, moduleItem, token);
+                            var ret = await CreateVersionInfo(lcu, machine, moduleItem,ctrl, token);
                             if(ret != null)
                             {
                                 moduleItem.UnitVersions = ret;

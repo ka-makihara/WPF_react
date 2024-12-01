@@ -166,7 +166,7 @@
                     </DataTemplate>
                 </Grid.Resources>
 
-                <materialDesign:DialogHost DialogTheme="Inherit" CloseOnClickAway="true" VerticalAlignment="Top">
+                <materialDesign:DialogHost DialogTheme="Inherit" CloseOnClickAway="true" Identifier="DialogHost">
                     <mahApps:TransitioningContentControl Content="{Binding ActiveView}" Transition="RightReplace" Height="330"  />
                 </materialDesign:DialogHost>
 
