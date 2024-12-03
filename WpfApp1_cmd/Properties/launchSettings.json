@@ -2,7 +2,7 @@
   "profiles": {
     "WpfApp1_cmd": {
       "commandName": "Project",
-      "commandLineArgs": "--dataFolder C:\\Users\\ka.makihara\\develop\\Peripheral\r\n--matchUnit=true\r\n--backup\r\n--diffOnly=false\r\n--module_selection_unit=false"
+      "commandLineArgs": "--dataFolder C:\\Users\\ka.makihara\\develop\\Peripheral\r\n--matchUnit=true\r\n--backup=C:\\Users\\ka.makihara\\UTT_Backup\r\n--diffOnly=true\r\n--module_selection_unit=false"
     }
   }
 }

@@ -26,6 +26,7 @@ namespace WpfApp1_cmd
         public MachineType? ItemType { get => _itemType; set => _itemType = value; }
 
         public ReactivePropertySlim<bool?> IsSelected { get; set; } = new ReactivePropertySlim<bool?>(true);
+        public ReactivePropertySlim<bool?> IsExpanded { get; set; } = new ReactivePropertySlim<bool?>(true);
 
         public CheckableItem()
         {
@@ -104,6 +105,8 @@ namespace WpfApp1_cmd
         public string Version { get; set; } = "V1.00";
         private LcuCtrl? _lcuCtrl;
         public LcuCtrl? LcuCtrl { get => _lcuCtrl; set =>  _lcuCtrl = value; }
+        public LineInfo LineInfo { get; set; }
+        public long DiskSpace { get; set; }
     }
 
     public class MachineInfo : CheckableItem
@@ -285,8 +288,16 @@ namespace WpfApp1_cmd
         public MachineInfo? Parent { get; set; }
 
         // Treeで表示するためには Children が必要(表示させないためにプロパティを UnitVersions としている)
-        //private ReactiveCollection<UnitVersion> _unitVersions = [];
-        public ReactiveCollection<UnitVersion> UnitVersions = [];
+        private ReactiveCollection<UnitVersion> _unitVersions = [];
+        public ReactiveCollection<UnitVersion> UnitVersions
+        {
+            get => _unitVersions;
+            set
+            {
+                _unitVersions = value;
+                SetProperty(ref _unitVersions, value);
+            }
+        }
         /*
         private ObservableCollection<UnitVersion> _unitVersions = [];
         public ObservableCollection<UnitVersion> UnitVersions
@@ -321,7 +332,21 @@ namespace WpfApp1_cmd
         public int ID {get => Module.ModuleId; }
         public int Pos { get => Module.LogicalPos; }
         public string IPAddress { get; set; } = ""; // 本来Moduleにはない情報だが、アクセスの利便性のために追加
+        public IniFileParser? UpdateInfo { get; set; } = null;
 
+        public List<string> UpdateFiles ()
+        {
+            List<string> paths = [];
+
+            if (UpdateInfo != null)
+            {
+                foreach (var sec in UpdateInfo.SectionCount())
+                {
+                    paths.Add(UpdateInfo.GetValue(sec, "Path"));
+                }
+            }
+            return paths;
+        }
         private void AddUnitVersion(UnitVersion unitVersion)
         {
             unitVersion.Parent = this;

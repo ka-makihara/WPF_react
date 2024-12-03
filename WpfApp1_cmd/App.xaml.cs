@@ -1,6 +1,7 @@
 ﻿using System.Configuration;
 using System.Data;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
 
@@ -160,6 +161,24 @@ namespace WpfApp1_cmd
             // --opt=true/false 以外に　--opt だけの場合は true とする
             return HasSwitch(opt);
             //return value;
+        }
+    }
+
+    public class Utility
+    {
+        public static long GetDirectorySize(DirectoryInfo dirinfo)
+        {
+            long size = 0;
+
+            foreach (FileInfo fi in dirinfo.GetFiles())
+            {
+                size += fi.Length;
+            }
+            foreach (DirectoryInfo di in dirinfo.GetDirectories())
+            {
+                size += GetDirectorySize(di);
+            }
+            return size;
         }
     }
 

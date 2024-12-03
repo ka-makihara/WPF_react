@@ -28,6 +28,8 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using MahApps.Metro.Controls;
 using MahApps.Metro.Controls.Dialogs;
+using System.Windows.Input;
+using System.IO.Packaging;
 
 namespace WpfApp1_cmd.ViewModel
 {
@@ -44,6 +46,9 @@ namespace WpfApp1_cmd.ViewModel
         public CancellationToken Token => Cts.Token;
 
         public ReactiveCommand WindowLoadedCommand { get; } = new ReactiveCommand();
+
+        public ReactiveCommand TreeViewCommand { get; } = new ReactiveCommand();
+
         /*
         private ObservableCollection<RichTextItem> _logMessage = [];// new RichTextItem() { Text = "original", Color = Colors.Wheat };
         public ObservableCollection<RichTextItem> LogMessage
@@ -170,6 +175,13 @@ namespace WpfApp1_cmd.ViewModel
         // TreeViewを操作可能か
         public ReactiveProperty<bool> IsTreeEnabled { get; } = new ReactiveProperty<bool>(true);
 
+        //メニューの有効無効
+        public bool IsFileMenuEnabled { get; set; } = true;
+        public bool IsLcuMenuEnabled { get; set; } = true;
+
+        //updateCommon.inf のパス(デフォルトではアプリのパスとする)
+        public string UpdateRootPath { get; set; } = System.Reflection.Assembly.GetExecutingAssembly().Location;
+
         /// <summary>
         ///  装置のFTPユーザー名を取得する(from DLL)
         /// </summary>
@@ -211,14 +223,18 @@ namespace WpfApp1_cmd.ViewModel
         }
 
         /// <summary>
-        /// 
+        /// 起動時、Windowsのロード後に呼ばれる
         /// </summary>
-        public bool _lineInfoLoaded = false;
+        public bool _lineInfoLoaded = false;        // line 情報の読み込み完了フラグ
         private async void LoadLineInfo_Start()
         {
-            ProgressDialogController controller = await Metro.ShowProgressAsync("please wait...", "Read Machine information.");
+            CancellationTokenSource cts = new CancellationTokenSource();
+            ProgressDialogController controller = await Metro.ShowProgressAsync("Read Machine information ...", "");
 
-            Task task = Task.Run(() => { LoadLineInfo(controller); });
+            controller.SetIndeterminate();// 進捗(?)をそれらしく流す・・・
+            controller.SetCancelable(true); // キャンセルボタンを表示する
+
+            Task task = Task.Run(() => { LoadLineInfo(controller, cts.Token); });
 
             Debug.WriteLine($"{nameof(task.IsCompleted)} ; {task.IsCompleted}");
             for (var i = 0; i < 1000; i++)
@@ -226,33 +242,25 @@ namespace WpfApp1_cmd.ViewModel
                 Debug.WriteLine($"{nameof(task.IsCompleted)} ; {task.IsCompleted}");
                 if (task.IsCompleted)
                 {
+                    // タスクの完了を待つ(※なぜか正しく取得できないので、変数を使用する)
                     if (_lineInfoLoaded == true)
                     {
                         break;
                     }
                 }
-                controller.SetProgress(1.0 / 1000 * i);
-                //controller.SetMessage($"message {i}");
-                await Task.Delay(500);
-            }
-/*
-            for(var i = 0; i < 10; i++)
-            {
-                controller.SetProgress(1.0 / 10 * i);
-                controller.SetMessage($"message {i}");
-                await Task.Delay(1000);
-            }
-*/
-            //DialogService dialogService = new DialogService("DialogHost");
-            //bool r = await dialogService.Question("転送を開始しますか？");
+                if( controller.IsCanceled == true)
+                {
+                    cts.Cancel();
+                    break;
+                }
 
-            //var r = DialogHost.Show(new WaitProgress("ユニット情報読み込み中"));    //時間がかかるので、クルクルを表示
-            //LoadLineInfo();
-            //DialogHost.CloseDialogCommand.Execute(null, null);
+                await Task.Delay(100);
+            }
 
             OnPropertyChanged(nameof(TreeViewItems));
 
             await controller.CloseAsync();
+
         }
         public MainWindowViewModel()
         {
@@ -262,7 +270,14 @@ namespace WpfApp1_cmd.ViewModel
             {
                 DataFolder = dataFolder;
                 Updates = ReadUpdateCommon(dataFolder + "\\UpdateCommon.inf");
+                UpdateRootPath = dataFolder;
                 AddLog($"Read {dataFolder}/UpdateCommon.inf");
+                IsFileMenuEnabled = true;
+            }
+            else
+            {
+                IsFileMenuEnabled = true;
+                IsLcuMenuEnabled = true;
             }
 
             //ビューの生成
@@ -363,12 +378,22 @@ namespace WpfApp1_cmd.ViewModel
             QuitApplicationCommand = CanAppQuitFlag.ToReactiveCommandSlim();
             QuitApplicationCommand.Subscribe(() => ApplicationShutDown() );
 
+            //TreeView 右クリックメニューのテスト
+            TreeViewCommand.Subscribe((x) => { TreeViewMenu(x); });
+
+        }
+
+        private void TreeViewMenu(object x)
+        {
+            CheckableItem item = x as CheckableItem;
+
+            Debug.WriteLine($"TreeViewMenu:{item.Name}");
         }
 
         /// <summary>
         ///  ユニットアップデートデータのフォルダを選択して読み込む
         /// </summary>
-        public void FileOpenCmd()
+        public async void FileOpenCmd()
         {
             using (var cofd = new CommonOpenFileDialog()
             {
@@ -384,12 +409,67 @@ namespace WpfApp1_cmd.ViewModel
                     if( Path.Exists(cofd.FileName + "\\UpdateCommon.inf") == false)
                     {
                         AddLog("UpdateCommon.inf が見つかりません");
+                        var result = await MsgBox.Show("Error","ErrorCode=E004","Can not Found UpdateInfo","UpdateCommon.inf not exist.",(int)(MsgDlgType.OK| MsgDlgType.ICON_ERROR),"DataGridView");
                         return;
                     }
                     Updates = ReadUpdateCommon(cofd.FileName + "\\UpdateCommon.inf");
 
+                    DirectoryInfo di = new DirectoryInfo(cofd.FileName);
+
+                    long dataSize = Utility.GetDirectorySize(di);
+
+                    //バージョン情報ビューの更新
                     viewModeTable["UpdateVersionView"] = new UpdateVersionViewModel(Updates);
-                    ActiveView = viewModeTable["UpdateVersionView"];
+
+                    //アップデートデータが変更されたので、 モジュールのバージョン情報をクリアする
+                    foreach (LcuInfo lcu in TreeViewItems)
+                    {
+                        foreach(MachineInfo machine in lcu.Children)
+                        {
+                            foreach (ModuleInfo module in machine.Children)
+                            {
+                                module.UnitVersions.Clear();
+                            }
+                        }
+                    }
+
+                    // モジュールビューを再生成する
+                    CancellationTokenSource cts = new CancellationTokenSource();
+                    foreach (LcuInfo lcu in TreeViewItems)
+                    {
+                        foreach(MachineInfo machine in lcu.Children)
+                        {
+                            foreach (ModuleInfo module in machine.Children)
+                            {
+                                var ret = await CreateVersionInfo(lcu, machine, module, null, cts.Token);
+                                if(ret != null)
+                                {
+                                    module.UnitVersions = ret;
+                                    if( viewModeTable.ContainsKey($"ModuleView_{module.Name}") == true)
+                                    {
+                                        viewModeTable[$"ModuleView_{module.Name}"] = new ModuleViewModel( module.UnitVersions,Updates);
+                                    }
+                                    else
+                                    {
+                                        viewModeTable.Add($"ModuleView_{module.Name}", new ModuleViewModel(module.UnitVersions, Updates));
+                                    }
+                                }   
+                            }
+                        }   
+                    }
+                    cts.Dispose();
+
+                    ModuleInfo? item = SelectedItem as ModuleInfo;
+                    if(item != null)
+                    {
+                        ActiveView = viewModeTable[$"ModuleView_{item.Name}"];
+                    }
+                    /*
+                    else
+                    {
+                        ActiveView = viewModeTable["UpdateVersionView"];
+                    }
+                    */
                 }
             }
 
@@ -424,7 +504,7 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
         /// </summary>
         async void LcuNetworkChkCmd()
         {
-            var result = await MsgBox.Show("Error","ErrorCode=E001","IP Address Error","サーバーに接続できませんでした",(int)(MsgDlgType.OK| MsgDlgType.ICON_ERROR));
+            var result = await MsgBox.Show("Error","ErrorCode=E001","IP Address Error","サーバーに接続できませんでした",(int)(MsgDlgType.OK| MsgDlgType.ICON_ERROR),"DataGridView");
 
             if( (string)result == "OK")
             {
@@ -451,12 +531,12 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
         /// <summary>
         /// LCU のディスク容量を確認する
         /// </summary>
-        public async void LcuDiskChkCmd()
+        public async Task<long> LcuDiskChkCmd()
         {
             LcuInfo lcu = SelectedItem as LcuInfo;
             if(lcu == null || lcu.LcuCtrl == null)
             {
-                return;
+                return 0;
             }
             CancelTokenSrc = new CancellationTokenSource();
             CancellationToken token = CancelTokenSrc.Token;
@@ -467,13 +547,17 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
             {
                 AddLog($"{lcu.Name}::Don't get disk space information.");
                 CancelTokenSrc.Dispose();
-                return;
+                return 0;
             }
             foreach (var item in info)
             {
                 AddLog($"Drive: {item.driveLetter}, Total: {item.total}, Use: {item.use}, Free: {item.free}");
             }
             CancelTokenSrc.Dispose();
+
+            long diskSpace = long.Parse(info.Find(x => x.driveLetter == "D").free);
+
+            return diskSpace;
         }
 
         /// <summary>
@@ -559,7 +643,7 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
             
             DialogTitle = "確認";
             DialogText = "転送を開始しますか？";
-            var r = await DialogHost.Show(new MyMessageBox());
+            var r = await DialogHost.Show(new MyMessageBox(),"DataGridView");
             DialogHost.CloseDialogCommand.Execute(null, null);
 
             if(r == null || r.ToString() == "CANCEL")
@@ -573,9 +657,11 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
             CanTransferStopFlag.Value = true;
             CanAppQuitFlag.Value = false;
 
-            if (Options.HasSwitch("--backup") == true)
+            string? backupPath = Options.GetOption("--backup");
+
+            if( backupPath != null)
             {
-                ret = await BackupUnitData();
+                ret = await BackupUnitData(backupPath);
             }
 
             if (ret == true)
@@ -615,7 +701,7 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
         {
             DialogTitle = "確認";
             DialogText = "アプリケーションを終了しますか？";
-            var r = await DialogHost.Show(new MyMessageBox());
+            var r = await DialogHost.Show(new MyMessageBox(),"DataGridView");
             DialogHost.CloseDialogCommand.Execute(null, null);
 
             if(r == null || r.ToString() == "CANCEL")
@@ -629,10 +715,13 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
         ///  選択状態にある装置のデータをバックアップする
         /// </summary>
         /// <returns></returns>
-        public async Task<bool> BackupUnitData()
+        public async Task<bool> BackupUnitData(string path)
         {
             CancelTokenSrc = new CancellationTokenSource();
             CancellationToken token = CancelTokenSrc.Token;
+            DateTime dt = DateTime.Now;
+
+            string hd = dt.ToString("yyyyMMdd_HHmmss_");
 
             foreach (var lcu in TreeViewItems)
             {
@@ -660,8 +749,14 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                         try
                         {
                             AddLog($"{lcu.Name}::{machine.Name}::{module.Name}::Backup Start");
+                            string bkupPath = path + $"\\{hd}{lcu.Name.Split(":")[0]}_{machine.Name.Split(":")[0]}_{module.Name}";
 
-                            bool ret = await DownloadModuleFiles(lcu, machine, module, Define.LOCAL_BACKUP_PATH,token);
+                            if (Directory.Exists(bkupPath) == false)
+                            {
+                                Directory.CreateDirectory(bkupPath);
+                            }
+
+                            bool ret = await DownloadModuleFiles(lcu, machine, module, bkupPath, token);
                             //await Task.Delay(3000,token);
 
                             AddLog($"{lcu.Name}::{machine.Name}::{module.Name}::Backup End");
@@ -676,7 +771,7 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                                 //「Stop」ボタンが押された
                                 DialogTitle = "確認";
                                 DialogText = "転送を中止しますか？";
-                                var r = await DialogHost.Show(new MyMessageBox());
+                                var r = await DialogHost.Show(new MyMessageBox(),"DataGridView");
                                 DialogHost.CloseDialogCommand.Execute(null, null);
 
                                 CancelTokenSrc.Dispose();
@@ -754,7 +849,8 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
 
             //装置から取得したUpdateCommon.inf のパスのみを取り出してリスト化(重複を削除)
             //    ※パスはファイル名を含むので、ファイル名を削除してフォルダのみを取り出す
-            List<string> folders = module.UnitVersions.Select(x => Path.GetDirectoryName(x.Path)).ToList().Distinct().ToList();
+            //List<string> folders = module.UnitVersions.Select(x => Path.GetDirectoryName(x.Path)).ToList().Distinct().ToList();
+            List<string> folders = module.UpdateFiles().Select(x => Path.GetDirectoryName(x)).ToList().Distinct().ToList();
 
             //LCU上にフォルダを作成する(装置からファイルを取得するフォルダ)
             string lcuRoot = $"LCU_{module.Pos}\\MCFiles\\";
@@ -864,7 +960,7 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
         ///  ツリーの選択状態が変更されたときの処理
         /// </summary>
         /// <param name="e"></param>
-        public async void TreeViewSelectedItemChanged(RoutedPropertyChangedEventArgs<object> e)
+        public void TreeViewSelectedItemChanged(RoutedPropertyChangedEventArgs<object> e)
         {
             CheckableItem? item = e.NewValue as CheckableItem;
 
@@ -878,14 +974,15 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
             switch (item.ItemType)
             {
                 case MachineType.LCU:
+                    CanExecuteLcuCommand.Value = true;
                     if (viewModeTable.ContainsKey($"LcuView_{item.Name}") == false)
                     {
                         viewModeTable.Add($"LcuView_{item.Name}", new LcuViewModel(TreeViewItems.Where(x => x.Name == item.Name).First().Children));
                     }
                      ActiveView = viewModeTable[$"LcuView_{item.Name}"];
-                    CanExecuteLcuCommand.Value = true;
                     break;
                 case MachineType.Machine:
+                    CanExecuteLcuCommand.Value = false; // LCU コマンドを実行不可にする
                     if (viewModeTable.ContainsKey($"MachineView_{item.Name}") == false)
                     {
                         string lcuName = (item as MachineInfo).Parent.Name;
@@ -899,78 +996,28 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                             break;
                         }
                     }
-                    CanExecuteLcuCommand.Value = false; // LCU コマンドを実行不可にする
                     ActiveView = viewModeTable[$"MachineView_{item.Name}"];
                     break;
                 case MachineType.Module:
                     CanExecuteLcuCommand.Value = false; //LCU コマンドを実行不可にする
                     if (viewModeTable.ContainsKey($"ModuleView_{item.Name}") == false)
                     {
-                        string lcuName = (item as ModuleInfo).Parent.Parent.Name;
-                        foreach (var lcu in TreeViewItems)
+                        ModuleInfo module = item as ModuleInfo;
+                        if (module != null)
                         {
-                            if (lcu.Children == null || lcu.Name != lcuName)
-                            {
-                                continue;
-                            }
-                            foreach (var machine in lcu.Children)
-                            {
-                                if (machine.Children == null || machine.Name != (item as ModuleInfo).Parent.Name)
-                                {
-                                    continue;
-                                }
-                                foreach (var module in machine.Children)
-                                {
-                                    if (module.Name != item.Name)
-                                    {
-                                        continue;
-                                    }
-                                    if (module.UnitVersions.Count == 0)
-                                    {
-                                        //初めての場合はバージョン情報を取得する
-                                        /*
-                                        IsTreeEnabled.Value = false;
-                                        var r = DialogHost.Show(new WaitProgress("ユニット情報読み込み中"));    //時間がかかるので、クルクルを表示
-
-                                        CancellationTokenSource tokenSource = new();
-
-                                        var ret = await CreateVersionInfo(lcu, machine, module, tokenSource.Token);
-                                        DialogHost.CloseDialogCommand.Execute(null, null);
-                                        IsTreeEnabled.Value = true;
-
-                                        tokenSource.Dispose();
-
-                                        if (ret != null )
-                                        {
-                                            module.UnitVersions = ret;
-                                            viewModeTable.Add($"ModuleView_{item.Name}", new ModuleViewModel(module.UnitVersions, Updates));
-                                        }
-                                        else
-                                        {
-                                            // LCU からの情報取得に失敗した場合
-                                            return;
-                                        }
-                                        */
-                                    }
-                                    else
-                                    {
-                                        viewModeTable.Add($"ModuleView_{item.Name}", new ModuleViewModel(module.UnitVersions, Updates));
-                                    }
-                                    ActiveView = viewModeTable[$"ModuleView_{item.Name}"];
-                                    return;
-                                }
-                            }
+                            viewModeTable.Add($"ModuleView_{item.Name}", new ModuleViewModel(module.UnitVersions, Updates));
                         }
                     }
+                    /*
                     else
                     {
                         ModuleViewModel vm = viewModeTable[$"ModuleView_{item.Name}"] as ModuleViewModel;
 
                         vm.UpdateVersions(Updates);
-                        //viewModeTable[$"ModuleView_{item.Name}"] = new ModuleViewModel(vm.UnitVersions, Updates);
-
-                        ActiveView = viewModeTable[$"ModuleView_{item.Name}"];
                     }
+                    */
+
+                    ActiveView = viewModeTable[$"ModuleView_{item.Name}"];
                     break;
             }
         }
@@ -982,39 +1029,43 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
         /// <param name="machine"></param>
         /// <param name="module"></param>
         /// <returns></returns>
-        public async Task<ReactiveCollection<UnitVersion>?> CreateVersionInfo(LcuInfo lcu, MachineInfo machine, ModuleInfo module, ProgressDialogController ctrl, CancellationToken token)
+        public async Task<ReactiveCollection<UnitVersion>?> CreateVersionInfo(LcuInfo lcu, MachineInfo machine, ModuleInfo module, ProgressDialogController? progCtrl, CancellationToken token)
         //public async Task<ObservableCollection<UnitVersion>?> CreateVersionInfo(LcuInfo lcu, MachineInfo machine, ModuleInfo module)
         {
             bool ret;
 
-            if( lcu.LcuCtrl == null || lcu.IsSelected.Value == false)
+            if ( lcu.LcuCtrl == null || lcu.IsSelected.Value == false)
             {
                 return null;
             }
 
-            ctrl.SetMessage($"{lcu.Name}::{machine.Name}::{module.Name} Get Update Info");
+            progCtrl?.SetMessage($"{lcu.Name}::{machine.Name}::{module.Name} Get Update Info");
 
-            string tmpDir = Path.GetTempPath();
-
-            string infoFile = Define.MC_PERIPHERAL_PATH + Define.UPDATE_INFO_FILE;
-            string lcuRoot = $"LCU_{module.Pos}\\MCFiles\\";
-            //string lcuPath = "/MCFiles/ "+ Define.MC_PERIPHERAL_PATH;
-
-            // UpdateCommon.inf を取得するフォルダを作成
-            ret = lcu.LcuCtrl.CreateFtpFolders(new List<string> { Path.GetDirectoryName(infoFile) }, lcuRoot);
-
-            //装置から UpdateCommon.inf を取得してテンポラリに保存
-            ret = await lcu.LcuCtrl.GetMachineFile(lcu.Name, machine.Name, module.Pos, infoFile,lcuRoot,tmpDir, token);
-
-            if( ret == false)
+            if (module.UpdateInfo == null)
             {
-                AddLog($"{lcu.Name}:{machine.Name}:{module.Pos}={infoFile} Get error");
-                return null;
-            }
-            IniFileParser parser = new(tmpDir + Define.UPDATE_INFO_FILE);
+                string tmpDir = Path.GetTempPath();
 
-            //テンポラリに生成したファイルを削除
-            System.IO.File.Delete(tmpDir + Define.UPDATE_INFO_FILE);
+                string infoFile = Define.MC_PERIPHERAL_PATH + Define.UPDATE_INFO_FILE;
+                string lcuRoot = $"LCU_{module.Pos}\\MCFiles\\";
+                //string lcuPath = "/MCFiles/ "+ Define.MC_PERIPHERAL_PATH;
+
+                // UpdateCommon.inf を取得するフォルダを作成
+                ret = lcu.LcuCtrl.CreateFtpFolders(new List<string> { Path.GetDirectoryName(infoFile) }, lcuRoot);
+
+                //装置から UpdateCommon.inf を取得してテンポラリに保存
+                ret = await lcu.LcuCtrl.GetMachineFile(lcu.Name, machine.Name, module.Pos, infoFile, lcuRoot, tmpDir, token);
+
+                if (ret == false)
+                {
+                    AddLog($"{lcu.Name}:{machine.Name}:{module.Pos}={infoFile} Get error");
+                    return null;
+                }
+                module.UpdateInfo = new(tmpDir + Define.UPDATE_INFO_FILE);
+
+                //テンポラリに生成したファイルを削除
+                System.IO.File.Delete(tmpDir + Define.UPDATE_INFO_FILE);
+            }
+            IniFileParser parser = module.UpdateInfo;
 
             IList<string> sec = parser.SectionCount();
 
@@ -1045,6 +1096,10 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                         //同じバージョンは対象外とするオプション指定の場合
                         continue;
                     }
+                    //データサイズを取得
+                    string binPath = UpdateRootPath + parser.GetValue(unit, "Path").Split("Peripheral")[1];
+                    FileInfo fi = new FileInfo(binPath);
+
                     UnitVersion version = new()
                     {
                         Name = unit,
@@ -1052,9 +1107,10 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                         Path = parser.GetValue(unit, "Path"),
                         CurVersion = parser.GetValue(unit, "Version"),
                         NewVersion = newVer,
-                        Parent = module
+                        Parent = module,
+                        Size = fi.Length
                     };
-                    ctrl.SetMessage($"{lcu.Name}::{machine.Name}::{module.Name}::{unit}={version.CurVersion}");
+                    progCtrl?.SetMessage($"{lcu.Name}::{machine.Name}::{module.Name}::{unit}={version.CurVersion}");
                     versions.Add(version);
                 }
                 else
@@ -1072,19 +1128,19 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                             NewVersion = newVer,
                             Parent = module
                         };
-                        ctrl.SetMessage($"{lcu.Name}::{machine.Name}::{module.Name}::{unit}={version.CurVersion}");
+                        progCtrl?.SetMessage($"{lcu.Name}::{machine.Name}::{module.Name}::{unit}={version.CurVersion}");
                         versions.Add(version);
                     }
                 }
             }
             return versions;
         }
-
+/*
         private void screenTransitionExecute(string screenName)
         {
             ActiveView = viewModeTable[screenName];
         }
-        
+*/        
         private string _textValue = "Hello, World!";
         public string TextValue 
         {
@@ -1095,7 +1151,7 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
         /// <summary>
         /// ライン情報を取得する
         /// </summary>
-        private async Task<bool> LoadLineInfo(ProgressDialogController ctrl)
+        private async Task<bool> LoadLineInfo(ProgressDialogController progCtrl, CancellationToken token)
         {
             AddLog("LoadLineInfo Start");
             /*
@@ -1114,13 +1170,11 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
             TreeViewItems.ObserveAddChanged().Subscribe( x => Debug.WriteLine(x.Name));
 
             // LCU, LCU下のライン 情報を取得
-            CancellationTokenSource tokenSource = new();
             foreach (var lcu in TreeViewItems)
             {
-                ctrl.SetMessage($"reading {lcu.Name}");
-                bool ret = await UpdateLcuInfo(lcu, ctrl, tokenSource.Token);
+                progCtrl.SetMessage($"reading {lcu.Name}");
+                bool ret = await UpdateLcuInfo(lcu, progCtrl, token);
             }
-            tokenSource.Dispose();
 
             AddLog("LoadLineInfo End");
             _lineInfoLoaded = true;
@@ -1132,7 +1186,7 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
         /// LCUの情報を更新する
         /// </summary>
         /// <param name="LcuInfo">LCU情報</param>
-        public async Task<bool> UpdateLcuInfo(LcuInfo lcu,ProgressDialogController ctrl, CancellationToken token) 
+        public async Task<bool> UpdateLcuInfo(LcuInfo lcu,ProgressDialogController? progCtrl, CancellationToken token) 
         {
             if( lcu.LcuCtrl == null)
             {
@@ -1165,7 +1219,10 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                 IList<LcuVersion> versionInfo = LcuVersion.FromJson(str);
                 lcu.Version = versionInfo.Where(x => x.itemName == "Fuji LCU Communication Server Service").First().itemVersion;
 
-                ctrl.SetMessage($"LCU:{lcu.Name} Version={lcu.Version}");
+                progCtrl?.SetMessage($"LCU:{lcu.Name} Version={lcu.Version}");
+
+                //ディスク情報
+                lcu.DiskSpace = await LcuDiskChkCmd();
             }
 
             //装置情報が未取得の場合
@@ -1194,6 +1251,8 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                     return false;
                 }
 
+                //ライン情報を保持
+                lcu.LineInfo = lineInfo;
 
                 foreach (var mc in lineInfo.Line.Machines)
                 {
@@ -1204,7 +1263,7 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                         Machine = mc,
                         Parent = lcu,
                     };
-                    ctrl.SetMessage($"Machine={mc.MachineName}");
+                    progCtrl?.SetMessage($"Machine={mc.MachineName}");
                     foreach (var base_ in mc.Bases)
                     {
                         BaseInfo baseInfo = new()
@@ -1226,11 +1285,11 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                                 Parent = machine,
                                 IPAddress = base_.IpAddr,
                             };
-                            ctrl.SetMessage($"Module={module.DispModule}");
+                            progCtrl?.SetMessage($"Module={module.DispModule}");
                             baseInfo.Children.Add(moduleItem);
                             machine.Children.Add(moduleItem);
 
-                            var ret = await CreateVersionInfo(lcu, machine, moduleItem,ctrl, token);
+                            var ret = await CreateVersionInfo(lcu, machine, moduleItem,progCtrl, token);
                             if(ret != null)
                             {
                                 moduleItem.UnitVersions = ret;

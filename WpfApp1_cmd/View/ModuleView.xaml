@@ -41,6 +41,12 @@
                         ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"
                         Header="UpdateVersion" FontSize="16" FontFamily="Arial" Width="180" MinWidth="180" Binding="{Binding NewVersion}" IsReadOnly="True">
                 </materialDesign:DataGridTextColumn>
+
+                <materialDesign:DataGridTextColumn
+                        EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnPopupEditingStyle}"
+                        ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"
+                        Header="Size" FontSize="16" FontFamily="Arial" Width="100" MinWidth="100" Binding="{Binding Size}" IsReadOnly="True">
+                </materialDesign:DataGridTextColumn>
                 
                 <DataGridCheckBoxColumn Binding="{Binding IsSelected.Value, UpdateSourceTrigger=PropertyChanged}"
                                         EditingElementStyle="{StaticResource MaterialDesignDataGridCheckBoxColumnEditingStyle}"

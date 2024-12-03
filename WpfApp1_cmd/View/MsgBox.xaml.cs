@@ -28,7 +28,7 @@ namespace WpfApp1_cmd.View
             InitializeComponent();
         }
 
-        public static Task<object?> Show(string title, string text, string detail, string info, int ty)
+        public static Task<object?> Show(string title, string text, string detail, string info, int ty, string identifier)
         {
             var dialog = new MsgBox();
             BitmapImage icon;
@@ -72,7 +72,7 @@ namespace WpfApp1_cmd.View
                 dialog.Buttons.Children.Remove(btnCancel);
             }
 
-            return DialogHost.Show(dialog);
+            return DialogHost.Show(dialog,identifier);
         }
     }
 }

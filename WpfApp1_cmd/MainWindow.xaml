@@ -20,7 +20,7 @@
         ShowSystemMenuOnRightClick="True"
         TitleCharacterCasing="Normal"
         Style="{StaticResource MaterialDesignWindow}"
-        Title="TransferTool" Height="800" Width="1050">
+        Title="TransferTool" Height="760" Width="1050">
 
     <Window.Resources>
       <local:RichTextItemsToDocumentConverter x:Key="RichTextItemsToDocumentConverter" />
@@ -29,7 +29,18 @@
             <view:MaterialDialog/>
         </DataTemplate>
         -->
+      <ContextMenu x:Key="SampleContextMenu">
+        <MenuItem Header="Menu1"
+                  Command="{Binding Path=PlacementTarget.Tag.TreeViewCommand, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                  CommandParameter="{Binding Path=PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"/>
+        <MenuItem Header="Menu2"
+                  Command="{Binding Path=PlacementTarget.Tag.TreeViewCommand, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                  CommandParameter="{Binding Path=PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"/>
+    </ContextMenu>
+    <BooleanToVisibilityConverter x:Key="BoolToVisible"/>
    </Window.Resources>
+
+    
 
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded">
@@ -69,22 +80,24 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <Menu IsMainMenu="True" Grid.ColumnSpan="2">
-            <MenuItem Header="_File">
+            <MenuItem Header="_File" Visibility="{Binding IsFileMenuEnabled, Converter={StaticResource BoolToVisible}}">
                 <MenuItem Header="Read UpdateData" Icon="{materialDesign:PackIcon Kind=PresentOpen}" Command="{Binding FileOpenCommand}" />
                 <Separator />
                 <MenuItem Header="Exit" Icon="{materialDesign:PackIcon Kind=ExitToApp}" InputGestureText="Ctrl+E" Command="{Binding QuitApplicationCommand}" />
             </MenuItem>
-            <MenuItem Header="_LCU">
+            <MenuItem Header="_LCU" Visibility="{Binding IsLcuMenuEnabled, Converter={StaticResource BoolToVisible}}">
                 <MenuItem Header="ConnectionCheck" Icon="{materialDesign:PackIcon Kind=Network}" Command="{Binding LcuNetworkChkCommand}" />
                 <MenuItem Header="Check Disk Space" Icon="{materialDesign:PackIcon Kind=DiscFull}" Command="{Binding LcuDiskChkCommand}" />
             </MenuItem>
         </Menu>
+        <!--
         <StatusBar VerticalAlignment="Center" Grid.Row="2" Grid.ColumnSpan="2">
             <ProgressBar Width="160" Height="20" Value="60"/>
             <Label Content="60" />
             <Separator/>
             <Label Content="処理中" />
         </StatusBar>
+        -->
 
         <Grid Grid.Row="1" Grid.ColumnSpan="2">
             <Grid.ColumnDefinitions>
@@ -121,6 +134,20 @@
                         <rp:EventToReactiveCommand Command="{Binding TreeViewSelectedItemChangedCommand}" />
                     </i:EventTrigger>
                 </i:Interaction.Triggers>
+
+                <TreeView.ItemContainerStyle>
+                    <Style TargetType="{x:Type TreeViewItem}" BasedOn="{StaticResource MaterialDesignTreeViewItem}">
+                        <Setter Property="Tag" Value="{Binding Path=DataContext, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type TreeView}}}" />
+                        <Setter Property="ContextMenu" Value="{Binding Source={StaticResource SampleContextMenu}}"/>
+                    </Style>
+                </TreeView.ItemContainerStyle>
+
+                <TreeView.Resources>
+                    <Style TargetType="{x:Type TreeViewItem}" BasedOn="{StaticResource MaterialDesignTreeViewItem}">
+                        <Setter Property="IsExpanded" Value="{Binding IsExpanded.Value, Mode=TwoWay}" />
+                    </Style>
+                </TreeView.Resources>
+             
                 <TreeView.ItemTemplate>
                     <HierarchicalDataTemplate ItemsSource="{Binding Children}">
                         <StackPanel Orientation="Horizontal">
@@ -166,7 +193,7 @@
                     </DataTemplate>
                 </Grid.Resources>
 
-                <materialDesign:DialogHost DialogTheme="Inherit" CloseOnClickAway="true" Identifier="DialogHost">
+                <materialDesign:DialogHost DialogTheme="Inherit" CloseOnClickAway="true" Identifier="DataGridView">
                     <mahApps:TransitioningContentControl Content="{Binding ActiveView}" Transition="RightReplace" Height="330"  />
                 </materialDesign:DialogHost>
 
@@ -175,7 +202,7 @@
                     <TextBlock Text="Execution Log" FontSize="16" FontWeight="Bold" Margin="5,1,1,1"/>
                     <Border BorderThickness="1" BorderBrush="White"/>
 
-                    <TextBox x:Name="logMessage" AcceptsReturn="True" Height="250" FontSize="16" Margin="5" TextWrapping="Wrap"
+                    <TextBox x:Name="logMessage" AcceptsReturn="True" Height="230" FontSize="16" Margin="5" TextWrapping="Wrap"
                             BorderBrush="{DynamicResource MaterialDesignShadowBrush}" BorderThickness="1"
                             VerticalScrollBarVisibility="Auto"
                             Text="{Binding LogData}"
@@ -200,7 +227,7 @@
                                                HorizontalScrollBarVisibility="Auto"/>
                     -->
                     <StackPanel Orientation="Horizontal" Margin="5,10,1,1" HorizontalAlignment="Right" VerticalAlignment="Bottom" >
-                        <Button Height="30" materialDesign:ButtonAssist.CornerRadius="5"
+                        <Button Height="40" materialDesign:ButtonAssist.CornerRadius="5"
                                 Command="{Binding StartTransferCommand}"
                                 Style="{StaticResource MaterialDesignRaisedLightButton}"
                                 ToolTip="Transfer start"
@@ -210,7 +237,7 @@
                                 VerticalAlignment="Bottom">
                             <TextBlock Text="Transfer" />
                         </Button>
-                        <Button Height="30" materialDesign:ButtonAssist.CornerRadius="5"
+                        <Button Height="40" materialDesign:ButtonAssist.CornerRadius="5"
                                 Command="{Binding StopTransferCommand}"
                                 Style="{StaticResource MaterialDesignRaisedLightButton}"
                                 ToolTip="Transfer Stop"
@@ -220,7 +247,7 @@
                                 VerticalAlignment="Bottom">
                             <TextBlock Text="Stop" />
                         </Button>
-                        <Button Height="30" materialDesign:ButtonAssist.CornerRadius="5"
+                        <Button Height="40" materialDesign:ButtonAssist.CornerRadius="5"
                                 Command="{Binding QuitApplicationCommand}"
                                 Style="{StaticResource MaterialDesignRaisedLightButton}"
                                 ToolTip="Application End"
@@ -228,7 +255,7 @@
                                 FontWeight="Bold"
                                 Background="LightGray"
                                 VerticalAlignment="Bottom">
-                            <TextBlock Text="Quit App" />
+                            <TextBlock Text="Exit" />
                         </Button>
                     </StackPanel>
                 </StackPanel>

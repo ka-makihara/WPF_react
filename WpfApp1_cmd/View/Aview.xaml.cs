@@ -51,7 +51,7 @@ namespace WpfApp1_cmd.View
         private async void Button_Click(object sender, RoutedEventArgs e)
         {
             CounterValue++;
-            var r = DialogHost.Show(new MyMessageBox());
+            var r = DialogHost.Show(new MyMessageBox(),"DataGridView");
             await Task.Delay(5000);
             DialogHost.CloseDialogCommand.Execute(null, null);
         }
