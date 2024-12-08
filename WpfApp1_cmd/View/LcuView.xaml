@@ -13,7 +13,6 @@
         <!-- 意味不明だが必要　-->
         <FrameworkElement x:Name="DataContextProxy" DataContext="{Binding}" />
 
-        <TextBlock Text="LCU名" FontSize="20" Margin="10,10,10,10" />
         <DataGrid AutoGenerateColumns="False"
                   ItemsSource="{Binding MachineInfos}"
                   FontSize="20"

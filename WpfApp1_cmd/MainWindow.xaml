@@ -14,11 +14,13 @@
         xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
         xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
         GlowBrush="{DynamicResource MahApps.Brushes.Accent}"
-        ResizeMode="CanResizeWithGrip"
+        ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen"
         ShowIconOnTitleBar="True"
         ShowSystemMenuOnRightClick="True"
         TitleCharacterCasing="Normal"
+        IsCloseButtonEnabled="False"
+        ShowCloseButton="False"
         Style="{StaticResource MaterialDesignWindow}"
         Title="TransferTool" Height="760" Width="1050">
 
@@ -45,6 +47,9 @@
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded">
             <rp:EventToReactiveCommand Command="{Binding WindowLoadedCommand}" />
+        </i:EventTrigger>
+        <i:EventTrigger EventName="Closing">
+            <rp:EventToReactiveCommand Command="{Binding WindowClosingCommand}" />
         </i:EventTrigger>
     </i:Interaction.Triggers>
 

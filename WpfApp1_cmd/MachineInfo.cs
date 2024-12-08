@@ -35,6 +35,10 @@ namespace WpfApp1_cmd
 
     public class LcuInfo : CheckableItem
     {
+        //LcuInfo の Name は ライン名
+        // LCUの名前は、LcuCtrl.Name で取得する
+        //    LcuCtrl.Name は  LCUのPC名(==IPAddress)であり、アクセスに使用
+
         public void Update(bool? value)
         {
             if (IsSelected.Value != value)
@@ -95,16 +99,18 @@ namespace WpfApp1_cmd
             Debug.WriteLine($"AddMachine: {machine.Name}");
         }
 
-        public LcuInfo()
+        public LcuInfo(string name)
         {
             _machines.ObserveAddChanged().Subscribe(x => AddMachine(x));
             IsSelected.Subscribe(x => Update(x));
+
+            _lcuCtrl = new(name);
         }
 
 
         public string Version { get; set; } = "V1.00";
-        private LcuCtrl? _lcuCtrl;
-        public LcuCtrl? LcuCtrl { get => _lcuCtrl; set =>  _lcuCtrl = value; }
+        private LcuCtrl _lcuCtrl;
+        public LcuCtrl LcuCtrl { get => _lcuCtrl; set =>  _lcuCtrl = value; }
         public LineInfo LineInfo { get; set; }
         public long DiskSpace { get; set; }
     }

@@ -30,6 +30,7 @@ using MahApps.Metro.Controls;
 using MahApps.Metro.Controls.Dialogs;
 using System.Windows.Input;
 using System.IO.Packaging;
+using System.Net.NetworkInformation;
 
 namespace WpfApp1_cmd.ViewModel
 {
@@ -40,12 +41,28 @@ namespace WpfApp1_cmd.ViewModel
         [DllImport("mcAccount.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         static extern int getMcPass(StringBuilder s, Int32 len);
 
+        [DllImport("JigFormat.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
+        static extern int GetDataCount(StringBuilder s, UInt32 len);
+        [DllImport("JigFormat.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
+        static extern int ConvertJigData(int cnt, byte[] pData, UInt32 size, UIntPtr pInfo);
+        [DllImport("JigFormat.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
+        static extern int ConvertJigData2(int cnt, byte[] pData, UInt32 size, UIntPtr pInfo);
+        [StructLayout(LayoutKind.Sequential)]
+        private struct JIGDATA_INFO
+        {
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)] //固定長文字列配列
+            public string Filename;
+            public int dataSize;
+            public long dataAddr;
+        }
+
         public MetroWindow Metro { get; set; } = System.Windows.Application.Current.MainWindow as MetroWindow;
 
         public CancellationTokenSource Cts { get; set; } = new CancellationTokenSource();
         public CancellationToken Token => Cts.Token;
 
         public ReactiveCommand WindowLoadedCommand { get; } = new ReactiveCommand();
+        public ReactiveCommand WindowClosingCommand { get; } = new ReactiveCommand();
 
         public ReactiveCommand TreeViewCommand { get; } = new ReactiveCommand();
 
@@ -87,6 +104,10 @@ namespace WpfApp1_cmd.ViewModel
             */
             //OnPropertyChanged(nameof(LogMessage));
             Debug.WriteLine(str);
+            if(LogWriter != null)
+            {
+                LogWriter.WriteLine(str);
+            }
         }
 
 
@@ -179,8 +200,9 @@ namespace WpfApp1_cmd.ViewModel
         public bool IsFileMenuEnabled { get; set; } = true;
         public bool IsLcuMenuEnabled { get; set; } = true;
 
-        //updateCommon.inf のパス(デフォルトではアプリのパスとする)
-        public string UpdateRootPath { get; set; } = System.Reflection.Assembly.GetExecutingAssembly().Location;
+        public StreamWriter? LogWriter { get; set; } = null;
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         /// <summary>
         ///  装置のFTPユーザー名を取得する(from DLL)
@@ -222,6 +244,21 @@ namespace WpfApp1_cmd.ViewModel
             }
         }
 
+        private void Startup_log()
+        {
+            string resultPath = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory) + "\\UnitTransferResult";
+            if( Directory.Exists(resultPath) == false)
+            {
+                DirectoryInfo info = Directory.CreateDirectory(resultPath);
+            }
+            DateTime dt = DateTime.Now;
+            LogWriter = new StreamWriter($"{resultPath}\\Update_{ dt.ToString("yyyyMMdd")}.txt");
+
+            if (LogWriter != null)
+            {
+                LogWriter.WriteLine("Start Application");
+            }
+        }
         /// <summary>
         /// 起動時、Windowsのロード後に呼ばれる
         /// </summary>
@@ -229,6 +266,11 @@ namespace WpfApp1_cmd.ViewModel
         private async void LoadLineInfo_Start()
         {
             CancellationTokenSource cts = new CancellationTokenSource();
+
+            //ログファイル
+            Startup_log();
+
+            //progress
             ProgressDialogController controller = await Metro.ShowProgressAsync("Read Machine information ...", "");
 
             controller.SetIndeterminate();// 進捗(?)をそれらしく流す・・・
@@ -260,8 +302,27 @@ namespace WpfApp1_cmd.ViewModel
             OnPropertyChanged(nameof(TreeViewItems));
 
             await controller.CloseAsync();
-
         }
+
+        /// <summary>
+        /// DecompBin.exe を呼び出す
+        /// </summary>
+        public void CallDecompExe()
+        {
+            ProcessStartInfo psi = new ProcessStartInfo();
+            psi.FileName = $"{ Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)}\\DecompBin.exe";
+            psi.Arguments =$"{DataFolder}\\Peripheral.bin";
+            Process? p = Process.Start(psi);
+
+            if(p != null)
+            {
+                p.WaitForExit();
+            }   
+        }
+
+        /// <summary>
+        /// コンストラクタ
+        /// </summary>
         public MainWindowViewModel()
         {
             //オプション処理
@@ -269,13 +330,22 @@ namespace WpfApp1_cmd.ViewModel
             if(dataFolder != "")
             {
                 DataFolder = dataFolder;
+
+                if( Path.Exists(dataFolder + "\\Peripheral.bin") == true)
+                {
+                    //指定フォルダにPeripheral.bin がある場合は、DecompBin.exe を呼び出す
+                    // Decompbin.exe は、Peripheral.bin を展開して、C:\\DeCompBin フォルダに展開する
+                    CallDecompExe();
+                    DataFolder = @"C:\DeCompBin\Fuji\System3\Program\Peripheral";
+                }
                 Updates = ReadUpdateCommon(dataFolder + "\\UpdateCommon.inf");
-                UpdateRootPath = dataFolder;
                 AddLog($"Read {dataFolder}/UpdateCommon.inf");
                 IsFileMenuEnabled = true;
             }
             else
             {
+                DataFolder = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+                Updates = [];
                 IsFileMenuEnabled = true;
                 IsLcuMenuEnabled = true;
             }
@@ -291,7 +361,8 @@ namespace WpfApp1_cmd.ViewModel
             ActiveView = viewModeTable["UpdateVersionView"];
 
             //ライン情報読み込み
-            WindowLoadedCommand.Subscribe(() => LoadLineInfo_Start());
+            WindowLoadedCommand.Subscribe(() => LoadLineInfo_Start() );
+            WindowClosingCommand.Subscribe(() => ApplicationShutDown() );
 
             // メニュー実行制御(Subscribe() するより先に設定する)
             LcuNetworkChkCommand = CanExecuteLcuCommand.ToReactiveCommand();
@@ -305,13 +376,6 @@ namespace WpfApp1_cmd.ViewModel
             HomeCommand.Subscribe(() =>
             {
                 ActiveView = viewModeTable["UpdateVersionView"];
-                /*
-                ModuleInfo item = SelectedItem as ModuleInfo;
-                if (item != null)
-                {
-                    MachineInfo mc = item.Parent as MachineInfo;
-                }
-                */
             });
             /*
                         ButtonCommand = new DelegateCommand(async () =>
@@ -381,13 +445,93 @@ namespace WpfApp1_cmd.ViewModel
             //TreeView 右クリックメニューのテスト
             TreeViewCommand.Subscribe((x) => { TreeViewMenu(x); });
 
+/*
+ C++ DLL関数 呼び出しテスト
+            var pst = Marshal.AllocHGlobal( Marshal.SizeOf(typeof(JIGDATA_INFO)) * 4 );
+            var fs = new FileStream("C:\\Users\\ka.makihara\\aa.bin", FileMode.Open, FileAccess.Read);
+
+            byte[] data = new byte[fs.Length];
+            int sz = fs.Read(data, 0, data.Length);
+            fs.Dispose();
+
+            ConvertJigData2(4,data,(uint)sz, (UIntPtr)pst);
+
+            JIGDATA_INFO[] st_rtn = new JIGDATA_INFO[4];
+            for(int i = 0; i < 4; i++)
+            {
+                st_rtn[i] = (JIGDATA_INFO)Marshal.PtrToStructure(pst + i * Marshal.SizeOf(typeof(JIGDATA_INFO)), typeof(JIGDATA_INFO));
+                AddLog($"{st_rtn[i].Filename}::{st_rtn[i].dataSize}::{st_rtn[i].dataAddr}");
+            }
+            Marshal.FreeHGlobal(pst);
+*/
         }
 
+        private List<string> GetLcuListFromNexim()
+        {
+            List<string> lcuList = [];
+
+            string connStr = "User Id=makihara;Password=wildgeese;Data Source=localhost:1521/XEPDB1";
+            //string connStr = "User Id=fujisuperuser;Password=em2g86fzjt945p73; Data Source=10.0.51.64:1521/neximdb";
+            using(OracleConnection conn = new(connStr))
+            {
+                try
+                {
+                    conn.Open();
+                    OracleCommand cmd = new("select * from LINE WHERE JOBID=0 AND ACTIVEFLG=1", conn);
+
+                    cmd.Connection = conn;
+                    cmd.CommandType = CommandType.Text;
+
+                    OracleDataReader reader = cmd.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        int lineId = reader.GetInt32(0);
+                        int jobId = reader.GetInt32(1);
+                        string name = reader.GetString(2);
+                        int lcuId = reader.GetInt32(3);
+                        int activeFlag = reader.GetInt32(4);
+
+                        /*
+                        NeximPC DBの場合
+                        int jobId = reader.GetInt32(0);
+                        int lineId = reader.GetInt32(1);
+                        string name = reader.GetString(2);
+                        int activeFlag = reader.GetInt32(6);
+                        int lcuId = reader.GetInt32(18);
+                        */
+                        AddLog($"{name}::LineID={lineId} JobID={jobId} ActiveFlag={activeFlag} LcuID={lcuId}");
+
+                        OracleCommand cm = new($"select * from COMPUTER WHERE COMPUTERID={lcuId}", conn);
+                        OracleDataReader rd = cm.ExecuteReader();
+                        while (rd.Read())
+                        {
+                            int computerId = rd.GetInt32(0);
+                            string lcuName = rd.GetString(1);
+                            AddLog($"ComputerID={computerId} LcuName={lcuName}");
+                            lcuList.Add($"{name}={lcuName}");
+                        }
+
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex.Message);
+                }
+            }
+            return lcuList;
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="x"></param>
         private void TreeViewMenu(object x)
         {
             CheckableItem item = x as CheckableItem;
 
             Debug.WriteLine($"TreeViewMenu:{item.Name}");
+
+            List<string> lcuList = GetLcuListFromNexim();
+
         }
 
         /// <summary>
@@ -464,39 +608,8 @@ namespace WpfApp1_cmd.ViewModel
                     {
                         ActiveView = viewModeTable[$"ModuleView_{item.Name}"];
                     }
-                    /*
-                    else
-                    {
-                        ActiveView = viewModeTable["UpdateVersionView"];
-                    }
-                    */
                 }
             }
-
-            /*
-            string connStr = "User Id=fujisuperuser;Password=em2g86fzjt945p73;Data Source=10.0.51.64:1521/neximdb";
-            using(OracleConnection conn = new(connStr))
-            {
-                try
-                {
-                    conn.Open();
-                    OracleCommand cmd = new("select * from LINE", conn);
-                    OracleDataReader reader = cmd.ExecuteReader();
-                    while (reader.Read())
-                    {
-                        AddLog(reader.GetString(0));
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine(ex.Message);
-                }
-            }
-            */
-            /*
-             * SELECT * FROM LINE WHERE JOBID=0 AND ACTIVEFLAG=1 AND LCUID!=0
-SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
-
         }
 
         /// <summary>
@@ -514,18 +627,6 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
             {
                 Debug.WriteLine("Click out");
             }
-            /*
-            await Metro.ShowMessageAsync("Error", "ErrorCode=E001", MessageDialogStyle.Affirmative, new MetroDialogSettings() { AffirmativeButtonText = "OK" });
-
-            var controller = await Metro.ShowProgressAsync("please wait...", "message");
-            for(var i = 0; i < 10; i++)
-            {
-                controller.SetProgress(1.0 / 10 * i);
-                controller.SetMessage($"message {i}");
-                await Task.Delay(1000);
-            }
-            await controller.CloseAsync();
-            */
         }
 
         /// <summary>
@@ -589,6 +690,35 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
         }
 
         /// <summary>
+        /// ping によるネットワーク接続確認
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="count"></param>
+        /// <returns></returns>
+        private static async Task<bool> CheckComputer(string name, int count)
+        {
+            var ping = new System.Net.NetworkInformation.Ping();
+
+            try
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    var reply = ping.Send(name);
+                    if (reply.Status == IPStatus.Success)
+                    {
+                        return true;
+                    }
+                    await Task.Delay(100);
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                return false;
+            }
+        }
+        /// <summary>
         /// フォルダのサイズを取得する
         /// </summary>
         /// <param name="dirInfo">サイズを取得するフォルダ</param>
@@ -608,7 +738,7 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
             //結果を返す
             return size;
         }
-        private long GetPeripheradSize(string path)
+        public static long GetPeripheradSize(string path)
         {
             long size = 0;
             DirectoryInfo di = new(path);
@@ -687,11 +817,6 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
             {
                 CancelTokenSrc.Cancel();
             }
-/*
-            CanTransferStartFlag.Value = true;
-            CanTransferStopFlag.Value = false;
-            CanAppQuitFlag.Value = true;
-*/
         }
 
         /// <summary>
@@ -701,13 +826,21 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
         {
             DialogTitle = "確認";
             DialogText = "アプリケーションを終了しますか？";
-            var r = await DialogHost.Show(new MyMessageBox(),"DataGridView");
+
+            var r = await DialogHost.Show(new MyMessageBox(), "DataGridView");
             DialogHost.CloseDialogCommand.Execute(null, null);
 
-            if(r == null || r.ToString() == "CANCEL")
+            if (r == null || r.ToString() == "CANCEL")
             {
                 return;
             }
+            if(LogWriter != null)
+            {
+                LogWriter.Close();
+            }
+
+            //Peripheral.bin の展開フォルダを削除
+            Directory.Delete("C:\\DeCompBin", true);
 
             Application.Current.Shutdown();
         }
@@ -1008,15 +1141,6 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                             viewModeTable.Add($"ModuleView_{item.Name}", new ModuleViewModel(module.UnitVersions, Updates));
                         }
                     }
-                    /*
-                    else
-                    {
-                        ModuleViewModel vm = viewModeTable[$"ModuleView_{item.Name}"] as ModuleViewModel;
-
-                        vm.UpdateVersions(Updates);
-                    }
-                    */
-
                     ActiveView = viewModeTable[$"ModuleView_{item.Name}"];
                     break;
             }
@@ -1039,7 +1163,7 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                 return null;
             }
 
-            progCtrl?.SetMessage($"{lcu.Name}::{machine.Name}::{module.Name} Get Update Info");
+            progCtrl?.SetMessage($"{lcu.LcuCtrl.Name}::{machine.Name}::{module.Name} Get Update Info");
 
             if (module.UpdateInfo == null)
             {
@@ -1053,11 +1177,11 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                 ret = lcu.LcuCtrl.CreateFtpFolders(new List<string> { Path.GetDirectoryName(infoFile) }, lcuRoot);
 
                 //装置から UpdateCommon.inf を取得してテンポラリに保存
-                ret = await lcu.LcuCtrl.GetMachineFile(lcu.Name, machine.Name, module.Pos, infoFile, lcuRoot, tmpDir, token);
+                ret = await lcu.LcuCtrl.GetMachineFile(machine.Name, module.Pos, infoFile, lcuRoot, tmpDir, token);
 
                 if (ret == false)
                 {
-                    AddLog($"{lcu.Name}:{machine.Name}:{module.Pos}={infoFile} Get error");
+                    AddLog($"{lcu.LcuCtrl.Name}:{machine.Name}:{module.Pos}={infoFile} Get error");
                     return null;
                 }
                 module.UpdateInfo = new(tmpDir + Define.UPDATE_INFO_FILE);
@@ -1097,7 +1221,7 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                         continue;
                     }
                     //データサイズを取得
-                    string binPath = UpdateRootPath + parser.GetValue(unit, "Path").Split("Peripheral")[1];
+                    string binPath = DataFolder + parser.GetValue(unit, "Path").Split("Peripheral")[1];
                     FileInfo fi = new FileInfo(binPath);
 
                     UnitVersion version = new()
@@ -1110,7 +1234,7 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                         Parent = module,
                         Size = fi.Length
                     };
-                    progCtrl?.SetMessage($"{lcu.Name}::{machine.Name}::{module.Name}::{unit}={version.CurVersion}");
+                    progCtrl?.SetMessage($"{lcu.LcuCtrl.Name}::{machine.Name}::{module.Name}::{unit}={version.CurVersion}");
                     versions.Add(version);
                 }
                 else
@@ -1128,19 +1252,14 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                             NewVersion = newVer,
                             Parent = module
                         };
-                        progCtrl?.SetMessage($"{lcu.Name}::{machine.Name}::{module.Name}::{unit}={version.CurVersion}");
+                        progCtrl?.SetMessage($"{lcu.LcuCtrl.Name}::{machine.Name}::{module.Name}::{unit}={version.CurVersion}");
                         versions.Add(version);
                     }
                 }
             }
             return versions;
         }
-/*
-        private void screenTransitionExecute(string screenName)
-        {
-            ActiveView = viewModeTable[screenName];
-        }
-*/        
+        
         private string _textValue = "Hello, World!";
         public string TextValue 
         {
@@ -1162,17 +1281,30 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
             NeximDataControl.Common.NeximDataControlApiCode r = nexim.GetLines(null, ref lines);
             */
 
+            // NeximDB より LCU のリストを取得(list=> Line名=LCU名)
+            List<string> lcuList = GetLcuListFromNexim();
+
+            TreeViewItems = [];
+            /*
             TreeViewItems = new ReactiveCollection<LcuInfo>
             {
                 new (){ Name = "localhost:9000", ItemType=MachineType.LCU},
                 //new (){ Name = "ch-lcu33",       ItemType=MachineType.LCU},
             };
+            */
+
             TreeViewItems.ObserveAddChanged().Subscribe( x => Debug.WriteLine(x.Name));
+            foreach (var lcu in lcuList)
+            {
+                string lineName = lcu.Split('=')[0];
+                string lcuName = lcu.Split('=')[1];
+                TreeViewItems.Add(new LcuInfo(lcuName) { Name = lineName, ItemType = MachineType.LCU });
+            }
 
             // LCU, LCU下のライン 情報を取得
             foreach (var lcu in TreeViewItems)
             {
-                progCtrl.SetMessage($"reading {lcu.Name}");
+                progCtrl.SetMessage($"reading {lcu.LcuCtrl.Name}");
                 bool ret = await UpdateLcuInfo(lcu, progCtrl, token);
             }
 
@@ -1188,9 +1320,16 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
         /// <param name="LcuInfo">LCU情報</param>
         public async Task<bool> UpdateLcuInfo(LcuInfo lcu,ProgressDialogController? progCtrl, CancellationToken token) 
         {
+            /*
             if( lcu.LcuCtrl == null)
             {
                 lcu.LcuCtrl = new LcuCtrl(lcu.Name);
+            }
+            */
+            bool ping = await CheckComputer(lcu.LcuCtrl.Name.Split(':')[0], 3);
+            if(ping == false)
+            {
+                return false;
             }
 
             if (lcu.LcuCtrl.FtpUser == null)
@@ -1219,7 +1358,7 @@ SELECT * FROM COMPUTER WHERE COMPUTERID=44*/
                 IList<LcuVersion> versionInfo = LcuVersion.FromJson(str);
                 lcu.Version = versionInfo.Where(x => x.itemName == "Fuji LCU Communication Server Service").First().itemVersion;
 
-                progCtrl?.SetMessage($"LCU:{lcu.Name} Version={lcu.Version}");
+                progCtrl?.SetMessage($"LCU:{lcu.LcuCtrl.Name} Version={lcu.Version}");
 
                 //ディスク情報
                 lcu.DiskSpace = await LcuDiskChkCmd();
