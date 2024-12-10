@@ -65,7 +65,8 @@ namespace WpfApp1_cmd
                 }
                 else
                 {
-                    IsSelected.Value = value;
+                    //IsSelected.Value = value;
+                    IsSelected.Value = false;
                 }
             }
             else
@@ -73,9 +74,16 @@ namespace WpfApp1_cmd
                 if (Children != null)
                 {
                     if (value == null) { return; }
-                    foreach (var child in Children)
+                    if (Children.Count() == 0)
                     {
-                        child.IsSelected.Value = value;
+                        IsSelected.Value = false;
+                    }
+                    else
+                    {
+                        foreach (var child in Children)
+                        {
+                            child.IsSelected.Value = value;
+                        }
                     }
                 }
             }
