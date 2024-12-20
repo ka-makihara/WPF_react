@@ -199,7 +199,7 @@
                 </Grid.Resources>
 
                 <materialDesign:DialogHost DialogTheme="Inherit" CloseOnClickAway="true" Identifier="DataGridView">
-                    <mahApps:TransitioningContentControl Content="{Binding ActiveView}" Transition="RightReplace" Height="330"  />
+                    <mahApps:TransitioningContentControl Content="{Binding ActiveView}" Transition="RightReplace" Height="350"  />
                 </materialDesign:DialogHost>
 
                 <GridSplitter Grid.Row="1" Height="5" Style="{StaticResource HorizontalGridSplitter}" />    

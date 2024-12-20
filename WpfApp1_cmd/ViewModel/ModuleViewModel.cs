@@ -14,25 +14,39 @@ namespace WpfApp1_cmd.ViewModel
         private ObservableCollection<UpdateInfo>? _updates = null;
         private void IsSelectedChk(UnitVersion item, bool? value)
         {
-            // バージョンが違うものしかチェックが更新できないようにする
-            try
-            {
-                string newVer = _updates.First(x => x.Name == item.Name).Version;
-                if (newVer != item.CurVersion)
-                {
-                    item.IsSelected.Value = value;
-                }
-                else
-                {
-                    item.IsSelected.Value = false;
-                }
-            }
-            catch(Exception e)
-            {
-                item.IsSelected.Value = false;
-            }
-            // IsSelected プロパティが変更されたときに、IsAllSelected プロパティを更新する
-            OnPropertyChanged(nameof(IsAllSelected));
+			if (Options.GetOptionBool("--diffOnly", false) == true)
+			{
+				// バージョンが違うものしかチェックが更新できないようにする
+				try
+				{
+					string newVer = _updates.First(x => x.Name == item.Name).Version;
+					if (newVer != item.CurVersion)
+					{
+						item.IsSelected.Value = value;
+					}
+					else
+					{
+						item.IsSelected.Value = false;
+					}
+				}
+				catch (Exception e)
+				{
+					item.IsSelected.Value = false;
+				}
+			}
+			else
+			{
+				if (item.Attribute == Define.NOT_UPDATE)
+				{
+					item.IsSelected.Value = false;
+				}
+				else
+				{
+					item.IsSelected.Value = value;
+				}
+			}
+			// IsSelected プロパティが変更されたときに、IsAllSelected プロパティを更新する
+			OnPropertyChanged(nameof(IsAllSelected));
         }
 
         public ReactiveCollection<UnitVersion> UnitVersions { get; set; }
@@ -54,12 +68,19 @@ namespace WpfApp1_cmd.ViewModel
                         if(newVer != item.CurVersion)
                         {
                             item.NewVersion = newVer;
-                            item.IsSelected.Value = true;
+							item.IsSelected.Value = (item.Attribute == Define.NOT_UPDATE) ? false : true ;
                         }
                         else
                         {
                             item.NewVersion = newVer;
-                            item.IsSelected.Value = false;
+							if (Options.GetOptionBool("--diffOnly", false) == true)	// --diffOnly オプションが設定されている場合はitemとして登録されていない??ので不要かも。
+							{
+								item.IsSelected.Value = false;
+							}
+							else
+							{
+								item.IsSelected.Value =  (item.Attribute == Define.NOT_UPDATE) ? false : true ;
+							}
                         }
                     }
                     catch (Exception e)
@@ -69,8 +90,8 @@ namespace WpfApp1_cmd.ViewModel
                     }
                 }
             }
-        }
-
+		}
+/*
         public void UpdateVersions(ReactiveCollection<UpdateInfo> updates)
         {
             foreach (var item in UnitVersions)
@@ -96,7 +117,7 @@ namespace WpfApp1_cmd.ViewModel
                 }
             }
         }
-
+*/
         public bool? IsAllSelected
         {
             get {

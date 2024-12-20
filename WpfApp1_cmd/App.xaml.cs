@@ -37,10 +37,12 @@ namespace WpfApp1_cmd
 	{
 		public const string FTP_ROOT_PATH = "C:\\users\\ka.makihara\\docker\\docker_ftp\\data";
 		public const string LCU_ROOT_PATH = "\\MCFiles";
-		public const string MC_PERIPHERAL_PATH = "Fuji/System3/Program/Peripheral";
-		public const string UPDATE_INFO_FILE = "/UpdateCommon.inf";
+		public const string MC_PERIPHERAL_PATH = "Fuji/System3/Program/Peripheral/";
+		public const string UPDATE_INFO_FILE = "UpdateCommon.inf";
 		public const string LOCAL_BACKUP_PATH = "C:\\users\\ka.makihara\\Backup";
 		public const string TXT_ENCODING = "shift_jis";
+
+		public const int NOT_UPDATE = 2;    // Attribute が 2 は更新しない(できない)
 	}
 
 	/// <summary>

@@ -33,9 +33,27 @@ using System.IO.Packaging;
 using System.Net.NetworkInformation;
 using System.Windows.Media.Animation;
 using System.Text.RegularExpressions;
+using System.Security.Cryptography.X509Certificates;
+using System.Text.Json;
 
 namespace WpfApp1_cmd.ViewModel
 {
+	public class PathData
+	{
+		public string? Path { get; set; }
+		public List<string> Files { get; set; }
+	}
+
+	public class UnitList
+	{
+		public List<UnitComponent> units { get; set; }
+	}
+	public class UnitComponent
+	{
+		public string name { get; set; }
+		public List<string> components { get; set; }
+	}
+
 	public class MainWindowViewModel : ViewModelBase
 	{
 		[DllImport("mcAccount.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
@@ -178,11 +196,16 @@ namespace WpfApp1_cmd.ViewModel
 		public ReactiveProperty<bool> CanTransferStartFlag { get; } = new ReactiveProperty<bool>(true);
 		public ReactiveProperty<bool> CanTransferStopFlag { get; } = new ReactiveProperty<bool>(false);
 		public ReactiveProperty<bool> CanAppQuitFlag { get; } = new ReactiveProperty<bool>(true);
+		public ReactivePropertySlim<bool> CanTransferFlag { get; } = new ReactivePropertySlim<bool>(true);
 
 		// 処理のキャンセルトークン
 		//   変数に保持しておくことで、「Stop」ボタンでキャンセルできる->イベント処理内で、Cancel() しているので
 		private CancellationTokenSource? _cancellationTokenSource;
 		public CancellationTokenSource? CancelTokenSrc { get => _cancellationTokenSource; set => _cancellationTokenSource = value; }
+
+		//Progressダイアログ
+		private ProgressDialogController? _progress;
+		public ProgressDialogController? Progress { get => _progress; set => _progress = value; }
 
 		// 「メニュー」の LCU コマンドの実行可否
 		public ReactiveProperty<bool> CanExecuteLcuCommand { get; } = new ReactiveProperty<bool>(false);
@@ -381,17 +404,18 @@ namespace WpfApp1_cmd.ViewModel
 			Startup_log();
 
 			//progress
-			ProgressDialogController controller = await Metro.ShowProgressAsync("Read Machine information ...", "");
+			//ProgressDialogController controller = await Metro.ShowProgressAsync("Read Machine information ...", "");
+			Progress = await Metro.ShowProgressAsync("Read Machine information ...", "");
 
-			controller.SetIndeterminate();// 進捗(?)をそれらしく流す・・・
-			controller.SetCancelable(true); // キャンセルボタンを表示する
+			Progress.SetIndeterminate();// 進捗(?)をそれらしく流す・・・
+			Progress.SetCancelable(true); // キャンセルボタンを表示する
 
-			Task task = Task.Run(() => { Task<bool> task1 = LoadLineInfo(controller, cts.Token); });
+			Task task = Task.Run(() => { Task<bool> task1 = LoadLineInfo(Progress, cts.Token); });
 
 			Debug.WriteLine($"{nameof(task.IsCompleted)} ; {task.IsCompleted}");
 			for (var i = 0; i < 1000; i++)
 			{
-				Debug.WriteLine($"{nameof(task.IsCompleted)} ; {task.IsCompleted}");
+				//Debug.WriteLine($"{nameof(task.IsCompleted)} ; {task.IsCompleted}");
 				if (task.IsCompleted)
 				{
 					// タスクの完了を待つ(※なぜか正しく取得できないので、変数を使用する)
@@ -400,7 +424,7 @@ namespace WpfApp1_cmd.ViewModel
 						break;
 					}
 				}
-				if( controller.IsCanceled == true)
+				if( Progress.IsCanceled == true)
 				{
 					cts.Cancel();
 					break;
@@ -411,7 +435,7 @@ namespace WpfApp1_cmd.ViewModel
 
 			OnPropertyChanged(nameof(TreeViewItems));
 
-			await controller.CloseAsync();
+			await Progress.CloseAsync();
 		}
 
 		/// <summary>
@@ -520,13 +544,18 @@ namespace WpfApp1_cmd.ViewModel
 		/// </summary>
 		public MainWindowViewModel()
 		{
+			string infoFile = "";
+
 			//オプション処理
+			//ファイルから文字列に読み込む
+			string str = System.IO.File.ReadAllText(@"c:\Users\ka.makihara\develop\UnitGroup.json");
+			UnitList list = JsonSerializer.Deserialize<UnitList>(str);
+
 			string dataFolder = Options.GetOption("--dataFolder", "");
 			if(dataFolder != "")
 			{
 				DataFolder = dataFolder;
 
-				bool isDecomp = false;
 				//Peripheral.bin が指定されている場合は、展開する
 				if ( Path.Exists(dataFolder + "\\Peripheral.bin") == true)
 				{
@@ -545,23 +574,24 @@ namespace WpfApp1_cmd.ViewModel
 					{
 						AddLog($"DeCompress {dataFolder}\\Peripheral.bin");
 						CallDecompExe(dataFolder + "\\Peripheral.bin");
-						isDecomp = true;
 					}
+					//Peripheral.bin が展開されたので、UpdateCommon.inf のパスを設定
+					infoFile = (DataFolder + "\\" + Define.MC_PERIPHERAL_PATH + Define.UPDATE_INFO_FILE).Replace("/", "\\");
 				}
-				if (isDecomp == true)
+				else
 				{
-					//Peripheral.bin が展開されたので、UpdateCommon.inf を読み込む
-					string infoFile = (DataFolder + "\\" + Define.MC_PERIPHERAL_PATH + Define.UPDATE_INFO_FILE).Replace("/", "\\");
-					Updates = ReadUpdateCommon(infoFile);
-					if (Updates == null)
-					{
-						AddLog($"Read Error:{infoFile}");
-					}
-					else
-					{
-						AddLog($"Read {infoFile}");
-						IsFileMenuEnabled = true;
-					}
+					infoFile = (DataFolder + "\\" + Define.MC_PERIPHERAL_PATH　+ Define.UPDATE_INFO_FILE).Replace("/", "\\");
+				}
+				//UpdateCommon.inf を読み込む
+				Updates = ReadUpdateCommon(infoFile);
+				if (Updates == null)
+				{
+					AddLog($"Read Error:{infoFile}");
+				}
+				else
+				{
+					AddLog($"Read {infoFile}");
+					IsFileMenuEnabled = true;
 				}
 			}
 			else
@@ -987,9 +1017,12 @@ namespace WpfApp1_cmd.ViewModel
 		/// <summary>
 		/// 転送開始(StartTransferCommand から呼び出される)
 		/// </summary>
+		private bool IsTransfering = false;
 		private async void StartTransfer()
 		{
 			bool ret = true;
+			CancelTokenSrc = new CancellationTokenSource();
+			CancellationToken token = CancelTokenSrc.Token;
 
 			DialogTitle = "確認";
 			DialogText = "転送を開始しますか？";
@@ -1010,14 +1043,50 @@ namespace WpfApp1_cmd.ViewModel
 
 			if( backupPath != null)
 			{
-				ret = await BackupUnitData(backupPath);
+				//ret = await BackupUnitData(backupPath);
 			}
 
 			if (ret == true)
 			{
-				ret = await TransferExecute();
-			}
+				Progress = await Metro.ShowProgressAsync("Unit Soft Transfer...", "");
+				Progress.SetIndeterminate();// 進捗(?)をそれらしく流す・・・
+				Progress.SetCancelable(true); // キャンセルボタンを表示する
 
+				IsTransfering = true;
+				Task task = Task.Run(() => { Task<bool> task1 = TransferExecute(token); });
+
+				bool isCancel = false;
+				while (true)
+				{
+					if (IsTransfering == false)
+					{
+						break;
+					}
+					if (Progress.IsCanceled == true)
+					{
+						//CancelTokenSrc.Cancel();
+						Debug.WriteLine("Cancel");
+						await Progress.CloseAsync();
+
+						CanTransferFlag.Value = false;
+						isCancel = await StopTransferExecute();
+						if (isCancel == true)
+						{
+							break;
+						}
+						// 再開
+						Progress = await Metro.ShowProgressAsync("Unit Soft Transfer...", "");
+						Progress.SetIndeterminate();// 進捗(?)をそれらしく流す・・・
+						Progress.SetCancelable(true); // キャンセルボタンを表示する
+						CanTransferFlag.Value = true;
+					}
+					await Task.Delay(100);
+				}
+				if(isCancel == false)
+				{
+					await Progress.CloseAsync();
+				}
+			}
 			CanTransferStartFlag.Value = true;
 			CanTransferStopFlag.Value = false;
 			CanAppQuitFlag.Value = true;
@@ -1026,7 +1095,7 @@ namespace WpfApp1_cmd.ViewModel
 		/// <summary>
 		///  転送中止
 		/// </summary>
-		private async void StopTransferExecute()
+		private async Task<bool> StopTransferExecute()
 		{
 			AddLog("StopTransfer Command");
 
@@ -1038,7 +1107,7 @@ namespace WpfApp1_cmd.ViewModel
 
 			if (r == null || r.ToString() == "CANCEL")
 			{
-				return;
+				return false;
 			}
 			//CancellationToken.ThrowIfCancellationRequested();
 
@@ -1046,6 +1115,7 @@ namespace WpfApp1_cmd.ViewModel
 			{
 				CancelTokenSrc.Cancel();
 			}
+			return true;
 		}
 
 		/// <summary>
@@ -1069,7 +1139,10 @@ namespace WpfApp1_cmd.ViewModel
 			}
 
 			//Peripheral.bin の展開フォルダを削除
-			Directory.Delete("C:\\DeCompBin", true);
+			if (Directory.Exists("C:\\DecompBin") == true)
+			{
+				Directory.Delete("C:\\DeCompBin", true);
+			}
 
 			Application.Current.Shutdown();
 		}
@@ -1154,12 +1227,9 @@ namespace WpfApp1_cmd.ViewModel
 		/// データ転送
 		/// </summary>
 		/// <returns></returns>
-		public async Task<bool> TransferExecute()
+		public async Task<bool> TransferExecute(CancellationToken token)
 		{
-			CancelTokenSrc = new CancellationTokenSource();
-			CancellationToken token = CancelTokenSrc.Token;
-
-			foreach(var lcu in TreeViewItems)
+			foreach (var lcu in TreeViewItems)
 			{
 				if (lcu.Children == null || lcu.LcuCtrl == null || lcu.IsSelected.Value == false)
 				{
@@ -1186,14 +1256,20 @@ namespace WpfApp1_cmd.ViewModel
 
 						bool ret = await UploadModuleFiles(lcu, machine, module, token);
 
-						AddLog($"{lcu.Name}::{machine.Name}::{module.Name}::Transfer Start");
+						AddLog($"{lcu.Name}::{machine.Name}::{module.Name}::Transfer End");
 
 						// LCU 上に作成、転送したファイルを削除する
 						lcu.LcuCtrl.ClearFtpFolders(Define.LCU_ROOT_PATH);
+
+						if( ret == false)
+						{
+							IsTransfering = false;
+							return false;
+						}
 					}
 				}
 			}
-			CancelTokenSrc.Dispose();
+			IsTransfering = false;
 			return true;
 		}
 
@@ -1285,6 +1361,85 @@ namespace WpfApp1_cmd.ViewModel
 		/// <summary>
 		/// 
 		/// </summary>
+		private async Task<bool> WaitTransferState(CancellationToken? token)
+		{
+			if (CanTransferFlag.Value == false)
+			{
+				while (true)
+				{
+					if (CanTransferFlag.Value == true)
+					{
+						break;
+					}
+					if( token != null )
+					{
+						if( token.Value.IsCancellationRequested == true)
+						{
+							return false;
+						}
+					}
+					await Task.Delay(500);
+				}
+			}
+			return true;
+		}
+
+		private List<string> CreateUpdateFileList(List<string> folders)
+		{
+			List<string> files = [];
+
+			foreach (var folder in folders)
+			{
+				string[] fs = Directory.GetFiles(folder, "*", SearchOption.AllDirectories);
+				files.AddRange(fs);
+			}
+
+			return files;
+		}
+
+		/// <summary>
+		/// アップデート対象のフォルダを取得する
+		/// </summary>
+		/// <returns></returns>
+		private List<(string, string)> CreateUpdateFolders()
+		{
+			List<(string unit,string path)> folders = [];
+
+			if(Updates == null)
+			{
+				//例外除け
+				return folders;
+			}
+
+			foreach (var item in Updates)
+			{
+				string localPath = DataFolder + item.Path;
+				if(Path.Exists(localPath) == false)
+				{
+					//存在しなければ次へ
+					continue;
+				}
+				if (System.IO.File.GetAttributes(localPath) == FileAttributes.Directory)
+				{
+					folders.Add((item.Name,localPath));
+				}
+				else
+				{
+					string? path = Path.GetDirectoryName(localPath);
+					if (path != null)
+					{
+						folders.Add((item.Name,path));
+					}
+				}
+			}
+			//重複を削除
+			folders = folders.Distinct().ToList();
+
+			return folders;
+		}
+		/// <summary>
+		/// モジュールにユニットソフトを転送する
+		/// </summary>
 		/// <param name="lcu"></param>
 		/// <param name="machine"></param>
 		/// <param name="module"></param>
@@ -1294,52 +1449,194 @@ namespace WpfApp1_cmd.ViewModel
 		{
 			bool ret;
 
+			if( module.UnitVersions == null)
+			{
+				return false;
+			}
+			// UpdateCommon.inf ファイルを取得
+			string tmp = Path.GetTempPath();
+			ret = await GetMcPeripheralFile(lcu, machine, module, Define.UPDATE_INFO_FILE, tmp);
+
+			// UpdateCommon.inf ファイルを読み込んで string[] としておく(各行がstring)
+			string[] lines = System.IO.File.ReadAllLines(tmp+Define.UPDATE_INFO_FILE, Encoding.GetEncoding(Define.TXT_ENCODING));
+
 			// UpdateCommon.inf の Path のフォルダにファイルを転送する
 			//   ※ UpdateCommon.inf に記載されているデータは存在するものとする
 			//       指定されたフォルダにあるUpdateCommon.inf を読み込んでいるので
 			//
 			//バージョン情報からパスのみを取り出してリスト化
-			//List<string> folders = module.UnitVersions.Select(x => Path.GetDirectoryName(x.Path)).ToList();
 			List<string> mcFiles = module.UnitVersions.Select(x => x.Path).ToList();
-			List<string> lcuFiles = module.UnitVersions.Select(x => $"LCU_{module.Pos}/MCFiles/{x.Path}").ToList();
 
+			string lcuRoot = $"/MCFiles";
+			//バージョン情報からパスのみを取り出してリスト化
+			List<(string unit,string path)> unitFolders = CreateUpdateFolders();
+			List<string> folders = unitFolders.Select(x => x.path).ToList();
+
+			// folder に含まれるファイルをリスト化
+			List<string> files = CreateUpdateFileList(folders);
+
+			//対象ファイルをすべて LCU にアップロード
+			//lcu.LcuCtrl.UploadFilesWithFolder(folders, lcuRoot, DataFolder);
+			lcu.LcuCtrl.UploadFilesWithFolder(folders, $"/LCU_{module.Pos}"+lcuRoot, DataFolder);
+
+			string mcUser = GetMcUser();
+			string mcPass = GetMcPass();
+			foreach (var (unit,folder) in unitFolders)
+			{
+				string[] fs = Directory.GetFiles(folder, "*", SearchOption.AllDirectories);
+
+				// //Fuji 以降を取り出してリスト化(装置に送るファイル名)
+				List<string> mc = fs.Select(x => x[DataFolder.Length..]).ToList();
+
+				// LCU にアップロードされたファイル名をリスト化
+				List<string> lc = mc.Select(x => $"{lcuRoot}" + x).ToList();
+
+				//転送が完了したので、転送中止ボタンが押されていないか確認(ファイル単位)
+				bool bt = await WaitTransferState(token);
+				if( bt == false )
+				{
+					AddLog($"{lcu.Name}::{machine.Name}::{module.Name}::Transfer Stop");
+					break;
+				}
+
+				//Progress?.SetMessage($"Transfering {unitVersion.Name}");
+
+				string retMsg = await lcu.LcuCtrl.LCU_Command(PostMcFile.Command(machine.Name, module.Pos, mcUser, mcPass, mc, lc), token);
+
+				if (retMsg == "" || retMsg == "Internal Server Error")
+				{
+					AddLog($"{lcu.Name}::{machine.Name}::{module.Name}::WebAPI Error");
+					break;
+				}
+				//AddLog($"Transfer {module.Name}::{unitVersion.Name}");
+				//unitVersion.IsUpdated.Value = true;
+
+				//対象となるユニットのバージョン情報(string)を更新
+				//ModifyUpdateInfo(lines, unitVersion.Name, unitVersion.NewVersion);
+			}
+
+			/*
 			try
 			{
-				//LCU上にフォルダを作成する(ファイルを送るフォルダ)
+				//LCU上にフォルダを作成する(ファイルを送るフォルダ: Fuji/System3/Program/Peripheral/***)
 				string lcuRoot = $"LCU_{module.Pos}\\MCFiles\\";
 				//string lcuRoot = "/MCFiles/";
 				ret = lcu.LcuCtrl.CreateFtpFolders(mcFiles, lcuRoot);
 				if (ret == false)
 				{
-					Debug.WriteLine("CreateFtpFolders Error");
-					return ret;
+					AddLog($"{lcu.Name}::CreateFtpFolders Error");
+					return false;
 				}
 				// LCUに FTPでファイルを送信
-				ret = lcu.LcuCtrl.UploadFiles(lcuRoot, DataFolder, mcFiles);
+				//ret = lcu.LcuCtrl.UploadFiles(lcuRoot, DataFolder, mcFiles);
+				ret = lcu.LcuCtrl.UploadFiles2(lcuRoot, DataFolder, tp);
 
 				//LCUから装置にファイルを送信するコマンド
 				string mcUser = GetMcUser();
 				string mcPass = GetMcPass();
-				string retMsg = await lcu.LcuCtrl.LCU_Command(PostMcFile.Command(machine.Name, module.Pos, mcUser, mcPass, mcFiles, lcuFiles), token);
 
-				if (retMsg == "" || retMsg == "Internal Server Error")
+				// 装置にファイルを送信(1ファイルずつ送信)
+				foreach (var unitVersion in module.UnitVersions)
 				{
-					Debug.WriteLine("PostMCFile Error");
-					return false;
+					List<string> mc = [unitVersion.Path, unitVersion.FuserPath];
+					List<string> lc = [$"{lcuRoot}{unitVersion.Path}",$"{lcuRoot}{unitVersion.FuserPath}"];
+
+					//転送が完了したので、転送中止ボタンが押されていないか確認(ファイル単位)
+					bool bt = await WaitTransferState(token);
+					if( bt == false )
+					{
+						AddLog($"{lcu.Name}::{machine.Name}::{module.Name}::Transfer Stop");
+						break;
+					}
+
+					Progress?.SetMessage($"Transfering {unitVersion.Name}");
+					string retMsg = await lcu.LcuCtrl.LCU_Command(PostMcFile.Command(machine.Name, module.Pos, mcUser, mcPass, mc, lc), token);
+					if (retMsg == "" || retMsg == "Internal Server Error")
+					{
+						AddLog($"{lcu.Name}::{machine.Name}::{module.Name}::WebAPI Error");
+						break;
+					}
+					AddLog($"Transfer {module.Name}::{unitVersion.Name}");
+					unitVersion.IsUpdated.Value = true;
+
+					//対象となるユニットのバージョン情報(string)を更新
+					ModifyUpdateInfo(lines, unitVersion.Name, unitVersion.NewVersion);
 				}
 
-				//UpdateCommon.inf を更新
-				ret = await MergeUpdateCommon(lcu, machine, module);
+				if (module.UnitVersions.Any(x => x.IsUpdated.Value == true) == true)
+				{
+					// 転送を行ったもの(IsUpdated = true)がある場合、UpdateCommon.inf を更新する
+					//新	 UpdateCommon.inf を作成
+					StringsToFile(lines, tmp + Define.UPDATE_INFO_FILE);
+
+					// LCUに FTPでファイルを送信
+					ret = lcu.LcuCtrl.UploadFiles(lcuRoot, tmp, [Define.UPDATE_INFO_FILE]);
+
+					// LCU から装置にファイルを送信する
+					List<string> lcuFile = [lcuRoot + Define.UPDATE_INFO_FILE];
+					List<string> mcFile = [Define.MC_PERIPHERAL_PATH + Define.UPDATE_INFO_FILE];
+					string rg = await lcu.LcuCtrl.LCU_Command(PostMcFile.Command(machine.Name, module.Pos, mcUser, mcPass, mcFile,lcuFile), token);
+				}
+
 			}
 			catch (Exception e)
 			{
-				Debug.WriteLine("UploadModuleFiles Error");
+				AddLog("UploadModuleFiles Error");
 				throw;
 			}
-
+*/
 			return true;
 		}
 
+		private async Task<bool> GetMcPeripheralFile(LcuInfo lcu, MachineInfo machine, ModuleInfo module, string peripheralFile, string targetPath)
+		{
+			string mcFile = Define.MC_PERIPHERAL_PATH + peripheralFile;
+			string lcuFile = $"LCU_{module.Pos}/MCFiles" + peripheralFile;
+
+			//装置からファイルを取得
+			return await lcu.LcuCtrl.GetMachineFile(machine.Name, module.Pos, mcFile, lcuFile, targetPath);
+		}
+
+		/// <summary>
+		///  UpdateCommon.inf をユニット単位で更新する
+		/// </summary>
+		/// <param name="lines"></param>
+		/// <param name="Name"></param>
+		/// <param name="version"></param>
+		private void ModifyUpdateInfo(string[] lines, string Name, string version)
+		{
+			int section = 0;
+			foreach (ref string line in lines.AsSpan())
+			{
+				if( line.Equals($"[{Name}]"))
+				{
+					section = 1;
+				}
+				if( section == 1 && line.StartsWith("Version="))
+				{
+					line = "Version=" + version;
+					break;
+				}
+			}
+		}
+
+		/// <summary>
+		///  string[] からファイルを作成する
+		/// </summary>
+		/// <param name="lines"></param>
+		/// <param name="lcu"></param>
+		/// <param name="machine"></param>
+		/// <param name="module"></param>
+		/// <param name="path"></param>
+		private void StringsToFile(string[] lines, string path)
+		{
+			StreamWriter outFile = new(path, false, Encoding.GetEncoding(Define.TXT_ENCODING));
+			foreach (var line in lines)
+			{
+				outFile.WriteLine(line);
+			}
+			outFile.Close();
+		}
 		/// <summary>
 		/// UpdateCommon.inf をマージして更新する
 		/// </summary>
@@ -1351,12 +1648,14 @@ namespace WpfApp1_cmd.ViewModel
 		{
 			bool ret;
 			//string tmpDir = Path.GetTempPath();
-			string tmpDir = @"C:\Users\ka.makihara\temp";
+			string tmpDir = @"C:\Users\ka.makihara\temp\";
 
 			//装置・モジュールから UpdateCommon.inf を取得する
 			string mcFile = Define.MC_PERIPHERAL_PATH + Define.UPDATE_INFO_FILE;
 			string lcuFile = $"LCU_{module.Pos}/MCFiles" + Define.UPDATE_INFO_FILE;
 			ret = await lcu.LcuCtrl.GetMachineFile(machine.Name, module.Pos, mcFile, lcuFile, tmpDir);
+
+			//ret = await GetMcPeripheralFile(lcu, machine, module, Define.UPDATE_INFO_FILE, tmpDir);
 
 			if (ret == false)
 			{
@@ -1365,8 +1664,17 @@ namespace WpfApp1_cmd.ViewModel
 			}
 
 			// UpdateCommon.inf を読み込む
+			string[] lines;
 			string path = tmpDir + Define.UPDATE_INFO_FILE;
-			var lines = System.IO.File.ReadAllLines(path, Encoding.GetEncoding(Define.TXT_ENCODING));
+			try
+			{
+				lines = System.IO.File.ReadAllLines(path, Encoding.GetEncoding(Define.TXT_ENCODING));
+			}
+			catch (Exception e)
+			{
+				AddLog($"{lcu.Name}::{machine.Name}::{module.Name}={path} Read error");
+				return false;
+			}
 			StreamWriter outFile = new StreamWriter(path+".new", false, Encoding.GetEncoding(Define.TXT_ENCODING));
 
 			string sectionName = "";
@@ -1481,36 +1789,90 @@ namespace WpfApp1_cmd.ViewModel
 		}
 
 		/// <summary>
+		/// バージョン情報を作成する
+		/// </summary>
+		/// <param name="unit">ユニット名</param>
+		/// <param name="newVer">新バージョン</param>
+		/// <param name="module">モジュール情報</param>
+		/// <returns></returns>
+		private UnitVersion? CreateUnitVersionItem(string unit, string newVer, ModuleInfo module)
+		{
+			IniFileParser? parser = module.UpdateInfo;  //装置から取得した UpdateCommon.inf
+			long fileSz = -1;
+
+			if( parser == null)
+			{
+				return null;
+			}
+
+			string path = parser.GetValue(unit, "Path");
+			string binPath = DataFolder + path;
+
+			if (System.IO.File.Exists(binPath) == true)
+			{
+				if (System.IO.File.GetAttributes(binPath) == FileAttributes.Directory )
+				{
+					fileSz = 0;
+				}
+				else if( Path.GetExtension(binPath) == ".inf")
+				{
+					// .inf の場合はディレクトリとして扱う(ただし、ディレクトリ名は .inf ファイルを除いたもの)
+					fileSz = 0;
+					path = Path.GetDirectoryName(binPath) ?? "";
+				}
+				else
+				{
+					FileInfo fi = new(binPath);
+					fileSz = fi.Length;
+				}
+			}
+
+			UnitVersion version = new()
+			{
+				Name = unit,
+				Attribute = int.Parse(parser.GetValue(unit, "Attribute")),
+				Path = path ?? "",
+				FuserPath = parser.GetValue(unit, "FuserPath"),
+				CurVersion = parser.GetValue(unit, "Version"),
+				NewVersion = newVer,
+				Parent = module,
+				Size = fileSz,
+			};
+			return version;
+		}
+		/// <summary>
 		/// LCUからユニットバージョン情報を取得する
 		/// </summary>
-		/// <param name="lcu"></param>
-		/// <param name="machine"></param>
-		/// <param name="module"></param>
+		/// <param name="lcu">LcuInfo</param>
+		/// <param name="machine">MachineInfo</param>
+		/// <param name="module">ModuleInfo</param>
+		/// <param name="progCtrl">ProgressDialogController</param>
+		/// <param name="token">CancellationToken</param>
 		/// <returns></returns>
 		public async Task<ReactiveCollection<UnitVersion>?> CreateVersionInfo(LcuInfo lcu, MachineInfo machine, ModuleInfo module, ProgressDialogController? progCtrl, CancellationToken token)
-		//public async Task<ObservableCollection<UnitVersion>?> CreateVersionInfo(LcuInfo lcu, MachineInfo machine, ModuleInfo module)
 		{
 			bool ret;
 
-			if ( lcu.LcuCtrl == null/* || lcu.IsSelected.Value == false*/)
+			if ( lcu.LcuCtrl == null)
 			{
 				return null;
 			}
 
 			progCtrl?.SetMessage($"{lcu.LcuCtrl.Name}::{machine.Name}::{module.Name} Get Update Info");
 
+			// UpdateCommon.inf をLCUを経由して取得する
 			if (module.UpdateInfo == null)
 			{
 				string tmpDir = Path.GetTempPath();
 
 				string mcFile = Define.MC_PERIPHERAL_PATH + Define.UPDATE_INFO_FILE;
-				string lcuFile = $"LCU_{module.Pos}/MCFiles" + Define.UPDATE_INFO_FILE;
+				string lcuFile = $"LCU_{module.Pos}/MCFiles/" + Define.UPDATE_INFO_FILE;
 				//string lcuPath = "/MCFiles/ "+ Define.MC_PERIPHERAL_PATH;
 
 				// UpdateCommon.inf を取得するフォルダを作成
 				//ret = lcu.LcuCtrl.CreateFtpFolders(new List<string> { mcFile }, lcuFile);
 
-				//装置から UpdateCommon.inf を取得してテンポラリに保存
+				//装置から UpdateCommon.inf を取得(lcuFile)してテンポラリに保存
 				ret = await lcu.LcuCtrl.GetMachineFile(machine.Name, module.Pos, mcFile, lcuFile, tmpDir, token);
 
 				if (ret == false)
@@ -1518,6 +1880,7 @@ namespace WpfApp1_cmd.ViewModel
 					AddLog($"{lcu.LcuCtrl.Name}:{machine.Name}:{module.Pos}={mcFile} Get error");
 					return null;
 				}
+				// IniFilePaeser に読み込む
 				module.UpdateInfo = new(tmpDir + Define.UPDATE_INFO_FILE);
 
 				//テンポラリに生成したファイルを削除
@@ -1525,70 +1888,60 @@ namespace WpfApp1_cmd.ViewModel
 			}
 			IniFileParser parser = module.UpdateInfo;
 
-			IList<string> sec = parser.SectionCount();
+			List<string> sec = parser.SectionCount();  //[Unit]セクションのリストを取得
 
 			//バージョン情報を生成
 			ReactiveCollection<UnitVersion> versions = [];
 
 			// ユニット一覧作成時のオプション
 			//   --matchUnit が指定されている場合は、UpdateCommon.inf に記載されているユニットのみを対象とする
-			bool opt  = Options.GetOptionBool("--matchUnit", false);
+			//   --diffOnly が指定されている場合は、バージョンが同一のユニットは対象外とする
+			bool match = Options.GetOptionBool("--matchUnit", false);
 			bool only = Options.GetOptionBool("--diffOnly", false);
 
 			foreach (var unit in sec)
 			{
 				//バージョンアップの中に該当するユニットのインデックスを取得(ない場合は -1)
 				int idx = -1;
-				string newVer = "N/A";
-
 				if (Updates != null )
 				{
 					idx = Updates.Select((v, i) => new { Value = v, Index = i }).FirstOrDefault(x => x.Value.Name == unit)?.Index ?? -1;
 				}
 
-				if (idx != -1)
+				if (idx != -1 && Updates != null )
 				{
-					newVer = Updates[idx].Version;
-					if( only == true && parser.GetValue(unit, "Version") == newVer)
+					if( only == true && parser.GetValue(unit, "Version") ==  Updates[idx].Version )
 					{
 						//同じバージョンは対象外とするオプション指定の場合
 						continue;
 					}
-					//データサイズを取得
-					//string binPath = DataFolder + parser.GetValue(unit, "Path").Split("Peripheral")[1];
-					string binPath = DataFolder + parser.GetValue(unit, "Path");
-					FileInfo fi = new FileInfo(binPath);
 
-					UnitVersion version = new()
+					UnitVersion? version = CreateUnitVersionItem(unit, Updates[idx].Version, module);
+
+					if(version == null)
 					{
-						Name = unit,
-						Attribute = parser.GetValue(unit, "Attribute"),
-						Path = parser.GetValue(unit, "Path"),
-						CurVersion = parser.GetValue(unit, "Version"),
-						NewVersion = newVer,
-						Parent = module,
-						Size = fi.Length
-					};
+						continue;
+					}
 					progCtrl?.SetMessage($"{lcu.LcuCtrl.Name}::{machine.Name}::{module.Name}::{unit}={version.CurVersion}");
 					versions.Add(version);
+					Debug.WriteLine($"{lcu.LcuCtrl.Name}::{machine.Name}::{module.Name}::{unit}={version.CurVersion}");
 				}
 				else
 				{
 					//アップデートデータ内に対象ユニットが無い場合
-					if( opt == false)
+					if( match == false)
 					{
-						//存在するユニット以外も対しようとする場合(--matchUnit==false)
-						UnitVersion version = new()
+						//存在するユニット以外も対象とする場合(--matchUnit==false or --matchUnit 未定義)
+						UnitVersion? version = CreateUnitVersionItem(unit, "N/A", module);
+
+						if(version == null)
 						{
-							Name = unit,
-							Attribute = parser.GetValue(unit, "Attribute"),
-							Path = parser.GetValue(unit, "Path"),
-							CurVersion = parser.GetValue(unit, "Version"),
-							NewVersion = newVer,
-							Parent = module
-						};
+							continue;
+						}
+
 						progCtrl?.SetMessage($"{lcu.LcuCtrl.Name}::{machine.Name}::{module.Name}::{unit}={version.CurVersion}");
 						versions.Add(version);
+						Debug.WriteLine($"{lcu.LcuCtrl.Name}::{machine.Name}::{module.Name}::{unit}={version.CurVersion}");
 					}
 				}
 			}
@@ -1657,12 +2010,6 @@ namespace WpfApp1_cmd.ViewModel
 		/// <param name="LcuInfo">LCU情報</param>
 		public async Task<bool> UpdateLcuInfo(LcuInfo lcu,ProgressDialogController? progCtrl, CancellationToken token) 
 		{
-			/*
-			if( lcu.LcuCtrl == null)
-			{
-				lcu.LcuCtrl = new LcuCtrl(lcu.Name);
-			}
-			*/
 			bool ping = await CheckComputer(lcu.LcuCtrl.Name.Split(':')[0], 3);
 			if(ping == false)
 			{
@@ -1684,7 +2031,7 @@ namespace WpfApp1_cmd.ViewModel
 				} 
 				string password = FtpData.GetPasswd(data.username, data.password);
 
-				// デバッグ用のFTPアカウント情報を設定
+				// FTPアカウント情報を設定
 				lcu.FtpUser = data.username;
 				lcu.FtpPassword = password;
 				lcu.LcuCtrl.FtpUser = lcu.FtpUser;
@@ -1692,8 +2039,13 @@ namespace WpfApp1_cmd.ViewModel
 
 				// LCU バージョン取得
 				str = await lcu.LcuCtrl.LCU_Command(LcuVersion.Command(),token);
-				IList<LcuVersion> versionInfo = LcuVersion.FromJson(str);
-				lcu.Version = versionInfo.Where(x => x.itemName == "Fuji LCU Communication Server Service").First().itemVersion;
+				IList<LcuVersion>? versionInfo = LcuVersion.FromJson(str);
+				if(versionInfo == null)
+				{
+					AddLog($"{lcu.Name}::LcuVersion Get Error");
+					return false;
+				}
+				lcu.Version = versionInfo.First(x => x.itemName == "Fuji LCU Communication Server Service").itemVersion;
 
 				progCtrl?.SetMessage($"LCU:{lcu.LcuCtrl.Name} Version={lcu.Version}");
 
@@ -1772,10 +2124,11 @@ namespace WpfApp1_cmd.ViewModel
 							baseInfo.Children.Add(moduleItem);
 							machine.Children.Add(moduleItem);
 
-							var ret = await CreateVersionInfo(lcu, machine, moduleItem,progCtrl, token);
+							var ret = await CreateVersionInfo(lcu, machine, moduleItem, progCtrl, token);
 							if(ret != null)
 							{
 								moduleItem.UnitVersions = ret;
+								moduleItem.IsSelected.Value = false;
 							}   
 						}
 					}
