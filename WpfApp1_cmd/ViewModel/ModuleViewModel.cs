@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using WpfApp1_cmd.Models;
 using WpfLcuCtrlLib;
 
 namespace WpfApp1_cmd.ViewModel

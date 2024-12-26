@@ -22,7 +22,7 @@
         IsCloseButtonEnabled="False"
         ShowCloseButton="False"
         Style="{StaticResource MaterialDesignWindow}"
-        Title="TransferTool" Height="760" Width="1050">
+        Title="TransferTool" Height="800" Width="850">
 
     <Window.Resources>
       <local:RichTextItemsToDocumentConverter x:Key="RichTextItemsToDocumentConverter" />
@@ -31,6 +31,7 @@
             <view:MaterialDialog/>
         </DataTemplate>
         -->
+      <!-- TreeView の右クリックメニューのリソース(Tagプロパティに代入しておいた、DataContextから値を取り出してCommandに設定) -->
       <ContextMenu x:Key="SampleContextMenu">
         <MenuItem Header="Menu1"
                   Command="{Binding Path=PlacementTarget.Tag.TreeViewCommand, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
@@ -141,6 +142,7 @@
                 </i:Interaction.Triggers>
 
                 <TreeView.ItemContainerStyle>
+                    <!-- TreeView の右クリックメニュー表示(TagプロパティにDataContextを代入しておく)-->
                     <Style TargetType="{x:Type TreeViewItem}" BasedOn="{StaticResource MaterialDesignTreeViewItem}">
                         <Setter Property="Tag" Value="{Binding Path=DataContext, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type TreeView}}}" />
                         <Setter Property="ContextMenu" Value="{Binding Source={StaticResource SampleContextMenu}}"/>
@@ -193,28 +195,39 @@
                     <DataTemplate DataType="{x:Type vm:LcuViewModel}">
                         <view:LcuView />
                     </DataTemplate>
+                    <DataTemplate DataType="{x:Type vm:UnitVersionViewModel}">
+                        <view:UnitVersionView />
+                    </DataTemplate>
                     <DataTemplate DataType="{x:Type vm:ModuleViewModel}">
                         <view:ModuleView />
                     </DataTemplate>
                 </Grid.Resources>
 
                 <materialDesign:DialogHost DialogTheme="Inherit" CloseOnClickAway="true" Identifier="DataGridView">
-                    <mahApps:TransitioningContentControl Content="{Binding ActiveView}" Transition="RightReplace" Height="350"  />
+                    <mahApps:TransitioningContentControl Content="{Binding ActiveView}" Transition="RightReplace"  />
                 </materialDesign:DialogHost>
 
                 <GridSplitter Grid.Row="1" Height="5" Style="{StaticResource HorizontalGridSplitter}" />    
-                <StackPanel Grid.Row="2" Orientation="Vertical" Margin="0,10,0,0" >
+                <StackPanel Grid.Row="2" Orientation="Vertical" Margin="0,3,0,0" >
                     <TextBlock Text="Execution Log" FontSize="16" FontWeight="Bold" Margin="5,1,1,1"/>
                     <Border BorderThickness="1" BorderBrush="White"/>
 
-                    <TextBox x:Name="logMessage" AcceptsReturn="True" Height="230" FontSize="16" Margin="5" TextWrapping="Wrap"
+                    <TextBox x:Name="logMessage" AcceptsReturn="True" Height="250" FontSize="16" Margin="5" TextWrapping="Wrap"
                             BorderBrush="{DynamicResource MaterialDesignShadowBrush}" BorderThickness="1"
                             VerticalScrollBarVisibility="Auto"
                             Text="{Binding LogData}"
                              IsReadOnly="True"
                             TextChanged="logMessage_TextChanged"
-                            HorizontalScrollBarVisibility="Auto">
-                            <!--
+                            HorizontalScrollBarVisibility="Auto" RenderTransformOrigin="0.509,0.328">
+                        <TextBox.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform/>
+                                <SkewTransform AngleX="1.097"/>
+                                <RotateTransform/>
+                                <TranslateTransform X="-2.961"/>
+                            </TransformGroup>
+                        </TextBox.RenderTransform>
+                        <!--
                         <i:Interaction.Triggers>
                             <i:EventTrigger EventName="TextChanged">
                                 <rp:EventToReactiveCommand Command="{Binding LogMessageChangedCommand}" />

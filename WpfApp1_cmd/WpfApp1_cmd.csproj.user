@@ -39,6 +39,9 @@
     <Compile Update="View\MyMessageBox.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="View\UnitVersionView.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="View\UpdateVersionView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -78,6 +81,9 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Update="View\MyMessageBox.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="View\UnitVersionView.xaml">
       <SubType>Designer</SubType>
     </Page>
     <Page Update="View\UpdateVersionView.xaml">

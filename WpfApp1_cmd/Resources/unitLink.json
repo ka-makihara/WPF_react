@@ -1,0 +1,268 @@
+{
+  "units": [
+    {
+      "name": "Palette",
+      "components": [ "Palette", "Palette_FPGA", "Palette_FPGA_GOWIN" ]
+    },
+    {
+      "name": "NXT_PALETTE",
+      "components": [ "NXT_PALETTE", "NXT_PALETTE_FPGA", "NXT_PALETTE_FPGA_GOWIN" ]
+    },
+    {
+      "name": "TRAY_PALETTE",
+      "components": [ "TRAY_PALETTE", "TRAY_PALETTE_FPGA", "TRAY_PALETTE_FPGA_GOWIN" ]
+    },
+    {
+      "name": "TRAY_PALETTE_LTR",
+      "components": [ "TRAY_PALETTE_LTR", "TRAY_PALETTE_LTR_FPGA", "TRAY_PALETTE_LTR_FPGA_GOWIN" ]
+    },
+    {
+      "name": "HalfPalette",
+      "components": [ "HalfPalette", "HalfPalette_FPGA", "HalfPalette_FPGA_GOWIN" ]
+    },
+    {
+      "name": "Palette_MFU63",
+      "components": [ "Palette_MFU63", "Palette_MFU63_FPGA", "Palette_MFU63_FPGA_GOWIN" ]
+    },
+    {
+      "name": "Palette_MFU65",
+      "components": [ "Palette_MFU65", "Palette_MFU65_FPGA", "Palette_MFU65_FPGA_GOWIN" ]
+    },
+    {
+      "name": "NXT_TrayUnitM",
+      "components": [ "NXT_TrayUnitM_IF", "NXT_TrayUnitM_PLC", "NXT_TrayUnitM_Conv" ]
+    },
+    {
+      "name": "NXT_TrayUnitM2",
+      "components": [ "NXT_TrayUnitM2_PLC", "NXT_TrayUnitM2_Conv" ]
+    },
+    {
+      "name": "Feeder_Jig",
+      "components": [ "Feeder_Jig", "Feeder_Jig_FPGA" ]
+    },
+    {
+      "name": "BRemoteIO",
+      "components": [ "BRemoteIO", "BRemoteIO_FPGA", "BRemoteIO_FPGA_GOWIN" ]
+    },
+    {
+      "name": "MRemoteIO",
+      "components": [ "MRemoteIO", "MRemoteIO_FPGA", "MRemoteIO_FPGA_GOWIN" ]
+    },
+    {
+      "name": "MRemoteIO_Multi",
+      "components": [ "MRemoteIO_Multi", "MRemoteIO_Multi_FPGA", "MRemoteIO_Multi_FPGA_GOWIN", "MRemoteIO_Multi_DOUBLE_FPGA_GOWIN" ]
+    },
+    {
+      "name": "Head_RH01",
+      "components": [ "Head_RH01", "Head_RH01_FPGA" ]
+    },
+    {
+      "name": "Head_RH28",
+      "components": [ "Head_RH28", "Head_RH28_FPGA" ]
+    },
+    {
+      "name": "Head_Hc02",
+      "components": [ "Head_Hc02", "Head_Hc02_FPGA" ]
+    },
+    {
+      "name": "Head_Hc08",
+      "components": [ "Head_Hc08", "Head_Hc08_FPGA" ]
+    },
+    {
+      "name": "Head_Hc20",
+      "components": [ "Head_Hc20", "Head_Hc20_FPGA" ]
+    },
+    {
+      "name": "Head_RHGL",
+      "components": [ "Head_RHGL", "Head_RHGL_FPGA" ]
+    },
+    {
+      "name": "Head_RHDX",
+      "components": [ "Head_RHDX", "Head_RHDX_FPGA" ]
+    },
+    {
+      "name": "Head_Matrix",
+      "components": [ "Head_Matrix", "Head_Matrix_FPGA" ]
+    },
+    {
+      "name": "XAxis",
+      "components": [ "XAxis", "XAxis_FPGA" ]
+    },
+    {
+      "name": "Fix",
+      "components": [ "Fix", "Fix_FPGA" ]
+    },
+    {
+      "name": "Justice",
+      "components": [ "JusticeMaster", "JusticeSlave" ]
+    },
+    {
+      "name": "Buffer_Palette",
+      "components": [ "Buffer_Palette", "Buffer_Palette_FPGA", "Buffer_Palette_FPGA_GOWIN" ]
+    },
+    {
+      "name": "ReelSet",
+      "components": [ "ReelSet", "ReelSet_FPGA" ]
+    },
+    {
+      "name": "Printer_Fix",
+      "components": [ "Printer_Fix", "Printer_Fix_FPGA" ]
+    },
+    {
+      "name": "Printer_XAxis",
+      "components": [ "Printer_XAxis", "Printer_XAxis_FPGA" ]
+    },
+    {
+      "name": "Copla",
+      "components": [ "Copla_App", "Copla_FW_FPGA", "Copla_FW_FPGA_VER3" ]
+    },
+    {
+      "name": "AutoFeeder_W08",
+      "components": [ "AutoFeeder_W08" ]
+    },
+    {
+      "name": "Feeder_Servo",
+      "components": [ "Feeder_Servo" ]
+    },
+    {
+      "name": "Feeder_Servo_TypeT",
+      "components": [ "Feeder_Servo_TypeT" ]
+    },
+    {
+      "name": "Feeder_W12_W104",
+      "components": [ "Feeder_W12_W104" ]
+    },
+    {
+      "name": "NXT_Feeder",
+      "components": [ "NXT_Feeder" ]
+    },
+    {
+      "name": "NXT_NGConv",
+      "components": [ "NXT_NGConv" ]
+    },
+    {
+      "name": "NXT_DipFlxUnit",
+      "components": [ "NXT_DipFlxUnit" ]
+    },
+    {
+      "name": "NXT_SqzDip",
+      "components": [ "NXT_SqzDip" ]
+    },
+    {
+      "name": "NXT_WxbFeder",
+      "components": [ "NXT_WxbFeder" ]
+    },
+    {
+      "name": "NXT_BeltStick",
+      "components": [ "NXT_BeltStick" ]
+    },
+    {
+      "name": "NXT_VibStick",
+      "components": [ "NXT_VibStick" ]
+    },
+    {
+      "name": "NXT_FeederTypeF",
+      "components": [ "NXT_FeederTypeF" ]
+    },
+    {
+      "name": "NXT_FeederTypeFW",
+      "components": [ "NXT_FeederTypeFW" ]
+    },
+    {
+      "name": "NXT_HS_Feeder",
+      "components": [ "NXT_HS_Feeder" ]
+    },
+    {
+      "name": "NXT_Feeder_W08N",
+      "components": [ "NXT_Feeder_W08N" ]
+    },
+    {
+      "name": "NXT_HiDipFlx",
+      "components": [ "NXT_HiDipFlx" ]
+    },
+    {
+      "name": "NXT_CTFeederR",
+      "components": [ "NXT_CTFeederR" ]
+    },
+    {
+      "name": "NXT_CTFeederG",
+      "components": [ "NXT_CTFeederG" ]
+    },
+    {
+      "name": "NXT_SWFeeder",
+      "components": [ "NXT_SWFeeder" ]
+    },
+    {
+      "name": "NXT_VA_Feeder",
+      "components": [ "NXT_VA_Feeder" ]
+    },
+    {
+      "name": "PartsLight",
+      "components": [ "PartsLight" ]
+    },
+    {
+      "name": "Inverter",
+      "components": [ "Inverter" ]
+    },
+    {
+      "name": "ContactlessBoard",
+      "components": [ "ContactlessBoard" ]
+    },
+    {
+      "name": "Point_MRemoteIO",
+      "components": [ "Point_MRemoteIO" ]
+    },
+    {
+      "name": "Printer_MRemoteIO",
+      "components": [ "Printer_MRemoteIO" ]
+    },
+    {
+      "name": "TrayPLC",
+      "components": [ "TrayPLC" ]
+    },
+    {
+      "name": "TrayRWPLC",
+      "components": [ "TrayRWPLC" ]
+    },
+    {
+      "name": "LCR2",
+      "components": [ "LCR2" ]
+    },
+    {
+      "name": "Servo",
+      "components": [ "Servo" ]
+    },
+    {
+      "name": "ManualFeeder_W08",
+      "components": [ "ManualFeeder_W08" ]
+    },
+    {
+      "name": "SE_FeederTypeT",
+      "components": [ "SE_FeederTypeT" ]
+    },
+    {
+      "name": "SE_FeederTypeT2",
+      "components": [ "SE_FeederTypeT2" ]
+    },
+    {
+      "name": "Feeder_Servo_TypeT",
+      "components": [ "Feeder_Servo_TypeT" ]
+    },
+    {
+      "name": "Nozzle_Supply_Unit",
+      "components": [ "Nozzle_Supply_Unit" ]
+    },
+    {
+      "name": "NXT_GCUR_S",
+      "components": [ "NXT_GCUR_S" ]
+    },
+    {
+      "name": "NXT_StackTrayFeeder",
+      "components": [ "NXT_StackTrayFeeder" ]
+    }
+  ],
+  "Options": {
+    "--dataFolder": "",
+    "--diffOnly": "true"
+  }
+}

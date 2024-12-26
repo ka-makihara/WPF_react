@@ -20,7 +20,6 @@ using MaterialDesignThemes.Wpf;
 using System.Runtime.InteropServices;
 
 using WpfLcuCtrlLib;
-//using NeximDataControl;
 using ControlzEx.Standard;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using Oracle.ManagedDataAccess.Client;
@@ -35,15 +34,19 @@ using System.Windows.Media.Animation;
 using System.Text.RegularExpressions;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
+using WpfApp1_cmd.Models;
 
 namespace WpfApp1_cmd.ViewModel
 {
-	public class PathData
+	/*
+    public class PathData
 	{
 		public string? Path { get; set; }
 		public List<string> Files { get; set; }
 	}
+	*/
 
+	/*
 	public class UnitList
 	{
 		public List<UnitComponent> units { get; set; }
@@ -53,6 +56,7 @@ namespace WpfApp1_cmd.ViewModel
 		public string name { get; set; }
 		public List<string> components { get; set; }
 	}
+	*/
 
 	public class MainWindowViewModel : ViewModelBase
 	{
@@ -139,13 +143,16 @@ namespace WpfApp1_cmd.ViewModel
 			LogMessage.Add(item);
 			*/
 			//OnPropertyChanged(nameof(LogMessage));
-			Debug.WriteLine(str);
+			//Debug.WriteLine(str);
 			if (LogWriter != null)
 			{
 				LogWriter.WriteLine(str);
 			}
 		}
 
+		// ユニット連携情報
+		private UnitLink _unitLink;
+		public UnitLink UnitLink { get => _unitLink; set => _unitLink = value; }
 
 		// ツリービューのアイテム
 		public ReactiveCollection<LcuInfo> TreeViewItems { get; set; }
@@ -176,13 +183,13 @@ namespace WpfApp1_cmd.ViewModel
 		public string DialogText { get; set; } = "Dialog Text";
 
 		//アップデート用のバージョンデータ
-		private ReactiveCollection<UpdateInfo> _upDates;
-		private ReactiveCollection<UpdateInfo>? Updates
+		private ReactiveCollection<UpdateInfo> _upDateInfos;
+		private ReactiveCollection<UpdateInfo>? UpdateInfos
 		{
-			get => _upDates;
+			get => _upDateInfos;
 			set {
-				_upDates = value;
-				OnPropertyChanged(nameof(Updates));
+				_upDateInfos = value;
+				OnPropertyChanged(nameof(UpdateInfos));
 			}
 		}
 
@@ -404,7 +411,6 @@ namespace WpfApp1_cmd.ViewModel
 			Startup_log();
 
 			//progress
-			//ProgressDialogController controller = await Metro.ShowProgressAsync("Read Machine information ...", "");
 			Progress = await Metro.ShowProgressAsync("Read Machine information ...", "");
 
 			Progress.SetIndeterminate();// 進捗(?)をそれらしく流す・・・
@@ -430,6 +436,7 @@ namespace WpfApp1_cmd.ViewModel
 					break;
 				}
 
+				//「待ち」を入れないと、ダイアログが更新されない
 				await Task.Delay(100);
 			}
 
@@ -519,13 +526,94 @@ namespace WpfApp1_cmd.ViewModel
 				{
 					AddLog($"DeCompress {path}\\Peripheral.bin");
 					CallDecompExe(path + "\\Peripheral.bin");
+				}
+				return true;
+			}
+			return false;
+		}
 
-					//Peripheral.bin が展開されたので、UpdateCommon.inf を読み込む
-					string infoFile = (path + "\\" + Define.MC_PERIPHERAL_PATH + Define.UPDATE_INFO_FILE).Replace("/", "\\");
-					
-					Updates = ReadUpdateCommon(infoFile);
+		/// <summary>
+		///  ユニットの連携情報を読み込む(デフォルトはexeのリソースから)
+		/// </summary>
+		private void ReadUnitLink()
+		{
+			var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+			var srcName = $"{assembly.GetName().Name}.Resources.unitLink.json";
+			string[] resources = assembly.GetManifestResourceNames();
+			string str = "";
 
-					if (Updates == null)
+			using( var stream = assembly.GetManifestResourceStream(srcName))
+			{
+				using (var reader = new StreamReader(stream))
+				{
+					str = reader.ReadToEnd();
+				}
+			}
+			UnitLink = JsonSerializer.Deserialize<UnitLink>(str);
+
+			// オプションでユニットリンクファイルが指定されている場合は、読み込んで更新する
+			if ( Options.GetOption("--unitLink", "") != "")
+			{
+				//オプションで指定されたファイルを読み込む
+				string path = Options.GetOption("--unitLink", "");
+				if (Path.Exists(path) == true)
+				{
+					string json = System.IO.File.ReadAllText(path);
+					UnitLink? list = JsonSerializer.Deserialize<UnitLink>(json);
+
+					if(list != null && UnitLink != null)
+					{
+						foreach(var unit in list.units)
+						{
+							var v = UnitLink.units.FirstOrDefault(x => x.name == unit.name);
+
+							if(v != null)
+							{
+								//存在する場合は、コンポーネントを更新
+								v.components = unit.components;
+							}
+							else
+							{
+								//存在しない場合は、追加
+								UnitLink.units.Add(unit);
+							}
+						}
+					}
+
+				}
+			}
+		}
+		/// <summary>
+		/// コンストラクタ
+		/// </summary>
+		public MainWindowViewModel()
+		{
+			string infoFile = "";
+
+			// unitLink.json の読み込み(ユニットのリンク情報、デフォルト)
+			ReadUnitLink();
+
+			//オプション処理
+			string dataFolder = Options.GetOption("--dataFolder", "");
+			if(dataFolder != "")
+			{
+				DataFolder = dataFolder;
+
+				//データフォルダが指定されている場合は、展開する
+				if( ReadPeripheralBin(dataFolder) == true )
+				{
+					//Peripheral.bin が展開されたので、UpdateCommon.inf のパスを設定
+					infoFile = (DataFolder + "\\" + Define.MC_PERIPHERAL_PATH + Define.UPDATE_INFO_FILE).Replace("/", "\\");
+				}
+				else
+				{
+					infoFile = (DataFolder + "\\" + Define.MC_PERIPHERAL_PATH　+ Define.UPDATE_INFO_FILE).Replace("/", "\\");
+				}
+				if (Path.Exists(infoFile) == true)
+				{
+					//UpdateCommon.inf を読み込む
+					UpdateInfos = ReadUpdateCommon(infoFile,UnitLink);
+					if (UpdateInfos == null)
 					{
 						AddLog($"Read Error:{infoFile}");
 					}
@@ -535,69 +623,17 @@ namespace WpfApp1_cmd.ViewModel
 						IsFileMenuEnabled = true;
 					}
 				}
-				return true;
-			}
-			return false;
-		}
-		/// <summary>
-		/// コンストラクタ
-		/// </summary>
-		public MainWindowViewModel()
-		{
-			string infoFile = "";
-
-			//オプション処理
-			//ファイルから文字列に読み込む
-			string str = System.IO.File.ReadAllText(@"c:\Users\ka.makihara\develop\UnitGroup.json");
-			UnitList list = JsonSerializer.Deserialize<UnitList>(str);
-
-			string dataFolder = Options.GetOption("--dataFolder", "");
-			if(dataFolder != "")
-			{
-				DataFolder = dataFolder;
-
-				//Peripheral.bin が指定されている場合は、展開する
-				if ( Path.Exists(dataFolder + "\\Peripheral.bin") == true)
-				{
-					FileInfo fileInfo = new FileInfo(dataFolder + "\\Peripheral.bin");
-					DriveInfo driveInfo = new DriveInfo("C:\\");
-
-					UpdateDataSize = fileInfo.Length;
-
-					//展開するデータがディスク容量を超えていないかチェック
-					if (driveInfo.AvailableFreeSpace < fileInfo.Length)
-					{
-						AddLog($"Not enough disk space:{driveInfo.AvailableFreeSpace} < UpdateData::{fileInfo.Length}");
-						MsgBox.Show("Error", "ErrorCode=E003", "Not enough disk space", "Not enough disk space for UpdateData", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "DataGridView");
-					}
-					else
-					{
-						AddLog($"DeCompress {dataFolder}\\Peripheral.bin");
-						CallDecompExe(dataFolder + "\\Peripheral.bin");
-					}
-					//Peripheral.bin が展開されたので、UpdateCommon.inf のパスを設定
-					infoFile = (DataFolder + "\\" + Define.MC_PERIPHERAL_PATH + Define.UPDATE_INFO_FILE).Replace("/", "\\");
-				}
 				else
 				{
-					infoFile = (DataFolder + "\\" + Define.MC_PERIPHERAL_PATH　+ Define.UPDATE_INFO_FILE).Replace("/", "\\");
-				}
-				//UpdateCommon.inf を読み込む
-				Updates = ReadUpdateCommon(infoFile);
-				if (Updates == null)
-				{
-					AddLog($"Read Error:{infoFile}");
-				}
-				else
-				{
-					AddLog($"Read {infoFile}");
-					IsFileMenuEnabled = true;
+					// UpdateCommon.inf が存在しない場合
+					AddLog($"Can not found Update Infoemation");
+					MsgBox.Show("Error", "ErrorCode=E001", "Not Found Update Data", "UpdateData", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "DataGridView");
 				}
 			}
 			else
 			{
 				DataFolder = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-				Updates = [];
+				UpdateInfos = [];
 				IsFileMenuEnabled = true;
 				IsLcuMenuEnabled = true;
 			}
@@ -608,9 +644,11 @@ namespace WpfApp1_cmd.ViewModel
 				{ "AView", new AViewModel() },
 				{ "BView", new BViewModel() },
 				{ "CView", new CViewModel() },
-				{ "UpdateVersionView", new UpdateVersionViewModel(Updates) }
+				{ "UpdateVersionView", new UpdateVersionViewModel(UpdateInfos) },
+				{ "UnitVersionView", new UnitVersionViewModel(UpdateInfos) }
 			};
-			ActiveView = viewModeTable["UpdateVersionView"];
+			//ActiveView = viewModeTable["UpdateVersionView"];
+			ActiveView = viewModeTable["UnitVersionView"];
 
 			//ライン情報読み込み
 			WindowLoadedCommand.Subscribe(() => LoadLineInfo_Start() );
@@ -692,7 +730,7 @@ namespace WpfApp1_cmd.ViewModel
 			StopTransferCommand.Subscribe(() => StopTransferExecute() );
 
 			QuitApplicationCommand = CanAppQuitFlag.ToReactiveCommandSlim();
-			QuitApplicationCommand.Subscribe(() => ApplicationShutDown() );
+			QuitApplicationCommand.Subscribe(() => ApplicationShutDown() ); 
 
 			//TreeView 右クリックメニューのテスト
 			TreeViewCommand.Subscribe((x) => { TreeViewMenu(x); });
@@ -812,14 +850,14 @@ namespace WpfApp1_cmd.ViewModel
 						var result = await MsgBox.Show("Error","ErrorCode=E004","Can not Found UpdateInfo","UpdateCommon.inf not exist.",(int)(MsgDlgType.OK| MsgDlgType.ICON_ERROR),"DataGridView");
 						return;
 					}
-					Updates = ReadUpdateCommon(cofd.FileName + "\\UpdateCommon.inf");
+					UpdateInfos = ReadUpdateCommon(cofd.FileName + "\\UpdateCommon.inf",UnitLink);
 
 					DirectoryInfo di = new DirectoryInfo(cofd.FileName);
 
 					long dataSize = Utility.GetDirectorySize(di);
 
 					//バージョン情報ビューの更新
-					viewModeTable["UpdateVersionView"] = new UpdateVersionViewModel(Updates);
+					viewModeTable["UpdateVersionView"] = new UpdateVersionViewModel(UpdateInfos);
 
 					//アップデートデータが変更されたので、 モジュールのバージョン情報をクリアする
 					foreach (LcuInfo lcu in TreeViewItems)
@@ -847,11 +885,11 @@ namespace WpfApp1_cmd.ViewModel
 									module.UnitVersions = ret;
 									if( viewModeTable.ContainsKey($"ModuleView_{module.Name}") == true)
 									{
-										viewModeTable[$"ModuleView_{module.Name}"] = new ModuleViewModel( module.UnitVersions,Updates);
+										viewModeTable[$"ModuleView_{module.Name}"] = new ModuleViewModel( module.UnitVersions,UpdateInfos);
 									}
 									else
 									{
-										viewModeTable.Add($"ModuleView_{module.Name}", new ModuleViewModel(module.UnitVersions, Updates));
+										viewModeTable.Add($"ModuleView_{module.Name}", new ModuleViewModel(module.UnitVersions, UpdateInfos));
 									}
 								}   
 							}
@@ -917,7 +955,7 @@ namespace WpfApp1_cmd.ViewModel
 		/// </summary>
 		/// <param name="path">UpdateCommon.inf ファイルのパス</param>
 		/// <returns></returns>
-		private ReactiveCollection<UpdateInfo> ReadUpdateCommon(string path)
+		private ReactiveCollection<UpdateInfo> ReadUpdateCommon(string path, UnitLink link)
 		{
 			ReactiveCollection<UpdateInfo> updates = [];
 
@@ -934,16 +972,19 @@ namespace WpfApp1_cmd.ViewModel
 						Attribute = parser.GetValue(unit, "Attribute"),
 						Path = parser.GetValue(unit, "Path"),
 						Version = parser.GetValue(unit, "Version"),
+						FuserPath = parser.GetValue(unit, "FuserPath"),
+
+						//リンク情報を取得
+						UnitGroup = link.units.Where(x => x.components.Find(y => y == unit) != null).FirstOrDefault()?.name
 					};
 					updates.Add(update);
 				}
-
 				UpdateDataSize = GetPeripheradSize(DataFolder);
 				return updates;
 			}
 			catch (Exception ex)
 			{
-				return null;
+				return updates;
 			}
 		}
 
@@ -1284,7 +1325,7 @@ namespace WpfApp1_cmd.ViewModel
 		{
 			bool ret;
 
-			if( Updates == null)
+			if( UpdateInfos == null)
 			{
 				return false;
 			}
@@ -1405,13 +1446,13 @@ namespace WpfApp1_cmd.ViewModel
 		{
 			List<(string unit,string path)> folders = [];
 
-			if(Updates == null)
+			if(UpdateInfos == null)
 			{
 				//例外除け
 				return folders;
 			}
 
-			foreach (var item in Updates)
+			foreach (var item in UpdateInfos)
 			{
 				string localPath = DataFolder + item.Path;
 				if(Path.Exists(localPath) == false)
@@ -1695,7 +1736,7 @@ namespace WpfApp1_cmd.ViewModel
 							if (item.IsSelected.Value == true)
 							{
 								//バージョンアップが選択されたユニット
-								var up = Updates.Where(x => x.Name == sectionName).First();
+								var up = UpdateInfos.Where(x => x.Name == sectionName).First();
 								if (up != null && up.Version != null)
 								{
 									ver = up.Version;
@@ -1780,7 +1821,7 @@ namespace WpfApp1_cmd.ViewModel
 						ModuleInfo module = item as ModuleInfo;
 						if (module != null)
 						{
-							viewModeTable.Add($"ModuleView_{item.Name}", new ModuleViewModel(module.UnitVersions, Updates));
+							viewModeTable.Add($"ModuleView_{item.Name}", new ModuleViewModel(module.UnitVersions, UpdateInfos));
 						}
 					}
 					ActiveView = viewModeTable[$"ModuleView_{item.Name}"];
@@ -1903,20 +1944,20 @@ namespace WpfApp1_cmd.ViewModel
 			{
 				//バージョンアップの中に該当するユニットのインデックスを取得(ない場合は -1)
 				int idx = -1;
-				if (Updates != null )
+				if (UpdateInfos != null )
 				{
-					idx = Updates.Select((v, i) => new { Value = v, Index = i }).FirstOrDefault(x => x.Value.Name == unit)?.Index ?? -1;
+					idx = UpdateInfos.Select((v, i) => new { Value = v, Index = i }).FirstOrDefault(x => x.Value.Name == unit)?.Index ?? -1;
 				}
 
-				if (idx != -1 && Updates != null )
+				if (idx != -1 && UpdateInfos != null )
 				{
-					if( only == true && parser.GetValue(unit, "Version") ==  Updates[idx].Version )
+					if( only == true && parser.GetValue(unit, "Version") ==  UpdateInfos[idx].Version )
 					{
 						//同じバージョンは対象外とするオプション指定の場合
 						continue;
 					}
 
-					UnitVersion? version = CreateUnitVersionItem(unit, Updates[idx].Version, module);
+					UnitVersion? version = CreateUnitVersionItem(unit, UpdateInfos[idx].Version, module);
 
 					if(version == null)
 					{
@@ -1924,7 +1965,7 @@ namespace WpfApp1_cmd.ViewModel
 					}
 					progCtrl?.SetMessage($"{lcu.LcuCtrl.Name}::{machine.Name}::{module.Name}::{unit}={version.CurVersion}");
 					versions.Add(version);
-					Debug.WriteLine($"{lcu.LcuCtrl.Name}::{machine.Name}::{module.Name}::{unit}={version.CurVersion}");
+					//Debug.WriteLine($"{lcu.LcuCtrl.Name}::{machine.Name}::{module.Name}::{unit}={version.CurVersion}");
 				}
 				else
 				{
@@ -1941,7 +1982,7 @@ namespace WpfApp1_cmd.ViewModel
 
 						progCtrl?.SetMessage($"{lcu.LcuCtrl.Name}::{machine.Name}::{module.Name}::{unit}={version.CurVersion}");
 						versions.Add(version);
-						Debug.WriteLine($"{lcu.LcuCtrl.Name}::{machine.Name}::{module.Name}::{unit}={version.CurVersion}");
+						//Debug.WriteLine($"{lcu.LcuCtrl.Name}::{machine.Name}::{module.Name}::{unit}={version.CurVersion}");
 					}
 				}
 			}
