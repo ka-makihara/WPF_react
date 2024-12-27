@@ -38,26 +38,6 @@ using WpfApp1_cmd.Models;
 
 namespace WpfApp1_cmd.ViewModel
 {
-	/*
-    public class PathData
-	{
-		public string? Path { get; set; }
-		public List<string> Files { get; set; }
-	}
-	*/
-
-	/*
-	public class UnitList
-	{
-		public List<UnitComponent> units { get; set; }
-	}
-	public class UnitComponent
-	{
-		public string name { get; set; }
-		public List<string> components { get; set; }
-	}
-	*/
-
 	public class MainWindowViewModel : ViewModelBase
 	{
 		[DllImport("mcAccount.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
@@ -418,7 +398,7 @@ namespace WpfApp1_cmd.ViewModel
 
 			Task task = Task.Run(() => { Task<bool> task1 = LoadLineInfo(Progress, cts.Token); });
 
-			Debug.WriteLine($"{nameof(task.IsCompleted)} ; {task.IsCompleted}");
+			//Debug.WriteLine($"{nameof(task.IsCompleted)} ; {task.IsCompleted}");
 			for (var i = 0; i < 1000; i++)
 			{
 				//Debug.WriteLine($"{nameof(task.IsCompleted)} ; {task.IsCompleted}");
@@ -612,7 +592,7 @@ namespace WpfApp1_cmd.ViewModel
 				if (Path.Exists(infoFile) == true)
 				{
 					//UpdateCommon.inf を読み込む
-					UpdateInfos = ReadUpdateCommon(infoFile,UnitLink);
+					UpdateInfos = ReadUpdateCommon(infoFile);
 					if (UpdateInfos == null)
 					{
 						AddLog($"Read Error:{infoFile}");
@@ -850,7 +830,7 @@ namespace WpfApp1_cmd.ViewModel
 						var result = await MsgBox.Show("Error","ErrorCode=E004","Can not Found UpdateInfo","UpdateCommon.inf not exist.",(int)(MsgDlgType.OK| MsgDlgType.ICON_ERROR),"DataGridView");
 						return;
 					}
-					UpdateInfos = ReadUpdateCommon(cofd.FileName + "\\UpdateCommon.inf",UnitLink);
+					UpdateInfos = ReadUpdateCommon(cofd.FileName + "\\UpdateCommon.inf");
 
 					DirectoryInfo di = new DirectoryInfo(cofd.FileName);
 
@@ -955,7 +935,7 @@ namespace WpfApp1_cmd.ViewModel
 		/// </summary>
 		/// <param name="path">UpdateCommon.inf ファイルのパス</param>
 		/// <returns></returns>
-		private ReactiveCollection<UpdateInfo> ReadUpdateCommon(string path, UnitLink link)
+		private ReactiveCollection<UpdateInfo> ReadUpdateCommon(string path)
 		{
 			ReactiveCollection<UpdateInfo> updates = [];
 
@@ -973,9 +953,9 @@ namespace WpfApp1_cmd.ViewModel
 						Path = parser.GetValue(unit, "Path"),
 						Version = parser.GetValue(unit, "Version"),
 						FuserPath = parser.GetValue(unit, "FuserPath"),
-
+						IsVisibled = true,//チェックボックスの表示/非表示
 						//リンク情報を取得
-						UnitGroup = link.units.Where(x => x.components.Find(y => y == unit) != null).FirstOrDefault()?.name
+						UnitGroup = UnitLink.units.Where(x => x.components.Find(y => y == unit) != null).FirstOrDefault()?.name
 					};
 					updates.Add(update);
 				}
@@ -1878,6 +1858,8 @@ namespace WpfApp1_cmd.ViewModel
 				NewVersion = newVer,
 				Parent = module,
 				Size = fileSz,
+				IsVisibled = new ReactivePropertySlim<bool?>(true),
+				UnitGroup = UnitLink.units.Where(x => x.components.Find(y => y == unit) != null).FirstOrDefault()?.name
 			};
 			return version;
 		}

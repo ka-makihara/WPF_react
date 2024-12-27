@@ -29,6 +29,6 @@ namespace WpfApp1_cmd.ViewModel
 		{
 			get;
 			set;
-		}
+		} = true;
 	}
 }

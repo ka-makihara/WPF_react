@@ -18,12 +18,12 @@ namespace WpfApp1_cmd.ValueConverter
 			if (value is int itemCount)
 			{
 				if( itemCount > 1 ) {
-					return $"({itemCount} items)";
+					return $"({itemCount} units)";
 				}
 
 				if( itemCount == 1)
 				{
-					return $"({itemCount} item)";
+					return $"({itemCount} unit)";
 				}
 			}
 			return string.Empty ;

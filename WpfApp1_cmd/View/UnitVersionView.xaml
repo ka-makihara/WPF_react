@@ -52,6 +52,12 @@
                     <StackPanel Orientation="Vertical" UseLayoutRounding="True">
                         <Grid>
                             <TextBlock Margin="0,4" HorizontalAlignment="Left" VerticalAlignment="Bottom" Text="UnitVersions" />
+                            <mah:ToggleSwitch Margin="0"
+                                              HorizontalAlignment="Right"
+                                              VerticalAlignment="Center"
+                                              IsOn="{Binding RelativeSource={RelativeSource AncestorType=mah:MetroHeader}, Path=DataContext.ShowTitleColumn}"
+                                              OffContent="No Title"
+                                              OnContent="Title visible" />
                         </Grid>
                         <Separator />
                     </StackPanel>
@@ -147,7 +153,7 @@
                                 <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                           Style="{StaticResource MaterialDesignCheckBox}"
                                           IsEnabled="True"
-                                          Visibility="{Binding ChkVisibled, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                          Visibility="{Binding IsVisibled, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>

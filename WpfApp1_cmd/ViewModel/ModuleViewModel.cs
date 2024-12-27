@@ -2,9 +2,14 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
 using WpfApp1_cmd.Models;
 using WpfLcuCtrlLib;
 
@@ -46,17 +51,46 @@ namespace WpfApp1_cmd.ViewModel
 					item.IsSelected.Value = value;
 				}
 			}
+			ICollectionView cvs = CollectionViewSource.GetDefaultView(UnitVersions);
+
 			// IsSelected プロパティが変更されたときに、IsAllSelected プロパティを更新する
 			OnPropertyChanged(nameof(IsAllSelected));
+			//OnPropertyChanged(nameof(IsGroupChecked));
         }
 
         public ReactiveCollection<UnitVersion> UnitVersions { get; set; }
-        public ModuleViewModel(ReactiveCollection<UnitVersion> unitVersions, ObservableCollection<UpdateInfo> updates)
+
+		public ReactiveCommand<RoutedEventArgs> GroupCheckCommand { get; }
+		private void GroupCheck(RoutedEventArgs e)
+		{
+			if(e.Source is CheckBox checkBox)
+			{
+				if (checkBox.DataContext is CollectionViewGroup group)
+				{
+					//bool? isChecked = group.Items.OfType<UnitVersion>().All(x => x.IsSelected.Value == true);
+					bool isChecked = checkBox.IsChecked.Value;
+
+					foreach (UnitVersion item in group.Items.Cast<UnitVersion>())
+					{
+						Debug.WriteLine($"{item.Name}:{item.CurVersion}->{item.NewVersion}");
+						item.IsSelected.Value = isChecked;
+					}
+				}
+			}
+		}
+
+		public ModuleViewModel(ReactiveCollection<UnitVersion> unitVersions, ObservableCollection<UpdateInfo> updates)
         {
             UnitVersions = unitVersions;
             _updates = updates;
 
-            foreach (var item in UnitVersions)
+			ICollectionView cvs = CollectionViewSource.GetDefaultView(UnitVersions);
+            cvs.GroupDescriptions.Add(new PropertyGroupDescription("UnitGroup"));
+
+			GroupCheckCommand = new ReactiveCommand<RoutedEventArgs>();
+			GroupCheckCommand.Subscribe(e => GroupCheck(e));
+
+			foreach (var item in UnitVersions)
             {
                 // IsSelected プロパティが変更されたときに、IsSelectedChk メソッドを呼び出す
                 item.IsSelected.Subscribe(x => IsSelectedChk(item,x));
@@ -92,7 +126,8 @@ namespace WpfApp1_cmd.ViewModel
                 }
             }
 		}
-/*
+
+		/*
         public void UpdateVersions(ReactiveCollection<UpdateInfo> updates)
         {
             foreach (var item in UnitVersions)
@@ -136,5 +171,50 @@ namespace WpfApp1_cmd.ViewModel
                 model.IsSelected.Value = select;
             }
         }
-    }
+
+		public bool IsSelectedGroup
+		{
+			get;
+			set;
+		} = true;
+
+		private bool _isChkVisibled = true;
+		public bool IsChkVisibled
+		{
+			get => _isChkVisibled;
+			set => SetProperty(ref _isChkVisibled, value);
+		}// = true;
+
+		/*
+		private bool _isSelectedGroup;
+		public bool IsSelectedGroup
+		{
+			get
+			{
+				return _isSelectedGroup;
+			}
+			set
+			{
+			}
+		}
+		*/
+		/*
+		public bool? IsGroupChecked
+        {
+            get
+            {
+                ICollectionView cvs = CollectionViewSource.GetDefaultView(UnitVersions);
+                if (cvs.Groups == null) return null;
+
+                foreach (CollectionViewGroup group in cvs.Groups)
+                {
+                    var selected = group.Items.Cast<UnitVersion>().Select(item => item.IsSelected.Value).Distinct().ToList();
+                    if (selected.Count != 1) return null;
+                }
+                return true;
+            }
+			set { }
+        }
+		*/
+	}
 }

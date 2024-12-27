@@ -34,7 +34,7 @@
     },
     {
       "name": "NXT_TrayUnitM2",
-      "components": [ "NXT_TrayUnitM2_PLC", "NXT_TrayUnitM2_Conv" ]
+      "components": [ "NXT_TrayUnitM2_IF", "NXT_TrayUnitM2_PLC", "NXT_TrayUnitM2_Conv" ]
     },
     {
       "name": "Feeder_Jig",
@@ -46,7 +46,7 @@
     },
     {
       "name": "MRemoteIO",
-      "components": [ "MRemoteIO", "MRemoteIO_FPGA", "MRemoteIO_FPGA_GOWIN" ]
+      "components": [ "MRemoteIO", "MRemoteIO_FPGA", "MRemoteIO_FPGA_GOWIN","MRemoteIO_Multi_FPGA_GOWIN" ]
     },
     {
       "name": "MRemoteIO_Multi",
@@ -238,15 +238,11 @@
     },
     {
       "name": "SE_FeederTypeT",
-      "components": [ "SE_FeederTypeT" ]
+      "components": [ "SE_FeederTypeT","Feeder_Servo_TypeT" ]
     },
     {
       "name": "SE_FeederTypeT2",
       "components": [ "SE_FeederTypeT2" ]
-    },
-    {
-      "name": "Feeder_Servo_TypeT",
-      "components": [ "Feeder_Servo_TypeT" ]
     },
     {
       "name": "Nozzle_Supply_Unit",

@@ -16,6 +16,7 @@ namespace WpfApp1_cmd.Models
 
         public ReactivePropertySlim<bool?> IsSelected { get; set; } = new ReactivePropertySlim<bool?>(true);
         public ReactivePropertySlim<bool?> IsUpdated { get; set; } = new ReactivePropertySlim<bool?>(false);
+		public ReactivePropertySlim<bool?> IsVisibled { get; set; }
 
         public string? Name
         {
@@ -32,6 +33,15 @@ namespace WpfApp1_cmd.Models
             get => _newVersion;
             set => SetProperty(ref _newVersion, value);
         }
+		/*
+		private bool _chkVisibled;
+		public bool ChkVisibled
+		{
+			get => _chkVisibled;
+			set => this.SetProperty(ref this._chkVisibled, value);
+		}
+		*/
+		public string? UnitGroup { get; set; } = "";
 
         public string Path { get; set; } = "";
         public string FuserPath { get; set; } = "";
@@ -51,55 +61,6 @@ namespace WpfApp1_cmd.Models
             IsSelected.Subscribe(x => Update(x));
         }
     }
-
-	/*
-	public class UnitInfo : ViewModelBase
-    {
-        private string? _name;
-        private string? _curVersion;
-        private string? _newVersion;
-
-        public ReactivePropertySlim<bool?> IsSelected { get; set; } = new ReactivePropertySlim<bool?>(true);
-        //public ReactivePropertySlim<bool?> IsUpdated { get; set; } = new ReactivePropertySlim<bool?>(false);
-
-		public ReactivePropertySlim<bool?> IsEnabled { get; set; } = new ReactivePropertySlim<bool?>(true);
-		public ReactivePropertySlim<bool?> IsVisibled { get; set; } = new ReactivePropertySlim<bool?>(true);
-
-		public string? Name
-        {
-            get => _name;
-            set => SetProperty(ref _name, value);
-        }
-        public string? CurVersion
-        {
-            get => _curVersion;
-            set => SetProperty(ref _curVersion,value);
-        }
-        public string? NewVersion
-        {
-            get => _newVersion;
-            set => SetProperty(ref _newVersion, value);
-        }
-
-        public string Path { get; set; } = "";
-        public string FuserPath { get; set; } = "";
-        public int    Attribute { get; set; }
-        public long   Size { get; set; }
-        public ModuleInfo? Parent { get; set; }
-
-        private void Update(bool? value)
-        {
-            if (Parent != null)
-            {
-                Parent.SetCheck(value);
-            }
-        }
-        public UnitInfo()
-        {
-            IsSelected.Subscribe(x => Update(x));
-        }
-    }
-	*/
 
 	/// <summary>
 	///  UpdateCommon.inf データ
@@ -123,6 +84,9 @@ namespace WpfApp1_cmd.Models
 		public string? FuserPath { get; set; }
 
 		public string? UnitGroup { get; set; } = "";
+
+		public bool IsVisibled { get; set; } = true;
+		public bool IsSelected { get; set; } = true;
 	}
 
 }
