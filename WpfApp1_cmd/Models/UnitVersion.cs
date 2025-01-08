@@ -16,7 +16,7 @@ namespace WpfApp1_cmd.Models
 
         public ReactivePropertySlim<bool?> IsSelected { get; set; } = new ReactivePropertySlim<bool?>(true);
         public ReactivePropertySlim<bool?> IsUpdated { get; set; } = new ReactivePropertySlim<bool?>(false);
-		public ReactivePropertySlim<bool?> IsVisibled { get; set; }
+		//public ReactivePropertySlim<bool?> IsVisibled { get; set; }
 
         public string? Name
         {
@@ -33,14 +33,25 @@ namespace WpfApp1_cmd.Models
             get => _newVersion;
             set => SetProperty(ref _newVersion, value);
         }
-		/*
-		private bool _chkVisibled;
-		public bool ChkVisibled
+
+		public string UpdateStatus
 		{
-			get => _chkVisibled;
-			set => this.SetProperty(ref this._chkVisibled, value);
+			get {
+				if( Attribute == Define.NOT_UPDATE)
+				{
+					return "Updates are prohibited";
+				}
+				else if (CurVersion == NewVersion)
+				{
+					return "Same Version";
+				}
+				else
+				{
+					return "Updates are allowed";
+				}
+			}
 		}
-		*/
+
 		public string? UnitGroup { get; set; } = "";
 
         public string Path { get; set; } = "";
@@ -49,16 +60,13 @@ namespace WpfApp1_cmd.Models
         public long   Size { get; set; }
         public ModuleInfo? Parent { get; set; }
 
-        private void Update(bool? value)
+        private void UpdateParent(bool? value)
         {
-            if (Parent != null)
-            {
-                Parent.SetCheck(value);
-            }
+            Parent?.UpdateParent(value);
         }
         public UnitVersion()
         {
-            IsSelected.Subscribe(x => Update(x));
+            IsSelected.Subscribe(x => UpdateParent(x));
         }
     }
 

@@ -38,57 +38,32 @@ namespace WpfApp1_cmd.Models
         // LCUの名前は、LcuCtrl.Name で取得する
         //    LcuCtrl.Name は  LCUのPC名(==IPAddress)であり、アクセスに使用
 
-        public void Update(bool? value)
-        {
-            if (IsSelected.Value != value)
-            {
-                if (Children != null)
-                {
-                    int cnt1 = Children.Where(x => x.IsSelected.Value == true).ToList().Count();
-                    int cnt2 = Children.Where(x => x.IsSelected.Value == null).ToList().Count();
-                    if (cnt1 == 0 && cnt2 == 0)
-                    {
-                        IsSelected.Value = false;
-                    }
-                    else
-                    {
-                        if (cnt1 == Children.Count())
-                        {
-                            IsSelected.Value = true;
-                        }
-                        else
-                        {
-                            IsSelected.Value = null;
-                        }
-                    }
-                }
-                else
-                {
-                    //IsSelected.Value = value;
-                    IsSelected.Value = false;
-                }
-            }
-            else
-            {
-                if (Children != null)
-                {
-                    if (value == null) { return; }
-                    if (Children.Count() == 0)
-                    {
-                        IsSelected.Value = false;
-                    }
-                    else
-                    {
-                        foreach (var child in Children)
-                        {
-                            child.IsSelected.Value = value;
-                        }
-                    }
-                }
-            }
-        }
+		private void CheckSelf()
+		{
+			int cntTrue = Children.Where(x => x.IsSelected.Value == true).ToList().Count();
+			int cntNull = Children.Where(x => x.IsSelected.Value == null).ToList().Count();
+			if (cntTrue == 0 && cntNull == 0)
+			{
+				IsSelected.Value = false;
+			}
+			else if ((cntTrue + cntNull) == Children.Count)
+			{
+				IsSelected.Value = true;
+			}
+			else
+			{
+				IsSelected.Value = null;
+			}
+		}
 
-        private string? _ftpUser;
+		public void UpdateParent(bool? value)
+		{
+			CheckSelf();
+
+			//LcuInfo は最上位なので、親がいない
+		}
+
+		private string? _ftpUser;
         public string? FtpUser { get => _ftpUser; set => _ftpUser = value; }
 
         private string? _ftpPassword;
@@ -103,13 +78,12 @@ namespace WpfApp1_cmd.Models
         private void AddMachine(MachineInfo machine)
         {
             machine.Parent = this;
-            //Debug.WriteLine($"AddMachine: {machine.Name}");
         }
 
         public LcuInfo(string name)
         {
             _machines.ObserveAddChanged().Subscribe(x => AddMachine(x));
-            IsSelected.Subscribe(x => Update(x));
+            //IsSelected.Subscribe(x => Update(x));
 
             _lcuCtrl = new(name);
         }
@@ -125,48 +99,40 @@ namespace WpfApp1_cmd.Models
 
     public class MachineInfo : CheckableItem
     {
-        public void Update(bool? value)
-        {
-            if (IsSelected.Value != value)
+		private void CheckSelf()
+		{
+			int cntTrue = Children.Where(x => x.IsSelected.Value == true).ToList().Count();
+			int cntNull = Children.Where(x => x.IsSelected.Value == null).ToList().Count();
+
+			if (cntTrue == 0 && cntNull == 0)
             {
-                if (Children != null)
-                {
-                    int cnt = Children.Where(x => x.IsSelected.Value == true).ToList().Count();
-                    if (cnt == 0)
-                    {
-                        IsSelected.Value = false;
-                    }
-                    else if (cnt == Children.Count)
-                    {
-                        IsSelected.Value = true;
-                    }
-                    else
-                    {
-                        IsSelected.Value = null;
-                    }
-                }
-                if (Parent != null)
-                {
-                    Parent.Update(value);
-                }
+                IsSelected.Value = false;
+            }
+            else if ((cntTrue + cntNull) == Children.Count)
+            {
+                IsSelected.Value = true;
             }
             else
             {
-                if (Children != null)
-                {
-                    if (value == null) { return; }
-                    foreach (var child in Children)
-                    {
-                        child.IsSelected.Value = value;
-                    }
-                }
-                if (Parent != null)
-                {
-                    Parent.Update(value);
-                }
+                IsSelected.Value = null;
             }
-        }
-        private Machine? _machine;
+		}
+
+		public void UpdateParent(bool? value)
+		{
+			CheckSelf();	
+			Parent?.UpdateParent(value);
+		}
+		public void UpdateChildren(bool? value)
+		{
+			CheckSelf();
+			foreach (var child in Children)
+			{
+				child.UpdateChildren(value);
+			}
+		}
+
+		private Machine? _machine;
         public Machine? Machine { get => _machine; set => _machine = value; }
 
         public LcuInfo? Parent { get; set; }
@@ -197,45 +163,20 @@ namespace WpfApp1_cmd.Models
             module.Parent = this;
             //Debug.WriteLine($"AddModule: {module.Name}");
         }
+
+
         public MachineInfo()
         {
             _bases.ObserveAddChanged().Subscribe(x => AddBase(x));
             _modules.ObserveAddChanged().Subscribe(x => AddModule(x));
-            IsSelected.Subscribe(x => Update(x));
+            //IsSelected.Subscribe(x => Update(x));
         }
 
-        public bool? IsParentSelected => Parent.IsSelected.Value;
+        //public bool? IsParentSelected => Parent.IsSelected.Value;
     }
 
     public class BaseInfo : CheckableItem
     {
-        public void Update(bool? value)
-        {
-            if (IsSelected.Value != value)
-            {
-                if (Children != null)
-                {
-                    int cnt = Children.Where(x => x.IsSelected.Value != true).ToList().Count();
-                    if (cnt == 0)
-                    {
-                        IsSelected.Value = false;
-                    }
-                    else if (cnt == Children.Count)
-                    {
-                        IsSelected.Value = false;
-                    }
-                    else
-                    {
-                        IsSelected.Value = null;
-                    }
-                }
-                if (Parent != null)
-                {
-                    Parent.Update(value);
-                }
-            }
-        }
-
         private Base? _base;
         public Base? Base { get => _base; set => _base = value; }
 
@@ -270,34 +211,47 @@ namespace WpfApp1_cmd.Models
         public BaseInfo()
         {
             Children.ObserveAddChanged().Subscribe(x => AddModule(x));
-            IsSelected.Subscribe(x => Update(x));
         }
     }
 
     public class ModuleInfo : CheckableItem
     {
-        public void Update(bool? value)
-        {
-            if (Parent != null)
-            {
-                Parent.Update(value);
-            }
+		private void CheckSelf()
+		{
+			// ユニットバージョンの選択状態は true/false のみ
+            int cnt = UnitVersions.Where(x => x.IsSelected.Value == true).ToList().Count();
 
-            // 装置の選択で装置下の全モジュールの選択を変更する
-            if (Options.GetOptionBool("--module_selection_unit", false) == true)
+            if (cnt == 0)
             {
-                if (UpdateVersionInfo)
-                {
-                    foreach (var unit in UnitVersions)
-                    {
-                        unit.IsSelected.Value = value;
-                    }
-                }
+                IsSelected.Value = false;
             }
+            else if (cnt == UnitVersions.Count)
+            {
+                IsSelected.Value = true;
+            }
+            else
+            {
+                IsSelected.Value = null;
+            }
+		}
+
+	    public void UpdateParent(bool? value)
+        {
+			CheckSelf();	
+			Parent?.UpdateParent(value);
         }
 
-        private bool UpdateVersionInfo { get; set; } = true;
-        private Module? _module;
+		public void UpdateChildren(bool? value)
+		{
+			CheckSelf();
+
+			foreach (var unit in UnitVersions)
+			{
+				unit.IsSelected.Value = value;
+			}
+		}
+
+		private Module? _module;
         public Module? Module { get => _module; set => _module = value; }
 
         public MachineInfo? Parent { get; set; }
@@ -312,37 +266,6 @@ namespace WpfApp1_cmd.Models
                 _unitVersions = value;
                 SetProperty(ref _unitVersions, value);
             }
-        }
-        /*
-		private ObservableCollection<UnitVersion> _unitVersions = [];
-		public ObservableCollection<UnitVersion> UnitVersions
-		{
-			get => _unitVersions;
-			set => _unitVersions = value;
-		}
-		*/
-        public void SetCheck(bool? value)
-        {
-            int cnt = UnitVersions.Where(x => x.IsSelected.Value == true).ToList().Count();
-
-            //モジュールの選択から、呼ばれるので、UpdateVersionInfoをfalseにしておく
-            //   false にして、IsSelect の Subscribe のUpdate で UnitVersion の更新が行われないようにする
-            //   これをしないと、UnitVersion の更新が行われて、また、この関数がよばれて、無限ループとなる
-            UpdateVersionInfo = false;
-
-            if (cnt == 0)
-            {
-                IsSelected.Value = false;
-            }
-            else if (cnt == UnitVersions.Count)
-            {
-                IsSelected.Value = true;
-            }
-            else
-            {
-                IsSelected.Value = null;
-            }
-            UpdateVersionInfo = true;
         }
 
         public int ID { get => Module.ModuleId; }
@@ -371,29 +294,8 @@ namespace WpfApp1_cmd.Models
 
         public ModuleInfo()
         {
-            IsSelected.Subscribe(x => Update(x));
             UnitVersions.ObserveAddChanged().Subscribe(x => AddUnitVersion(x));
+            //IsSelected.Subscribe(x => Update(x));
         }
     }
-
-	/*
-    public class UnitInfo : CheckableItem
-    {
-        private string _version;
-        public string Version
-        {
-            get => _version; set => _version = value;
-        }
-        private int _attribute;
-        public int Attribute
-        {
-            get => _attribute; set => _attribute = value;
-        }
-        private string _path;
-        public string Path
-        {
-            get => _path; set => _path = value;
-        }
-    }
-	*/
 }

@@ -51,7 +51,6 @@ namespace WpfApp1_cmd.ViewModel
 					item.IsSelected.Value = value;
 				}
 			}
-			ICollectionView cvs = CollectionViewSource.GetDefaultView(UnitVersions);
 
 			// IsSelected プロパティが変更されたときに、IsAllSelected プロパティを更新する
 			OnPropertyChanged(nameof(IsAllSelected));
@@ -60,7 +59,13 @@ namespace WpfApp1_cmd.ViewModel
 
         public ReactiveCollection<UnitVersion> UnitVersions { get; set; }
 
+		public ReactivePropertySlim<bool> IsUnitSelectToggleEnabled { get; } = new ReactivePropertySlim<bool>(true);
+
 		public ReactiveCommand<RoutedEventArgs> GroupCheckCommand { get; }
+		/// <summary>
+		/// グループヘッダーのチェックボックス変更時の処理(コマンド)
+		/// </summary>
+		/// <param name="e"></param>
 		private void GroupCheck(RoutedEventArgs e)
 		{
 			if(e.Source is CheckBox checkBox)
@@ -78,6 +83,17 @@ namespace WpfApp1_cmd.ViewModel
 				}
 			}
 		}
+		public ReactiveCommand<CollectionViewGroup> GroupCheckCommand2 { get; }
+		private void GroupCheck2(CollectionViewGroup cvs)
+		{
+			foreach (UnitVersion item in cvs.Items.Cast<UnitVersion>())
+			{
+				bool isChecked = IsGroupChecked;
+				{
+					item.IsSelected.Value = isChecked;
+				}
+			}
+		}
 
 		public ModuleViewModel(ReactiveCollection<UnitVersion> unitVersions, ObservableCollection<UpdateInfo> updates)
         {
@@ -89,6 +105,12 @@ namespace WpfApp1_cmd.ViewModel
 
 			GroupCheckCommand = new ReactiveCommand<RoutedEventArgs>();
 			GroupCheckCommand.Subscribe(e => GroupCheck(e));
+
+			GroupCheckCommand2 = new ReactiveCommand<CollectionViewGroup>();
+			GroupCheckCommand2.Subscribe(e => GroupCheck2(e));
+
+			//有効/無効が切り替わったときに、チェックボックスの有効/無効を切り替える
+			IsUnitSelectToggleEnabled.Subscribe(x => IsUnitCheckBoxEnabled = x);
 
 			foreach (var item in UnitVersions)
             {
@@ -125,6 +147,8 @@ namespace WpfApp1_cmd.ViewModel
                     }
                 }
             }
+			// ユニット選択のトグルボタンの初期値
+			IsUnitSelectToggleEnabled.Value = true;
 		}
 
 		/*
@@ -154,7 +178,11 @@ namespace WpfApp1_cmd.ViewModel
             }
         }
 */
-        public bool? IsAllSelected
+
+		/// <summary>
+		/// All チェックボックスの状態を取得または設定します。
+		/// </summary>
+		public bool? IsAllSelected
         {
             get {
                 var selected = UnitVersions.Select(item => item.IsSelected.Value).Distinct().ToList();
@@ -162,42 +190,65 @@ namespace WpfApp1_cmd.ViewModel
             }
             set {
                 SelectAll(value, UnitVersions);
-                OnPropertyChanged();
             }
         }
-        private static void SelectAll(bool? select, IEnumerable<UnitVersion> models)
+        private void SelectAll(bool? select, IEnumerable<UnitVersion> units)
         {
-            foreach (var model in models) {
-                model.IsSelected.Value = select;
+			if( _isCheckBoxEnabled == false)
+			{
+				return;
+			}
+			foreach (var unit in units)
+			{
+				if (unit.Attribute != Define.NOT_UPDATE) {
+					unit.IsSelected.Value = select;
+				}
             }
         }
 
+		/// <summary>
+		///  グループヘッダーのチェックボックス表示で、初期値としてチェックを入れるかどうか
+		/// </summary>
 		public bool IsSelectedGroup
 		{
 			get;
 			set;
 		} = true;
 
+		/// <summary>
+		/// チェックボックスの表示を行うかどうか(未使用)
+		/// </summary>
 		private bool _isChkVisibled = true;
 		public bool IsChkVisibled
 		{
 			get => _isChkVisibled;
 			set => SetProperty(ref _isChkVisibled, value);
-		}// = true;
+		}
+
+		/// <summary>
+		/// チェックボックスを有効にするかどうか
+		/// </summary>
+		private bool _isCheckBoxEnabled = true; // 初期状態ではチェックボックスを有効にする
+		public bool IsUnitCheckBoxEnabled
+		{
+			get => _isCheckBoxEnabled;
+			set => SetProperty(ref _isCheckBoxEnabled, value);
+		}
 
 		/*
-		private bool _isSelectedGroup;
-		public bool IsSelectedGroup
+		private bool _isUnitSelectToggleEnabled = false;
+		public bool IsUnitSelectToggleEnabled
 		{
-			get
-			{
-				return _isSelectedGroup;
-			}
-			set
-			{
-			}
+			get => _isUnitSelectToggleEnabled;
+			set => SetProperty(ref _isUnitSelectToggleEnabled, value);
 		}
 		*/
+
+		public bool IsGroupChecked
+		{
+			get;
+			set;
+		} = true;
 		/*
 		public bool? IsGroupChecked
         {
@@ -216,5 +267,6 @@ namespace WpfApp1_cmd.ViewModel
 			set { }
         }
 		*/
+		
 	}
 }

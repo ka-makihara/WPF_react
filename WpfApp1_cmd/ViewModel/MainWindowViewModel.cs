@@ -59,6 +59,7 @@ namespace WpfApp1_cmd.ViewModel
 			public long subErrorCode;
 		}
 
+		/*
 		// 暗号化ライブラリ(DLL)の関数 [ 現在は未使用 ]
 		[DllImport("JigFormat.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
 		static extern int GetDataCount(StringBuilder s, UInt32 len);
@@ -74,7 +75,7 @@ namespace WpfApp1_cmd.ViewModel
 			public int dataSize;
 			public long dataAddr;
 		}
-
+		*/
 
 		public MetroWindow Metro { get; set; } = Application.Current.MainWindow as MetroWindow;
 
@@ -85,6 +86,7 @@ namespace WpfApp1_cmd.ViewModel
 		public ReactiveCommand WindowClosingCommand { get; } = new ReactiveCommand();
 
 		public ReactiveCommand TreeViewCommand { get; } = new ReactiveCommand();
+		public ReactiveCommand TreeViewChkCommand { get; } = new ReactiveCommand();
 
 		/*
 		private ObservableCollection<RichTextItem> _logMessage = [];// new RichTextItem() { Text = "original", Color = Colors.Wheat };
@@ -714,6 +716,7 @@ namespace WpfApp1_cmd.ViewModel
 
 			//TreeView 右クリックメニューのテスト
 			TreeViewCommand.Subscribe((x) => { TreeViewMenu(x); });
+			TreeViewChkCommand.Subscribe((x) => { TreeViewChkCmd(x); });
 
 			/*
 			 C++ DLL関数 呼び出しテスト
@@ -806,6 +809,44 @@ namespace WpfApp1_cmd.ViewModel
 
 			List<string> lcuList = GetLcuListFromNexim();
 
+		}
+
+		private void TreeViewChkCmd(object x)
+		{
+			CheckableItem item = x as CheckableItem;
+
+			if( item == null)
+			{
+				return;
+			}
+
+			if( item is LcuInfo)
+			{
+				LcuInfo lcu = item as LcuInfo;
+				bool? chk = item.IsSelected.Value;	// 値を取得しておく、(UpdateChildren()で子が更新されると IsSelected.Value 値が更新されてしまうので)
+				foreach (MachineInfo machine in lcu.Children)
+				{
+					machine.UpdateChildren(chk);
+				}
+			}
+			else if( item is MachineInfo)
+			{
+				MachineInfo machine = item as MachineInfo;
+				bool? chk = item.IsSelected.Value;
+				foreach (ModuleInfo module in machine.Children)
+				{
+					module.UpdateChildren(chk);
+				}
+			}
+			else if (item is ModuleInfo)
+			{
+				ModuleInfo module = item as ModuleInfo;
+				bool? chk = item.IsSelected.Value;
+				foreach (UnitVersion unit in module.UnitVersions)
+				{
+					unit.IsSelected.Value = (chk == true);
+				}
+			}
 		}
 
 		/// <summary>
@@ -1520,7 +1561,7 @@ namespace WpfApp1_cmd.ViewModel
 					break;
 				}
 
-				//Progress?.SetMessage($"Transfering {unitVersion.Name}");
+				Progress?.SetMessage($"Transfering {unit}");
 
 				string retMsg = await lcu.LcuCtrl.LCU_Command(PostMcFile.Command(machine.Name, module.Pos, mcUser, mcPass, mc, lc), token);
 
@@ -1529,7 +1570,15 @@ namespace WpfApp1_cmd.ViewModel
 					AddLog($"{lcu.Name}::{machine.Name}::{module.Name}::WebAPI Error");
 					break;
 				}
-				//AddLog($"Transfer {module.Name}::{unitVersion.Name}");
+				// エラーメッセージがある場合はログに出力(デバッグ用、FTPでファイル転送に失敗した場合など)
+				var data = JsonSerializer.Deserialize<LcuErrMsg>(retMsg);
+				if( data != null && data.errorMsg != "")
+				{
+					AddLog($"{lcu.Name}::{machine.Name}::{module.Name}::WebAPI Error::{data.errorMsg}-{data.errorStatus}");
+					break;
+				}
+
+				AddLog($"Transfer {module.Name}::{unit}");
 				//unitVersion.IsUpdated.Value = true;
 
 				//対象となるユニットのバージョン情報(string)を更新
@@ -1858,7 +1907,7 @@ namespace WpfApp1_cmd.ViewModel
 				NewVersion = newVer,
 				Parent = module,
 				Size = fileSz,
-				IsVisibled = new ReactivePropertySlim<bool?>(true),
+				//IsVisibled = new ReactivePropertySlim<bool?>(true),
 				UnitGroup = UnitLink.units.Where(x => x.components.Find(y => y == unit) != null).FirstOrDefault()?.name
 			};
 			return version;
@@ -2151,8 +2200,12 @@ namespace WpfApp1_cmd.ViewModel
 							if(ret != null)
 							{
 								moduleItem.UnitVersions = ret;
+								//moduleItem.IsSelected.Value = true;
+							}
+							else
+							{
 								moduleItem.IsSelected.Value = false;
-							}   
+							}
 						}
 					}
 					lcu.Children.Add(machine);

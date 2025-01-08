@@ -28,7 +28,8 @@
                             <mah:ToggleSwitch Margin="0"
                                               HorizontalAlignment="Right"
                                               VerticalAlignment="Center"
-                                              IsOn="{Binding RelativeSource={RelativeSource AncestorType=mah:MetroHeader}, Path=DataContext.IsChkVisibled}"
+                                              IsEnabled="{Binding RelativeSource={RelativeSource AncestorType=mah:MetroHeader}, Path=DataContext.IsUnitSelectToggleEnabled.Value}"
+                                              IsOn="{Binding RelativeSource={RelativeSource AncestorType=mah:MetroHeader}, Path=DataContext.IsUnitCheckBoxEnabled}"
                                               OffContent="UnitSelect Off"
                                               OnContent="UnitSelect On" />
 
@@ -61,7 +62,16 @@
                         <GroupStyle.HeaderTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">
-                                    <CheckBox IsChecked="{Binding DataContext.IsSelectedGroup, Source={x:Reference DataContextProxy}}">
+                                    <CheckBox IsChecked="{Binding DataContext.IsSelectedGroup, Source={x:Reference DataContextProxy}}" >
+                                        <!--
+                                    <CheckBox >
+                                        IsChecked="{Binding DataContext.IsGroupChecked, 
+                                              RelativeSource={RelativeSource AncestorType=DataGrid}}" >
+                                  Command="{Binding DataContext.GroupCheckCommand2, 
+                                            RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                  CommandParameter="{Binding}" >
+                                  -->
+                                  
                                         <CheckBox.Style>
                                             <Style BasedOn="{StaticResource MahApps.Styles.CheckBox.Win10}" TargetType="{x:Type CheckBox}">
                                                 <Setter Property="HorizontalAlignment" Value="Stretch" />
@@ -90,11 +100,20 @@
                 </DataGrid.GroupStyle>
                 
                 <DataGrid.Columns>
-                     <DataGridCheckBoxColumn Binding="{Binding IsSelected.Value, UpdateSourceTrigger=PropertyChanged}"
-                                            EditingElementStyle="{StaticResource MaterialDesignDataGridCheckBoxColumnEditingStyle}"
-                                            ElementStyle="{StaticResource MaterialDesignDataGridCheckBoxColumnStyle}"
-                                            Visibility="{Binding DataContext.IsChkVisibled, Converter={StaticResource BooleanToVisibilityConverter}, Source={x:Reference DataContextProxy}}"
-                                            >
+                     <DataGridCheckBoxColumn Binding="{Binding IsSelected.Value, UpdateSourceTrigger=PropertyChanged}" >
+                        <DataGridCheckBoxColumn.ElementStyle>
+                            <Style TargetType="CheckBox" BasedOn="{StaticResource MaterialDesignDataGridCheckBoxColumnEditingStyle}">
+                                <Setter Property="IsEnabled" Value="{Binding DataContext.IsUnitCheckBoxEnabled, Source={x:Reference DataContextProxy}}" />
+                                <Setter Property="ToolTip" Value="{Binding UpdateStatus}" />
+                            </Style>
+                        </DataGridCheckBoxColumn.ElementStyle>
+                        <DataGridCheckBoxColumn.EditingElementStyle>
+                            <Style TargetType="CheckBox" BasedOn="{StaticResource MaterialDesignDataGridCheckBoxColumnEditingStyle}">
+                                <Setter Property="IsEnabled" Value="{Binding DataContext.IsUnitCheckBoxEnabled, Source={x:Reference DataContextProxy}}" />
+                                <Setter Property="ToolTip" Value="{Binding UpdateStatus}" />
+                            </Style>
+                        </DataGridCheckBoxColumn.EditingElementStyle>
+
                         <DataGridCheckBoxColumn.Header>
                             <Border Background="Transparent">
                                 <CheckBox Content="All" IsChecked="{Binding DataContext.IsAllSelected, Source={x:Reference DataContextProxy}}" />

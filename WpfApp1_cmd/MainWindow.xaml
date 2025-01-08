@@ -158,7 +158,10 @@
                 <TreeView.ItemTemplate>
                     <HierarchicalDataTemplate ItemsSource="{Binding Children}">
                         <StackPanel Orientation="Horizontal">
-                            <CheckBox IsChecked="{Binding IsSelected.Value, Mode=TwoWay}"  HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <CheckBox IsChecked="{Binding IsSelected.Value, Mode=TwoWay}"
+                            Command="{Binding DataContext.TreeViewChkCommand, RelativeSource={RelativeSource FindAncestor,AncestorType={x:Type TreeView}}}"
+                            CommandParameter="{Binding}"
+                                      VerticalAlignment="Center" />
                             <TextBlock Text="{Binding Name}" Margin="5,0,0,0" FontSize="16" IsEnabled="False"/>
                         </StackPanel>
                     </HierarchicalDataTemplate>

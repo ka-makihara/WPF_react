@@ -23,7 +23,8 @@ namespace WpfApp1_cmd.View
         public ModuleView()
         {
             InitializeComponent();
+
         }
 
-    }
+	}
 }
