@@ -175,8 +175,10 @@
                                         Header="Unit" />
                      -->
                     <DataGridTextColumn Binding="{Binding Name}"    Header="Unit" />
-                    <DataGridTextColumn Binding="{Binding Version}" Header="PriviousVersion" Width="150"/>
+                    <DataGridTextColumn Binding="{Binding Version}" Header="Version" Width="150"/>
+                    <!--
                     <DataGridTextColumn Binding="{Binding Version}" Header="UpdateVersion" Width="150"/>
+                    -->
                     <!--
                     <DataGridComboBoxColumn DisplayMemberPath="Name"
                                             Header="UdateVersion" Width="150"

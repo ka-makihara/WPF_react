@@ -14,7 +14,7 @@ namespace WpfApp1_cmd.Models
         private string? _curVersion;
         private string? _newVersion;
 
-        public ReactivePropertySlim<bool?> IsSelected { get; set; } = new ReactivePropertySlim<bool?>(true);
+		public ReactivePropertySlim<bool?> IsSelected { get; set; } = new ReactivePropertySlim<bool?>(true);
         public ReactivePropertySlim<bool?> IsUpdated { get; set; } = new ReactivePropertySlim<bool?>(false);
 		//public ReactivePropertySlim<bool?> IsVisibled { get; set; }
 
@@ -68,7 +68,7 @@ namespace WpfApp1_cmd.Models
         {
             IsSelected.Subscribe(x => UpdateParent(x));
         }
-    }
+	}
 
 	/// <summary>
 	///  UpdateCommon.inf データ

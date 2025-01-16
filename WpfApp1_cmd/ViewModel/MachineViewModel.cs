@@ -11,8 +11,6 @@ namespace WpfApp1_cmd.ViewModel
 {
     class MachineViewModel : ViewModelBase
     {
-        //private ObservableCollection<ModuleInfo> _modules;
-        //public ObservableCollection<ModuleInfo> Modules
         private ReactiveCollection<ModuleInfo> _modules;
         public ReactiveCollection<ModuleInfo> Modules
         {
@@ -23,62 +21,66 @@ namespace WpfApp1_cmd.ViewModel
                 SetProperty(ref _modules, value);
             }
         }
-        //public ReactiveCollection<ModuleInfo> Modules { get; set; }
-        //public MachineViewModel(ObservableCollection<ModuleInfo> modules)
-        public MachineViewModel(ReactiveCollection<ModuleInfo> modules)
+
+		public ReactivePropertySlim<bool?> IsAllSelected { get; set; }
+		public ReactiveCommand<ModuleInfo> CheckBoxCommand { get; }
+
+		public void SelectModules(ModuleInfo module, bool? value)
+		{
+			if( module != null && value != null )
+			{
+				foreach (var unit in module.UnitVersions)
+				{
+					unit.IsSelected.Value = value;
+				}
+				OnPropertyChanged(nameof(IsAllSelected));
+			}
+		}
+
+		public MachineViewModel(ReactiveCollection<ModuleInfo> modules)
         {
-            //LoadMachineInfo();
             Modules = modules;
 
-            // IsSelected プロパティが変更されたときに、IsAllSelected プロパティを更新する
             foreach (var item in Modules)
             {
-                /*
-                item.PropertyChanged += (sender, e) =>
-                {
-                    if (e.PropertyName == nameof(UnitVersion.IsSelected))
-                    {
-                        OnPropertyChanged(nameof(IsAllSelected));
-                    }
-                };
-                */
+				item.IsSelected.Subscribe(x => SelectModules(item,x));
+			}
 
-                item.IsSelected.Subscribe(_ =>
-                {
-                    OnPropertyChanged(nameof(IsAllSelected));
-                });
-            }
-        }
+			// 全選択用のチェックボックスの状態を管理するプロパティの初期化
+            IsAllSelected = new ReactivePropertySlim<bool?>(true);
+            IsAllSelected.Subscribe(OnIsAllSelectedChanged);
 
-        private void LoadMachineInfo()
+			// チェックボックスの状態変更時の処理を登録
+			CheckBoxCommand = new ReactiveCommand<ModuleInfo>();
+			CheckBoxCommand.Subscribe(OnCheckBoxCommandExecuted);
+		}
+
+		private void OnIsAllSelectedChanged(bool? isChecked)
         {
-            Modules =
-            [
-                //new (){Name="Module1", IsSelected=true}
-                new (){Name="Module1", }
-            ];
-        }
-        public bool? IsAllSelected
-        {
-            get {
-                //var selected = Modules.Select(item => item.IsSelected).Distinct().ToList();
-                var selected = Modules.Select(item => item.IsSelected.Value).Distinct().ToList();
-                return selected.Count == 1 ? selected.Single() : (bool?)null;
-            }
-            set {
-                if (value.HasValue) {
-                    SelectAll(value.Value, Modules);
-                    OnPropertyChanged();
+            if (isChecked.HasValue)
+            {
+                foreach (var module in Modules)
+                {
+                    module.IsSelected.Value = isChecked.Value;
                 }
             }
         }
-        private static void SelectAll(bool select, IEnumerable<ModuleInfo> models)
+
+		private void OnCheckBoxCommandExecuted(ModuleInfo module)
         {
-            foreach (var model in models) {
-                //model.IsSelected = select;
-                model.IsSelected.Value = select;
+            // チェックボックスの状態変更時の処理をここに記述
+            Console.WriteLine($"Module {module.Name} is checked: {module.IsSelected.Value}");
+
+            // 全選択用のチェックボックスの状態を更新
+            var selectedStates = Modules.Select(m => m.IsSelected.Value).Distinct().ToList();
+            if (selectedStates.Count == 1)
+            {
+                IsAllSelected.Value = selectedStates.Single();
+            }
+            else
+            {
+                IsAllSelected.Value = null;
             }
         }
-
     }
 }

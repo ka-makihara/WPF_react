@@ -120,28 +120,15 @@ namespace WpfApp1_cmd.ViewModel
                 if (updates != null)
                 {
                     try {
-                        // 要素が見つからない場合は例外が発生する
-                        string newVer = updates.First(x => x.Name == item.Name).Version;
-                        if(newVer != item.CurVersion)
-                        {
-                            item.NewVersion = newVer;
-							item.IsSelected.Value = (item.Attribute == Define.NOT_UPDATE) ? false : true ;
-                        }
-                        else
-                        {
-                            item.NewVersion = newVer;
-							if (Options.GetOptionBool("--diffOnly", false) == true)	// --diffOnly オプションが設定されている場合はitemとして登録されていない??ので不要かも。
-							{
-								item.IsSelected.Value = false;
-							}
-							else
-							{
-								item.IsSelected.Value =  (item.Attribute == Define.NOT_UPDATE) ? false : true ;
-							}
-                        }
-                    }
+                        item.NewVersion = updates.First(x => x.Name == item.Name).Version;
+						if( item.Attribute == Define.NOT_UPDATE)
+						{
+							item.IsSelected.Value = false;
+						}
+					}
                     catch (Exception e)
                     {
+                        // 要素が見つからない場合は例外が発生する
                         item.NewVersion = "N/A";
                         item.IsSelected.Value = false;
                     }

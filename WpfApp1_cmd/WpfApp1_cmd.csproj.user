@@ -9,6 +9,9 @@
     </ApplicationDefinition>
   </ItemGroup>
   <ItemGroup>
+    <Compile Update="Controls\MultiTagBox.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="View\Aview.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -39,6 +42,9 @@
     <Compile Update="View\MyMessageBox.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="View\TransferResultView.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="View\UnitVersionView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -48,8 +54,14 @@
     <Compile Update="View\WaitProgress.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="Windows\TransferResultWindow.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Page Update="Controls\MultiTagBox.xaml">
+      <SubType>Designer</SubType>
+    </Page>
     <Page Update="MainWindow.xaml">
       <SubType>Designer</SubType>
     </Page>
@@ -83,6 +95,9 @@
     <Page Update="View\MyMessageBox.xaml">
       <SubType>Designer</SubType>
     </Page>
+    <Page Update="View\TransferResultView.xaml">
+      <SubType>Designer</SubType>
+    </Page>
     <Page Update="View\UnitVersionView.xaml">
       <SubType>Designer</SubType>
     </Page>
@@ -90,6 +105,9 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Update="View\WaitProgress.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="Windows\TransferResultWindow.xaml">
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>

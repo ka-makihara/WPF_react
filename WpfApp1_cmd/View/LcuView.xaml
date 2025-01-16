@@ -19,6 +19,7 @@
                   CanUserAddRows="False"
                   HeadersVisibility="All"
                   AlternatingRowBackground="#666666"
+                  GridLinesVisibility="All"
                   IsReadOnly="False"
                   >
             <DataGrid.Columns>

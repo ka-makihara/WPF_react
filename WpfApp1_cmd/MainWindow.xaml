@@ -204,6 +204,9 @@
                     <DataTemplate DataType="{x:Type vm:ModuleViewModel}">
                         <view:ModuleView />
                     </DataTemplate>
+                    <DataTemplate DataType="{x:Type vm:TransferResultViewModel}">
+                        <view:TransferResultView />
+                    </DataTemplate>
                 </Grid.Resources>
 
                 <materialDesign:DialogHost DialogTheme="Inherit" CloseOnClickAway="true" Identifier="DataGridView">
