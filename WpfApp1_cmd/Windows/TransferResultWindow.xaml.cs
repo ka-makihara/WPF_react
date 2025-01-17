@@ -13,6 +13,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using WpfApp1_cmd.ViewModel;
 
 namespace WpfApp1_cmd.Windows
 {
@@ -21,9 +22,13 @@ namespace WpfApp1_cmd.Windows
 	/// </summary>
 	public partial class TransferResultWindow : MetroWindow
 	{
-		public TransferResultWindow()
+		public TransferResultWindow(string resultData)
 		{
 			InitializeComponent();
+			DataContext = new TransferResultWindowViewModel(resultData);
+
+			// ViewModel の CloseAction に Window の Close メソッドをバインド
+			((TransferResultWindowViewModel)DataContext).CloseAction = () => this.Close();
 		}
 
 		private async void ClickMeOnClick(object sender, RoutedEventArgs e)

@@ -5,12 +5,13 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
         xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:vm="clr-namespace:WpfApp1_cmd.ViewModel"
         xmlns:local="clr-namespace:WpfApp1_cmd.Windows"
         mc:Ignorable="d"
         MinWidth="800"
         MinHeight="600"
-        d:DataContext="{d:DesignInstance vm:MainWindowViewModel}"
+        d:DataContext="{d:DesignInstance vm:TransferResultWindowViewModel}"
         IconOverlayBehavior="Never"
         ResizeMode="CanResizeWithGrip"
         SaveWindowPosition="True"
@@ -88,7 +89,139 @@
    --> 
     
     <Grid>
-        
+       <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <FrameworkElement x:Name="DataContextProxy" DataContext="{Binding}" />
+
+        <mah:MetroHeader Grid.Row="1" mah:HeaderedControlHelper.HeaderFontSize="22" Header="TransferResult">
+            <mah:MetroHeader.HeaderTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Vertical" UseLayoutRounding="True">
+                        <Grid>
+                            <TextBlock Margin="0,4" HorizontalAlignment="Left" VerticalAlignment="Bottom" Text="TransferResult" />
+                        </Grid>
+                        <Separator />
+                    </StackPanel>
+                </DataTemplate>
+            </mah:MetroHeader.HeaderTemplate>
+
+            <DataGrid 
+                      x:Name="MetroDataGrid" Margin="5,5,5,1" AutoGenerateColumns="False"
+                      EnableColumnVirtualization="True" EnableRowVirtualization="True"
+                      HeadersVisibility="All"
+                      ItemsSource="{Binding FilteredResultDataList}"
+                      RowHeaderWidth="2"
+                      CanUserAddRows="False"
+                      SelectionUnit="FullRow"
+                      SelectionMode="Extended"
+                      GridLinesVisibility="All"
+                      VirtualizingPanel.IsVirtualizingWhenGrouping="True">
+
+                <DataGrid.Columns>
+                    
+                    <DataGridTemplateColumn Header="LineName" >
+                        <DataGridTemplateColumn.HeaderTemplate>
+                            <DataTemplate>
+                                <ComboBox
+                                    materialDesign:ColorZoneAssist.Mode="SecondaryDark"
+                                    materialDesign:HintAssist.Hint="LineName"
+                                    materialDesign:TextFieldAssist.HasClearButton="True"
+                                    ItemsSource="{Binding DataContext.LineNames, Source={x:Reference DataContextProxy}}"
+                                    SelectedItem="{Binding DataContext.SelectedLineName.Value, Source={x:Reference DataContextProxy}}"
+                                    DisplayMemberPath="Name" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.HeaderTemplate>
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding LineName}" />
+                            </DataTemplate> 
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTemplateColumn Header="MachineName" >
+                        <DataGridTemplateColumn.HeaderTemplate>
+                            <DataTemplate>
+                                <ComboBox 
+                                    materialDesign:ColorZoneAssist.Mode="SecondaryDark"
+                                    materialDesign:HintAssist.Hint="MachineName"
+                                    materialDesign:TextFieldAssist.HasClearButton="True"
+                                    ItemsSource="{Binding DataContext.MachineNames, Source={x:Reference DataContextProxy}}"
+                                    SelectedItem="{Binding DataContext.SelectedMachineName.Value, Source={x:Reference DataContextProxy}}"
+                                    DisplayMemberPath="Name" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.HeaderTemplate>
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding MachineName}" />
+                            </DataTemplate> 
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    
+                    <DataGridTemplateColumn Header="ModuleName" >
+                        <DataGridTemplateColumn.HeaderTemplate>
+                            <DataTemplate>
+                                <ComboBox 
+                                    materialDesign:ColorZoneAssist.Mode="SecondaryDark"
+                                    materialDesign:HintAssist.Hint="ModuleName"
+                                    materialDesign:TextFieldAssist.HasClearButton="True"
+                                    ItemsSource="{Binding DataContext.ModuleNames, Source={x:Reference DataContextProxy}}"
+                                    SelectedItem="{Binding DataContext.SelectedModuleName.Value, Source={x:Reference DataContextProxy}}"
+                                    DisplayMemberPath="Name" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.HeaderTemplate>
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding ModuleName}" />
+                            </DataTemplate> 
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTextColumn Header="Unit" Binding="{Binding UnitName}" />
+
+                    <DataGridTemplateColumn Header="Result" >
+                        <DataGridTemplateColumn.HeaderTemplate>
+                            <DataTemplate>
+                                <ComboBox 
+                                    materialDesign:ColorZoneAssist.Mode="SecondaryDark"
+                                    materialDesign:HintAssist.Hint="result"
+                                    materialDesign:TextFieldAssist.HasClearButton="True"
+                                    ItemsSource="{Binding DataContext.StatusList, Source={x:Reference DataContextProxy}}"
+                                    SelectedItem="{Binding DataContext.SelectedStatus.Value, Source={x:Reference DataContextProxy}}"
+                                    DisplayMemberPath="Name" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.HeaderTemplate>
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Status}" />
+                            </DataTemplate> 
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </mah:MetroHeader>
+
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Grid.Column="0">
+                <TextBlock Text="TotalTransfer" FontSize="16" FontWeight="Bold" Margin="10,5,0,0" HorizontalAlignment="Left"/>
+                <TextBlock Text="O   K" FontSize="16" FontWeight="Bold" Margin="10,5,0,0" HorizontalAlignment="Left"/>
+                <TextBlock Text="ERROR" FontSize="16" FontWeight="Bold" Margin="10,5,0,0" HorizontalAlignment="Left"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Column="1">
+                <Button Content="O   K" Margin="10" 
+                        Background="LightGray"
+                        FontWeight="Bold"
+                        Style="{StaticResource MaterialDesignRaisedLightButton}"
+                        Command="{Binding OKCommand}" />
+            </StackPanel>
+        </Grid>
     </Grid>
 
 </mah:MetroWindow>

@@ -1081,11 +1081,11 @@ namespace WpfApp1_cmd.ViewModel
 		}
 
 		private TransferResultWindow? resultWindow;
-		private void LaunchResultWindow()
+		private void LaunchResultWindow(string resultData)
 		{
 			if( resultWindow is null)
 			{
-				resultWindow = new TransferResultWindow();
+				resultWindow = new TransferResultWindow(resultData);
 				resultWindow.Closed += (o, args) => resultWindow = null;
 			}
 			this.resultWindow.Launch();
@@ -1096,8 +1096,8 @@ namespace WpfApp1_cmd.ViewModel
 		private bool IsTransfering = false;
 		private async void StartTransfer()
 		{
-			LaunchResultWindow();
-			/*
+			LaunchResultWindow(LogData);
+			
 			bool ret = true;
 			CancelTokenSrc = new CancellationTokenSource();
 			CancellationToken token = CancelTokenSrc.Token;
@@ -1172,9 +1172,7 @@ namespace WpfApp1_cmd.ViewModel
 			CanAppQuitFlag.Value = true;
 
 			//転送結果ウインドウを表示する
-			ShowTransferResult();
-			*/
-
+			//ShowTransferResult();
 		}
 
 		/// <summary>
@@ -1336,14 +1334,14 @@ namespace WpfApp1_cmd.ViewModel
 				{
 					if( machine.Children == null || machine.Name == null || machine.IsSelected.Value == false)
 					{
-						AddLog($"[Transfer] {lcu.Name}:{machine.Name}=Skip");
+						AddLog($"[Transfer] {lcu.Name};{machine.Name}=Skip");
 						continue;
 					}
 					foreach(var module in machine.Children)
 					{
 						if( module.IsSelected.Value == false || module.UnitVersions == null )
 						{
-							AddLog($"[Transfer] {lcu.Name}:{machine.Name}:{module.Name}=Skip");
+							AddLog($"[Transfer] {lcu.Name};{machine.Name};{module.Name}=Skip");
 							continue;
 						}
 
@@ -1351,11 +1349,11 @@ namespace WpfApp1_cmd.ViewModel
 						//   ※ UpdateCommon.inf に記載されているデータは存在するものとする
 						//       指定されたフォルダにあるUpdateCommon.inf を読み込んでいるので
 						//
-						AddLog($"[Transfer] {lcu.Name}:{machine.Name}:{module.Name}=Start");
+						AddLog($"[Transfer] {lcu.Name};{machine.Name};{module.Name}=Start");
 
 						bool ret = await UploadModuleFiles(lcu, machine, module, token);
 
-						AddLog($"[Transfer] {lcu.Name}:{machine.Name}:{module.Name}=End");
+						AddLog($"[Transfer] {lcu.Name};{machine.Name};{module.Name}=End");
 
 						// LCU 上に作成、転送したファイルを削除する
 						lcu.LcuCtrl.ClearFtpFolders(Define.LCU_ROOT_PATH);
@@ -1624,16 +1622,16 @@ namespace WpfApp1_cmd.ViewModel
 			List<string> files = CreateUpdateFileList(folders);
 
 			//対象ファイルをすべて LCU にアップロード
-			AddLog($"[Transfer] {lcu.Name}:{machine.Name}:{module.Name}=UploadFiles Start");
-			string target = $"{lcu.Name}:{machine.Name}:{module.Name}";
+			AddLog($"[Transfer] {lcu.Name};{machine.Name};{module.Name}=UploadFiles Start");
+			string target = $"{lcu.Name};{machine.Name};{module.Name}";
 
 			ret = await UploadFilesWithFolder(lcu, target, folders, $"/LCU_{module.Pos}"+lcuRoot, DataFolder,token);
 			if(ret == false)
 			{
-				AddLog($"[Transfer] {lcu.Name}:{machine.Name}:{module.Name}=UploadFilesWithFolder Error");
+				AddLog($"[Transfer] {lcu.Name};{machine.Name};{module.Name}=UploadFilesWithFolder Error");
 				return false;
 			}
-			AddLog($"[Transfer] {lcu.Name}:{machine.Name}:{module.Name}=UploadFiles End");
+			AddLog($"[Transfer] {lcu.Name};{machine.Name};{module.Name}=UploadFiles End");
 
 			//LCUに転送したファイルを装置に送信する
 			string mcUser = GetMcUser();
@@ -1643,7 +1641,7 @@ namespace WpfApp1_cmd.ViewModel
 				if( module.UnitVersions.First(x => x.Name == unit).IsSelected.Value == false)
 				{
 					//選択されていないユニットは転送しない
-					AddLog($"[Transfer] {lcu.Name}:{machine.Name}:{module.Name}:{unit}=Skip");
+					AddLog($"[Transfer] {lcu.Name};{machine.Name};{module.Name}:{unit}=Skip");
 					continue;
 				}
 
@@ -1659,7 +1657,7 @@ namespace WpfApp1_cmd.ViewModel
 				bool bt = await WaitTransferState(token);
 				if( bt == false )
 				{
-					AddLog($"[Transfer] {lcu.Name}:{machine.Name}:{module.Name}=Transfer Stop");
+					AddLog($"[Transfer] {lcu.Name};{machine.Name};{module.Name}=Transfer Stop");
 					ret = false;
 					break;
 				}
@@ -1670,8 +1668,8 @@ namespace WpfApp1_cmd.ViewModel
 
 				if (retMsg == "" || retMsg == "Internal Server Error")
 				{
-					AddLog($"[Transfer] {lcu.Name}:{machine.Name}:{module.Name}=WebAPI(PostMcFile) Error");
-					AddLog($"[Transfer] {module.Name}:{unit}=NG");
+					AddLog($"[Transfer] {lcu.Name};{machine.Name};{module.Name}=WebAPI(PostMcFile) Error");
+					AddLog($"[Transfer] {module.Name};{unit}=NG");
 					ret = false;
 					break;
 				}
@@ -1679,13 +1677,13 @@ namespace WpfApp1_cmd.ViewModel
 				var data = JsonSerializer.Deserialize<LcuErrMsg>(retMsg);
 				if( data != null && data.errorMsg != "")
 				{
-					AddLog($"[Transfer] {lcu.Name}:{machine.Name}:{module.Name}=WebAPI(PostMcFile) Error");
-					AddLog($"[Transfer] {lcu.Name}:{machine.Name}:{module.Name}:{unit}=NG");
+					AddLog($"[Transfer] {lcu.Name};{machine.Name};{module.Name}=WebAPI(PostMcFile) Error");
+					AddLog($"[Transfer] {lcu.Name};{machine.Name};{module.Name};{unit}=NG");
 					ret = false;
 					break;
 				}
 
-				AddLog($"[Transfer] {lcu.Name}:{machine.Name}:{module.Name}:{unit}=OK");
+				AddLog($"[Transfer] {lcu.Name};{machine.Name};{module.Name};{unit}=OK");
 
 				//転送が完了したのでUpdateを「済」にする
 				UnitVersion unitVersion = module.UnitVersions.First(x => x.Name == unit);
@@ -1782,7 +1780,7 @@ namespace WpfApp1_cmd.ViewModel
 			}
 			catch (Exception e)
 			{
-				AddLog($"{lcu.Name}::{machine.Name}::{module.Name}={path} Read error");
+				AddLog($"{lcu.Name};{machine.Name};{module.Name}={path} Read error");
 				return false;
 			}
 			StreamWriter outFile = new StreamWriter(path+".new", false, Encoding.GetEncoding(Define.TXT_ENCODING));
@@ -1969,7 +1967,7 @@ namespace WpfApp1_cmd.ViewModel
 				return null;
 			}
 
-			progCtrl?.SetMessage($"{lcu.LcuCtrl.Name}::{machine.Name}::{module.Name} Get Update Info");
+			progCtrl?.SetMessage($"{lcu.LcuCtrl.Name};{machine.Name};{module.Name} Get Update Info");
 
 			// UpdateCommon.inf をLCUを経由して取得する
 			if (module.UpdateInfo == null)
@@ -1988,7 +1986,7 @@ namespace WpfApp1_cmd.ViewModel
 
 				if (ret == false)
 				{
-					AddLog($"{lcu.LcuCtrl.Name}:{machine.Name}:{module.Pos}={mcFile} Get error");
+					AddLog($"{lcu.LcuCtrl.Name};{machine.Name};{module.Pos}={mcFile} Get error");
 					return null;
 				}
 				// IniFilePaeser に読み込む
@@ -2033,7 +2031,7 @@ namespace WpfApp1_cmd.ViewModel
 					{
 						continue;
 					}
-					progCtrl?.SetMessage($"{lcu.LcuCtrl.Name}::{machine.Name}::{module.Name}::{unit}={version.CurVersion}");
+					progCtrl?.SetMessage($"{lcu.LcuCtrl.Name};{machine.Name};{module.Name};{unit}={version.CurVersion}");
 					versions.Add(version);
 					//Debug.WriteLine($"{lcu.LcuCtrl.Name}::{machine.Name}::{module.Name}::{unit}={version.CurVersion}");
 				}
@@ -2050,7 +2048,7 @@ namespace WpfApp1_cmd.ViewModel
 							continue;
 						}
 
-						progCtrl?.SetMessage($"{lcu.LcuCtrl.Name}::{machine.Name}::{module.Name}::{unit}={version.CurVersion}");
+						progCtrl?.SetMessage($"{lcu.LcuCtrl.Name};{machine.Name};{module.Name};{unit}={version.CurVersion}");
 						versions.Add(version);
 						//Debug.WriteLine($"{lcu.LcuCtrl.Name}::{machine.Name}::{module.Name}::{unit}={version.CurVersion}");
 					}
@@ -2124,7 +2122,7 @@ namespace WpfApp1_cmd.ViewModel
 			bool ping = await CheckComputer(lcu.LcuCtrl.Name.Split(':')[0], 3);
 			if(ping == false)
 			{
-				AddLog($"[ERROR] {lcu.Name}::Access Fail");
+				AddLog($"[ERROR] {lcu.Name}=Access Fail");
 				return false;
 			}
 
@@ -2154,12 +2152,12 @@ namespace WpfApp1_cmd.ViewModel
 				IList<LcuVersion>? versionInfo = LcuVersion.FromJson(str);
 				if(versionInfo == null)
 				{
-					AddLog($"[ERROR] {lcu.Name}::LcuVersion Get Error");
+					AddLog($"[ERROR] {lcu.Name}=LcuVersion Get Error");
 					return false;
 				}
 				lcu.Version = versionInfo.First(x => x.itemName == "Fuji LCU Communication Server Service").itemVersion;
 
-				progCtrl?.SetMessage($"LCU:{lcu.LcuCtrl.Name} Version={lcu.Version}");
+				progCtrl?.SetMessage($"LCU:{lcu.LcuCtrl.Name}=Version({lcu.Version})");
 
 				//ディスク情報
 				lcu.DiskSpace = await LcuDiskChkCmd(lcu);
@@ -2169,7 +2167,7 @@ namespace WpfApp1_cmd.ViewModel
 					// アップデートデータを転送するだけのディスク容量がない
 					lcu.IsSelected.Value = false;
 					lcu.IsUpdateOk = false;
-					AddLog($"[ERROR] {lcu.Name}::DiskSpace Error.({lcu.DiskSpace}<{UpdateDataSize})");
+					AddLog($"[ERROR] {lcu.Name}=DiskSpace Error({lcu.DiskSpace}<{UpdateDataSize})");
 				}
 			}
 
@@ -2182,7 +2180,7 @@ namespace WpfApp1_cmd.ViewModel
 
 				if( response.Contains("errorCode") )
 				{
-					AddLog($"[ERROR] {lcu.Name}::get lines error");
+					AddLog($"[ERROR] {lcu.Name};get lines error");
 					return false;
 				}
 
