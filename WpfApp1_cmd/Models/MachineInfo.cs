@@ -80,12 +80,13 @@ namespace WpfApp1_cmd.Models
             machine.Parent = this;
         }
 
-        public LcuInfo(string name)
+        public LcuInfo(string name, int id=0)
         {
             _machines.ObserveAddChanged().Subscribe(x => AddMachine(x));
-            //IsSelected.Subscribe(x => Update(x));
+			//IsSelected.Subscribe(x => Update(x));
 
-            _lcuCtrl = new(name);
+			LcuId = id;
+			_lcuCtrl = new(name);
         }
 
 
@@ -95,7 +96,8 @@ namespace WpfApp1_cmd.Models
         public LineInfo LineInfo { get; set; }
         public long DiskSpace { get; set; }
         public bool IsUpdateOk { get; set; } = true;
-    }
+		public int LcuId { get; set; }
+	}
 
     public class MachineInfo : CheckableItem
     {

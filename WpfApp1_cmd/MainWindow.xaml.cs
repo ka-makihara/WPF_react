@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Diagnostics;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -10,6 +11,8 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 
 using MahApps.Metro.Controls;
+using MahApps.Metro.Controls.Dialogs;
+using WpfApp1_cmd.ViewModel;
 
 namespace WpfApp1_cmd
 {
@@ -18,9 +21,15 @@ namespace WpfApp1_cmd
     /// </summary>
     public partial class MainWindow : MetroWindow
     {
+		private readonly MainWindowViewModel viewModel;
+
         public MainWindow()
         {
-            InitializeComponent();
+			// xaml の　<Window.DataContext>　と同じ意味
+			viewModel = new MainWindowViewModel(DialogCoordinator.Instance);
+			DataContext = viewModel;
+
+			InitializeComponent();
         }
         private void LaunchGitHubSite(object sender, RoutedEventArgs e)
         {

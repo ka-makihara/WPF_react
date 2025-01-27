@@ -42,6 +42,9 @@
     <Compile Update="View\MyMessageBox.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="View\TransferProgressDialog.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="View\TransferResultView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -93,6 +96,9 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Update="View\MyMessageBox.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="View\TransferProgressDialog.xaml">
       <SubType>Designer</SubType>
     </Page>
     <Page Update="View\TransferResultView.xaml">

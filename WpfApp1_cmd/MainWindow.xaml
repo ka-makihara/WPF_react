@@ -9,11 +9,13 @@
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:rp="clr-namespace:Reactive.Bindings.Interactivity;assembly=ReactiveProperty.WPF"
         mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance vm:MainWindowViewModel}"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:mahApps="http://metro.mahapps.com/winfx/xaml/controls"
         xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
         xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
         GlowBrush="{DynamicResource MahApps.Brushes.Accent}"
+        mahApps:DialogParticipation.Register="{Binding}"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen"
         ShowIconOnTitleBar="True"
@@ -54,9 +56,11 @@
         </i:EventTrigger>
     </i:Interaction.Triggers>
 
+<!--　code behindでViewModelを設定しない場合は以下のコメントアウトを外す 
     <Window.DataContext>
         <vm:MainWindowViewModel />
     </Window.DataContext>
+-->
   
     <!--
     <mah:MetroWindow.LeftWindowCommands>
@@ -261,6 +265,7 @@
                                 VerticalAlignment="Bottom">
                             <TextBlock Text="Transfer" />
                         </Button>
+                        <!--
                         <Button Height="40" materialDesign:ButtonAssist.CornerRadius="5"
                                 Command="{Binding StopTransferCommand}"
                                 Style="{StaticResource MaterialDesignRaisedLightButton}"
@@ -271,6 +276,7 @@
                                 VerticalAlignment="Bottom">
                             <TextBlock Text="Stop" />
                         </Button>
+                        -->
                         <Button Height="40" materialDesign:ButtonAssist.CornerRadius="5"
                                 Command="{Binding QuitApplicationCommand}"
                                 Style="{StaticResource MaterialDesignRaisedLightButton}"
@@ -279,7 +285,7 @@
                                 FontWeight="Bold"
                                 Background="LightGray"
                                 VerticalAlignment="Bottom">
-                            <TextBlock Text="Exit" />
+                            <TextBlock Text="  Exit  " />
                         </Button>
                     </StackPanel>
                 </StackPanel>

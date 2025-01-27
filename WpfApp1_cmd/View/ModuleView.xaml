@@ -15,6 +15,11 @@
              d:DataContext="{d:DesignInstance Type=viewmodel:ModuleViewModel}"
              mc:Ignorable="d" 
              d:DesignHeight="350" d:DesignWidth="800">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolVisibilityConverter" />
+    </UserControl.Resources>
+    
     <Grid>
          <!-- 意味不明だが必要　-->
         <FrameworkElement x:Name="DataContextProxy" DataContext="{Binding}" />
@@ -103,13 +108,16 @@
                      <DataGridCheckBoxColumn Binding="{Binding IsSelected.Value, UpdateSourceTrigger=PropertyChanged}" >
                         <DataGridCheckBoxColumn.ElementStyle>
                             <Style TargetType="CheckBox" BasedOn="{StaticResource MaterialDesignDataGridCheckBoxColumnEditingStyle}">
+                                <!-- IsEnabled or Visivility どちらか一方だけで良いと思うが、最終的に決める-->
                                 <Setter Property="IsEnabled" Value="{Binding DataContext.IsUnitCheckBoxEnabled, Source={x:Reference DataContextProxy}}" />
+                                <Setter Property="Visibility" Value="{Binding DataContext.IsUnitCheckBoxEnabled, Source={x:Reference DataContextProxy}, Converter={StaticResource BoolVisibilityConverter}}" />
                                 <Setter Property="ToolTip" Value="{Binding UpdateStatus}" />
                             </Style>
                         </DataGridCheckBoxColumn.ElementStyle>
                         <DataGridCheckBoxColumn.EditingElementStyle>
                             <Style TargetType="CheckBox" BasedOn="{StaticResource MaterialDesignDataGridCheckBoxColumnEditingStyle}">
                                 <Setter Property="IsEnabled" Value="{Binding DataContext.IsUnitCheckBoxEnabled, Source={x:Reference DataContextProxy}}" />
+                                <Setter Property="Visibility" Value="{Binding DataContext.IsUnitCheckBoxEnabled, Source={x:Reference DataContextProxy}, Converter={StaticResource BoolVisibilityConverter}}" />
                                 <Setter Property="ToolTip" Value="{Binding UpdateStatus}" />
                             </Style>
                         </DataGridCheckBoxColumn.EditingElementStyle>
