@@ -14,7 +14,7 @@ namespace WpfApp1_cmd.Models
         private string? _curVersion;
         private string? _newVersion;
 
-		public ReactivePropertySlim<bool?> IsSelected { get; set; } = new ReactivePropertySlim<bool?>(true);
+		public ReactivePropertySlim<bool?> IsSelected { get; set; } = new ReactivePropertySlim<bool?>(false);
         public ReactivePropertySlim<bool?> IsUpdated { get; set; } = new ReactivePropertySlim<bool?>(false);
 		//public ReactivePropertySlim<bool?> IsVisibled { get; set; }
 
@@ -34,20 +34,27 @@ namespace WpfApp1_cmd.Models
             set => SetProperty(ref _newVersion, value);
         }
 
+		/// <summary>
+		///  チェックボックスのツールチップ表示
+		/// </summary>
 		public string UpdateStatus
 		{
 			get {
 				if( Attribute == Define.NOT_UPDATE)
 				{
-					return "Updates are prohibited";
+					return "Updates are prohibited";	//アップデート禁止
 				}
 				else if (CurVersion == NewVersion)
 				{
-					return "Same Version";
+					return "Same Version";	//同一バージョン
+				}
+				else if( NewVersion == "N/A")
+				{
+					return "Not applicable";	//対象外
 				}
 				else
 				{
-					return "Updates are allowed";
+					return "Updates are allowed"; //アップデート許可
 				}
 			}
 		}
@@ -60,14 +67,14 @@ namespace WpfApp1_cmd.Models
         public long   Size { get; set; }
         public ModuleInfo? Parent { get; set; }
 
-        private void UpdateParent(bool? value)
+        public void UpdateParent(bool? value)
         {
             Parent?.UpdateParent(value);
         }
-        public UnitVersion()
+        public UnitVersion(bool sel)
         {
-            IsSelected.Subscribe(x => UpdateParent(x));
-        }
+			IsSelected.Value = sel;
+		}
 	}
 
 	/// <summary>

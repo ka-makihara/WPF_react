@@ -31,14 +31,18 @@ namespace WpfApp1_cmd.ViewModel
 
 		public ICollectionView FilteredResultDataList { get; set; }
 
+		public int TransferTotalCount { get; set; }
+		public int TransferOkCount { get; set; }
+		public int TransferFailCount { get; set; }
+
 		// CloseAction は ViewModel から View を閉じるための Action
 		public Action CloseAction { get; set; }
 		public ReactiveCommandSlim OKCommand { get; } = new ReactiveCommandSlim();
 
 		public TransferResultWindowViewModel(string resultData)
 		{
-			string path = @"C:\Users\ka.makihara\Desktop\UnitTransferResult\result.txt";
-			resultData = System.IO.File.ReadAllText(path);
+			//string path = @"C:\Users\ka.makihara\Desktop\UnitTransferResult\result.txt";
+			//resultData = System.IO.File.ReadAllText(path);
 
 			// OK ボタンが押されたときの処理(クローズ)
 			OKCommand.Subscribe(_ =>
@@ -86,6 +90,11 @@ namespace WpfApp1_cmd.ViewModel
 					}
 				}
 			}
+
+			TransferTotalCount = ResultDataList.Count;
+			TransferOkCount = ResultDataList.Count(x => x.Status == "OK");
+			TransferFailCount = ResultDataList.Count(x => x.Status == "NG");
+
 			LineNames = new ReactiveCollection<NameData>();
 			var names = ResultDataList.Select(x => x.LineName).Distinct().ToList();
 			foreach (var lineName in names)

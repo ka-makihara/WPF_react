@@ -86,7 +86,7 @@ namespace WpfApp1_cmd.Models
 			//IsSelected.Subscribe(x => Update(x));
 
 			LcuId = id;
-			_lcuCtrl = new(name);
+			_lcuCtrl = new(name,id);
         }
 
 

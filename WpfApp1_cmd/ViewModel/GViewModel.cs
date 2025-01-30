@@ -46,11 +46,11 @@ namespace WpfApp1_cmd.ViewModel
         {
             UnitVersions = new ReactiveCollection<UnitVersion>
             {
-                new UnitVersion { Name = "Unit1", CurVersion = "1.0.0", NewVersion = "1.0.1" },
-                new UnitVersion { Name = "Unit2", CurVersion = "1.0.0", NewVersion = "1.0.1" },
-                new UnitVersion { Name = "Unit3", CurVersion = "1.0.0", NewVersion = "1.0.1" },
-                new UnitVersion { Name = "Unit4", CurVersion = "1.0.0", NewVersion = "1.0.1" },
-                new UnitVersion { Name = "Unit5", CurVersion = "1.0.0", NewVersion = "1.0.1" },
+                new UnitVersion(true) { Name = "Unit1", CurVersion = "1.0.0", NewVersion = "1.0.1" },
+                new UnitVersion(true) { Name = "Unit2", CurVersion = "1.0.0", NewVersion = "1.0.1" },
+                new UnitVersion(true) { Name = "Unit3", CurVersion = "1.0.0", NewVersion = "1.0.1" },
+                new UnitVersion(true) { Name = "Unit4", CurVersion = "1.0.0", NewVersion = "1.0.1" },
+                new UnitVersion(true) { Name = "Unit5", CurVersion = "1.0.0", NewVersion = "1.0.1" },
             };
         }
         public bool? IsAllSelected

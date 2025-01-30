@@ -8,6 +8,7 @@
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:vm="clr-namespace:WpfApp1_cmd.ViewModel"
         xmlns:local="clr-namespace:WpfApp1_cmd.Windows"
+        xmlns:converters="clr-namespace:WpfApp1_cmd.ValueConverter"
         mc:Ignorable="d"
         MinWidth="800"
         MinHeight="600"
@@ -38,6 +39,7 @@
                 </ObjectDataProvider.MethodParameters>
             </ObjectDataProvider>
 
+            <converters:NumberToStringConverter x:Key="NumberToStringConverter" />
         </ResourceDictionary>
     </Window.Resources>
 
@@ -210,9 +212,18 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Grid.Column="0">
-                <TextBlock Text="TotalTransfer" FontSize="16" FontWeight="Bold" Margin="10,5,0,0" HorizontalAlignment="Left"/>
-                <TextBlock Text="O   K" FontSize="16" FontWeight="Bold" Margin="10,5,0,0" HorizontalAlignment="Left"/>
-                <TextBlock Text="ERROR" FontSize="16" FontWeight="Bold" Margin="10,5,0,0" HorizontalAlignment="Left"/>
+                <StackPanel Orientation="Horizontal" >
+                    <TextBlock Text="TotalTransfer:" FontSize="16" FontWeight="Bold" Margin="10,5,0,0" HorizontalAlignment="Left"/>
+                    <TextBlock Text="{Binding TransferTotalCount,Converter={StaticResource NumberToStringConverter}}" FontSize="16" FontWeight="Bold" Margin="10,5,0,0" HorizontalAlignment="Left"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" >
+                    <TextBlock Text="O  K:" FontSize="16" FontWeight="Bold" Margin="10,5,0,0" HorizontalAlignment="Left"/>
+                    <TextBlock Text="{Binding TransferOkCount,Converter={StaticResource NumberToStringConverter}}" FontSize="16" FontWeight="Bold" Margin="10,5,0,0" HorizontalAlignment="Left"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" >
+                    <TextBlock Text="FAIL:" FontSize="16" FontWeight="Bold" Margin="10,5,0,0" HorizontalAlignment="Left"/>
+                    <TextBlock Text="{Binding TransferFailCount,Converter={StaticResource NumberToStringConverter}}" FontSize="16" FontWeight="Bold" Margin="10,5,0,0" HorizontalAlignment="Left"/>
+                </StackPanel>
             </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Column="1">
                 <Button Content="O   K" Margin="10" 

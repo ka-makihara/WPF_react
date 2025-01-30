@@ -12,7 +12,7 @@ namespace WpfApp1_cmd.ViewModel
     public class BViewModel : ViewModelBase
     {
         public ReactiveCommand LcuCommandTest { get; } = new ReactiveCommand();
-        private readonly LcuCtrl lcuCtrl = new("localhost:9000");
+        private readonly LcuCtrl lcuCtrl = new("localhost:9000",1);
 
         public BViewModel()
         {

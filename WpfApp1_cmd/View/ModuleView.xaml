@@ -29,7 +29,8 @@
                 <DataTemplate>
                     <StackPanel Orientation="Vertical" UseLayoutRounding="True">
                         <Grid>
-                            <TextBlock Margin="0,4" HorizontalAlignment="Left" VerticalAlignment="Bottom" Text="Transfer Select" />
+                            <TextBlock Margin="0,4" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                                       Text="{Binding RelativeSource={RelativeSource AncestorType=mah:MetroHeader}, Path=DataContext.ModuleName}" />
                             <mah:ToggleSwitch Margin="0"
                                               HorizontalAlignment="Right"
                                               VerticalAlignment="Center"

@@ -263,5 +263,10 @@ namespace WpfApp1_cmd
 			}
 			return null;
 		}
+
+		public static string GetLcuRootPath(int id)
+		{
+			return $"LCU_{id}";
+		}
 	}
 }

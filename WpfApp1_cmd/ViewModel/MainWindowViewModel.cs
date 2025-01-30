@@ -208,6 +208,7 @@ namespace WpfApp1_cmd.ViewModel
 
 		// TreeView の選択項目が変更されたときのコマンド
 		public ReactiveCommand<RoutedPropertyChangedEventArgs<object>> TreeViewSelectedItemChangedCommand { get; }
+		//public ReactivePropertySlim<bool> TreeViewIsSelected { get; } = new ReactivePropertySlim<bool>(false);
 
 		// 転送制御ボタン
 		public ReactiveCommandSlim StartTransferCommand { get; } = new ReactiveCommandSlim();
@@ -636,9 +637,9 @@ namespace WpfApp1_cmd.ViewModel
 				{ "UnitVersionView", new UnitVersionViewModel(UpdateInfos) },
 				{ "TransferResultView", new TransferResultViewModel() }
 			};
-			//ActiveView = viewModeTable["UpdateVersionView"];
+			ActiveView = viewModeTable["UpdateVersionView"];
 			//ActiveView = viewModeTable["UnitVersionView"];
-			ActiveView = viewModeTable["TransferResultView"];
+			//ActiveView = viewModeTable["TransferResultView"];
 
 			//ライン情報読み込み
 			WindowLoadedCommand.Subscribe(() => LoadLineInfo_Start());
@@ -711,6 +712,8 @@ namespace WpfApp1_cmd.ViewModel
 			// ツリービューの選択項目が変更されたときのコマンド
 			TreeViewSelectedItemChangedCommand = new ReactiveCommand<RoutedPropertyChangedEventArgs<object>>();
 			TreeViewSelectedItemChangedCommand.Subscribe(args => TreeViewSelectedItemChanged(args));
+
+			//TreeViewIsSelected.Subscribe(x => { Debug.WriteLine($"TreeViewIsSelected:{x}"); });
 
 			// 転送制御ボタン
 			StartTransferCommand = CanTransferStartFlag.ToReactiveCommandSlim();
@@ -914,11 +917,11 @@ namespace WpfApp1_cmd.ViewModel
 									module.UnitVersions = ret;
 									if (viewModeTable.ContainsKey($"ModuleView_{module.Name}") == true)
 									{
-										viewModeTable[$"ModuleView_{module.Name}"] = new ModuleViewModel(module.UnitVersions, UpdateInfos);
+										viewModeTable[$"ModuleView_{module.Name}"] = new ModuleViewModel(module.Name,module.UnitVersions, UpdateInfos);
 									}
 									else
 									{
-										viewModeTable.Add($"ModuleView_{module.Name}", new ModuleViewModel(module.UnitVersions, UpdateInfos));
+										viewModeTable.Add($"ModuleView_{module.Name}", new ModuleViewModel(module.Name,module.UnitVersions, UpdateInfos));
 									}
 								}
 							}
@@ -1103,12 +1106,11 @@ namespace WpfApp1_cmd.ViewModel
 		private bool IsTransfering = false;
 		private async void StartTransfer()
 		{
-			TransferCount = GetTransferFiles();
+			(long units, long files) cnt = GetTransferFiles();
+			TransferCount = cnt.files;
 			TransferedCount = 0;
 			TransferErrorCount = 0;
 			TransferSuccessCount = 0;
-
-			//long files = GetTransferFiles();
 
 			if (TransferCount == 0)
 			{
@@ -1124,7 +1126,7 @@ namespace WpfApp1_cmd.ViewModel
 			CancellationToken token = CancelTokenSrc.Token;
 
 			DialogTitle = "確認";
-			DialogText = $"{TransferCount}個のソフトを転送します。\n転送を開始しますか？";
+			DialogText = $"{cnt.units} ユニット\n{TransferCount}個のファイルを転送します。\n開始しますか？";
 			var r = await DialogHost.Show(new MyMessageBox(), "DataGridView");
 			DialogHost.CloseDialogCommand.Execute(null, null);
 
@@ -1196,7 +1198,15 @@ namespace WpfApp1_cmd.ViewModel
 			CanAppQuitFlag.Value = true;
 
 			//転送結果ウインドウを表示する
-			//ShowTransferResult();
+			var showResult = await MsgBox.Show("Info",
+									$"Success={TransferSuccessCount}",
+									$"Fail={TransferErrorCount}",
+									"Show Transfer Details",
+									(int)(MsgDlgType.OK_CANCEL | MsgDlgType.ICON_INFO), "DataGridView");
+			if ((string)showResult == "OK")
+			{
+				LaunchResultWindow(LogData);
+			}
 		}
 
 		/// <summary>
@@ -1407,9 +1417,10 @@ namespace WpfApp1_cmd.ViewModel
 		/// 転送するユニットデータファイルの数を取得する
 		/// </summary>
 		/// <returns>転送するファイル数</returns>
-		public long GetTransferFiles()
+		public (long, long) GetTransferFiles()
 		{
 			long files = 0;
+			long units = 0;
 
 			//対象のユニット数をカウント
 			foreach (var item in TreeViewItems)
@@ -1435,12 +1446,13 @@ namespace WpfApp1_cmd.ViewModel
 							if (unit.IsSelected.Value == true)
 							{
 								files += GetDirectoryFiles( DataFolder + unit.Path );
+								units++;
 							}
 						}
 					}
 				}
 			}
-			return files;
+			return (units,files);
 		}
 
 		/// <summary>
@@ -1466,7 +1478,7 @@ namespace WpfApp1_cmd.ViewModel
 			//ret = await UploadFilesWithFolder(lcu, folders, lcuRoot, DataFolder,token);
 
 			//デバッグ環境の場合、FTPが一つだけなので、LCU_n のフォルダで対応する
-			ret = await UploadFilesWithFolder(lcu, folders, $"LCU_{lcu.LcuId}" + lcuRoot, DataFolder, token);
+			ret = await UploadFilesWithFolder(lcu, folders, $"{App.GetLcuRootPath(lcu.LcuId)}" + lcuRoot, DataFolder, token);
 			if (ret == false)
 			{
 				AddLog($"[Transfer] {lcu.Name}=UploadFilesWithFolder Error");
@@ -1743,11 +1755,11 @@ namespace WpfApp1_cmd.ViewModel
 					Progress?.SetMessage($"Transfering {lcu.Name}:{Path.GetFileName(folder)}");
 
 					// 進捗%の計算
-					//  PC->LCU で 50% とする(LCU->MC で 50%)　※プログレスバーのレンジを0-1000としているため 50% は 500
-					long rate = (long)(((double)transferedSize / (double)ftpSize) * 1000.0 / 2.0);
+					//  PC->LCU で 25% とする(LCU->MC で 25%)　※プログレスバーのレンジを0-1000としているため 25% は 250
+					long rate = (long)(((double)transferedSize / (double)ftpSize) * 250.0);
 					Debug.WriteLine($"TransferedFtpSize={transferedSize}, FtpDataSize={ftpSize}, rate={rate}");
 
-					Progress?.SetProgress( ((double)transferedSize / (double)ftpSize) * 1000.0 / 2.0);
+					Progress?.SetProgress( ((double)transferedSize / (double)ftpSize) * 250.0);
 
 					Debug.WriteLine($"[FTP Upload] {folder} => {lcu.Name}/{lcuPath}");
 
@@ -1863,7 +1875,7 @@ namespace WpfApp1_cmd.ViewModel
 				TransferedCount += mc.Count;
 
 				Debug.WriteLine($"Transfered={TransferedCount} cnt={mc.Count}");
-				double r = 500.0 + ((double)TransferedCount / (double)TransferCount) * 1000.0 / 2.0;
+				double r = 250.0 + ((double)TransferedCount / (double)TransferCount) * 750.0;
 				Debug.WriteLine($"Progress={r}");
 				if( r > 1000.0)
 				{
@@ -1905,6 +1917,8 @@ namespace WpfApp1_cmd.ViewModel
 		{
 			string mcFile = Define.MC_PERIPHERAL_PATH + peripheralFile;
 			string lcuFile = $"/MCFiles/" + peripheralFile;
+
+			string retMsg = await lcu.LcuCtrl.LCU_Command(SetLcu.Command(lcu.LcuId));
 
 			//装置からファイルを取得
 			return await lcu.LcuCtrl.GetMachineFile(machine.Name, module.Pos, mcFile, lcuFile, targetPath);
@@ -2108,7 +2122,7 @@ namespace WpfApp1_cmd.ViewModel
 						ModuleInfo module = item as ModuleInfo;
 						if (module != null)
 						{
-							viewModeTable.Add($"ModuleView_{item.Name}", new ModuleViewModel(module.UnitVersions, UpdateInfos));
+							viewModeTable.Add($"ModuleView_{item.Name}", new ModuleViewModel(item.Name, module.UnitVersions, UpdateInfos));
 						}
 					}
 					ActiveView = viewModeTable[$"ModuleView_{item.Name}"];
@@ -2156,7 +2170,17 @@ namespace WpfApp1_cmd.ViewModel
 				}
 			}
 
-			UnitVersion version = new()
+			bool sel;
+			if (int.Parse(parser.GetValue(unit, "Attribute")) == Define.NOT_UPDATE || newVer == "N/A")
+			{
+				sel = false;
+			}
+			else
+			{
+				sel = true;
+			}
+
+			UnitVersion version = new(sel)
 			{
 				Name = unit,
 				Attribute = int.Parse(parser.GetValue(unit, "Attribute")),
@@ -2202,6 +2226,9 @@ namespace WpfApp1_cmd.ViewModel
 				//string lcuFile = $"LCU_{module.Pos}/MCFiles/" + Define.UPDATE_INFO_FILE;
 				string lcuFile = "/MCFiles/" + Define.UPDATE_INFO_FILE;
 
+				//LCU選択(本来のLCUでは不要、デバッグ環境の都合で追加、本来のLCUにこのコマンドを送ってもエラーになる)
+				string retMsg = await lcu.LcuCtrl.LCU_Command(SetLcu.Command(lcu.LcuId));
+
 				//装置から UpdateCommon.inf を取得(lcuFile)してテンポラリに保存
 				ret = await lcu.LcuCtrl.GetMachineFile(machine.Name, module.Pos, mcFile, lcuFile, tmpDir, token);
 
@@ -2225,9 +2252,9 @@ namespace WpfApp1_cmd.ViewModel
 
 			// ユニット一覧作成時のオプション
 			//   --matchUnit が指定されている場合は、UpdateCommon.inf に記載されているユニットのみを対象とする
-			//   --diffOnly が指定されている場合は、バージョンが同一のユニットは対象外とする
+			//   --diffVersionOnly が指定されている場合は、バージョンが同一のユニットは対象外とする
 			bool match = Options.GetOptionBool("--matchUnit", false);
-			bool only = Options.GetOptionBool("--diffOnly", false);
+			bool only = Options.GetOptionBool("--diffVersionOnly", false);
 
 			foreach (var unit in sec)
 			{
@@ -2245,16 +2272,7 @@ namespace WpfApp1_cmd.ViewModel
 						//同じバージョンは対象外とするオプション指定の場合
 						continue;
 					}
-
 					CreateUnitVersionList(versions, unit, UpdateInfos[idx].Version, module);
-					/*
-										if(version == null)
-										{
-											continue;
-										}
-										progCtrl?.SetMessage($"{lcu.LcuCtrl.Name};{machine.Name};{module.Name};{unit}={version.CurVersion}");
-										versions.Add(version);
-					*/
 				}
 				else
 				{
@@ -2263,15 +2281,6 @@ namespace WpfApp1_cmd.ViewModel
 					{
 						//存在するユニット以外も対象とする場合(--matchUnit==false or --matchUnit 未定義)
 						CreateUnitVersionList(versions, unit, "N/A", module);
-						/*
-												if(version == null)
-												{
-													continue;
-												}
-
-												progCtrl?.SetMessage($"{lcu.LcuCtrl.Name};{machine.Name};{module.Name};{unit}={version.CurVersion}");
-												versions.Add(version);
-						*/
 					}
 				}
 			}

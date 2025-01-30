@@ -20,22 +20,30 @@ namespace WpfApp1_cmd.ViewModel
         private ObservableCollection<UpdateInfo>? _updates = null;
         private void IsSelectedChk(UnitVersion item, bool? value)
         {
-			if (Options.GetOptionBool("--diffOnly", false) == true)
+			if (Options.GetOptionBool("--diffVersionOnly", false) == true)
 			{
 				// バージョンが違うものしかチェックが更新できないようにする
-				try
+				var uv = _updates.FirstOrDefault(x => x.Name == item.Name);
+				if( uv != null)
 				{
-					string newVer = _updates.First(x => x.Name == item.Name).Version;
+					string newVer = uv.Version;
 					if (newVer != item.CurVersion)
 					{
-						item.IsSelected.Value = value;
+						if (item.Attribute == Define.NOT_UPDATE)
+						{
+							item.IsSelected.Value = false;
+						}
+						else
+						{
+							item.IsSelected.Value = value;
+						}
 					}
 					else
 					{
 						item.IsSelected.Value = false;
 					}
 				}
-				catch (Exception e)
+				else
 				{
 					item.IsSelected.Value = false;
 				}
@@ -52,6 +60,7 @@ namespace WpfApp1_cmd.ViewModel
 				}
 			}
 
+			item.UpdateParent(value);
 			// IsSelected プロパティが変更されたときに、IsAllSelected プロパティを更新する
 			OnPropertyChanged(nameof(IsAllSelected));
 			//OnPropertyChanged(nameof(IsGroupChecked));
@@ -62,6 +71,8 @@ namespace WpfApp1_cmd.ViewModel
 		public ReactivePropertySlim<bool> IsUnitSelectToggleEnabled { get; } = new ReactivePropertySlim<bool>(true);
 
 		public ReactiveCommand<RoutedEventArgs> GroupCheckCommand { get; }
+
+		public string ModuleName { get; set; } = "Module";
 		/// <summary>
 		/// グループヘッダーのチェックボックス変更時の処理(コマンド)
 		/// </summary>
@@ -95,10 +106,11 @@ namespace WpfApp1_cmd.ViewModel
 			}
 		}
 
-		public ModuleViewModel(ReactiveCollection<UnitVersion> unitVersions, ObservableCollection<UpdateInfo> updates)
+		public ModuleViewModel(string name, ReactiveCollection<UnitVersion> unitVersions, ObservableCollection<UpdateInfo> updates)
         {
             UnitVersions = unitVersions;
             _updates = updates;
+			ModuleName = "Transfer Selection : " + name;
 
 			ICollectionView cvs = CollectionViewSource.GetDefaultView(UnitVersions);
             cvs.GroupDescriptions.Add(new PropertyGroupDescription("UnitGroup"));
@@ -119,8 +131,24 @@ namespace WpfApp1_cmd.ViewModel
 
                 if (updates != null)
                 {
+					var uv = updates.FirstOrDefault(x => x.Name == item.Name);
+					if( uv != null)
+					{
+						item.NewVersion = uv.Version;
+						if (item.Attribute == Define.NOT_UPDATE)
+						{
+							item.IsSelected.Value = false;
+						}
+					}
+					else
+					{
+						item.NewVersion = "N/A";
+						item.IsSelected.Value = false;
+					}
+					/*
                     try {
-                        item.NewVersion = updates.First(x => x.Name == item.Name).Version;
+						var nn = updates.FirstOrDefault(x => x.Name == item.Name);
+						item.NewVersion = updates.First(x => x.Name == item.Name).Version;
 						if( item.Attribute == Define.NOT_UPDATE)
 						{
 							item.IsSelected.Value = false;
@@ -128,43 +156,17 @@ namespace WpfApp1_cmd.ViewModel
 					}
                     catch (Exception e)
                     {
-                        // 要素が見つからない場合は例外が発生する
-                        item.NewVersion = "N/A";
+						Debug.WriteLine($"Exception:{e.Message}");
+						// 要素が見つからない場合は例外が発生する
+						item.NewVersion = "N/A";
                         item.IsSelected.Value = false;
                     }
-                }
+					*/
+				}
             }
 			// ユニット選択のトグルボタンの初期値
 			IsUnitSelectToggleEnabled.Value = true;
 		}
-
-		/*
-        public void UpdateVersions(ReactiveCollection<UpdateInfo> updates)
-        {
-            foreach (var item in UnitVersions)
-            {
-                try {
-                    // 要素が見つからない場合は例外が発生する
-                    string newVer = updates.First(x => x.Name == item.Name).Version;
-                    if(newVer != item.CurVersion)
-                    {
-                        item.NewVersion = newVer;
-                        item.IsSelected.Value = true;
-                    }
-                    else
-                    {
-                        item.NewVersion = newVer;
-                        item.IsSelected.Value = false;
-                    }
-                }
-                catch (Exception e)
-                {
-                    item.NewVersion = "N/A";
-                    item.IsSelected.Value = false;
-                }
-            }
-        }
-*/
 
 		/// <summary>
 		/// All チェックボックスの状態を取得または設定します。
@@ -221,15 +223,6 @@ namespace WpfApp1_cmd.ViewModel
 			get => _isCheckBoxEnabled;
 			set => SetProperty(ref _isCheckBoxEnabled, value);
 		}
-
-		/*
-		private bool _isUnitSelectToggleEnabled = false;
-		public bool IsUnitSelectToggleEnabled
-		{
-			get => _isUnitSelectToggleEnabled;
-			set => SetProperty(ref _isUnitSelectToggleEnabled, value);
-		}
-		*/
 
 		public bool IsGroupChecked
 		{

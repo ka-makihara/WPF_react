@@ -12,7 +12,7 @@ namespace WpfApp1_cmd.ValueConverter
 	{
 		public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
 		{
-			return $"{value.ToString()} %";
+			return $"{value.ToString()}";
 		}
 		public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
 		{
