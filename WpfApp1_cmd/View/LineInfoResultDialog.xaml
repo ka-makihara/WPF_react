@@ -1,0 +1,36 @@
+﻿<UserControl x:Class="WpfApp1_cmd.View.LineInfoResultDialog"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+             xmlns:viewmodel="clr-namespace:WpfApp1_cmd.ViewModel"
+             xmlns:local="clr-namespace:WpfApp1_cmd.View"
+             xmlns:models="clr-namespace:WpfApp1_cmd.Models"
+             mc:Ignorable="d" 
+             d:DataContext="{d:DesignInstance Type=viewmodel:LineInfoResultDialogViewModel}"
+             d:DesignHeight="250" d:DesignWidth="800">
+    <Grid>
+        <FrameworkElement x:Name="DataContextProxy" DataContext="{Binding}" />
+
+        <StackPanel Orientation="Vertical" >
+            <ListView ItemsSource="{Binding LineInfoResults}" Margin="10" >
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Header="Line" DisplayMemberBinding="{Binding Line}" Width="100"/>
+                        <GridViewColumn Header="Result" DisplayMemberBinding="{Binding Result}" Width="100"/>
+                        <GridViewColumn Header="Detail" DisplayMemberBinding="{Binding Detail}" Width="500"/>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+            <Button Content="O  K" Width="90" Command="{Binding CloseCommand}"
+                FontSize="20"
+                Margin="10"
+                FontWeight="Bold"
+                Background="LightGray"
+            Style="{StaticResource MaterialDesignFlatButton}" >
+            </Button>
+        </StackPanel>
+    </Grid>
+</UserControl>

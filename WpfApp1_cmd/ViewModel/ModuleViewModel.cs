@@ -60,7 +60,7 @@ namespace WpfApp1_cmd.ViewModel
 				}
 			}
 
-			item.UpdateParent(value);
+			//item.UpdateParent(value);
 			// IsSelected プロパティが変更されたときに、IsAllSelected プロパティを更新する
 			OnPropertyChanged(nameof(IsAllSelected));
 			//OnPropertyChanged(nameof(IsGroupChecked));
@@ -127,7 +127,7 @@ namespace WpfApp1_cmd.ViewModel
 			foreach (var item in UnitVersions)
             {
                 // IsSelected プロパティが変更されたときに、IsSelectedChk メソッドを呼び出す
-                item.IsSelected.Subscribe(x => IsSelectedChk(item,x));
+                //item.IsSelected.Subscribe(x => IsSelectedChk(item,x));
 
                 if (updates != null)
                 {
@@ -145,23 +145,6 @@ namespace WpfApp1_cmd.ViewModel
 						item.NewVersion = "N/A";
 						item.IsSelected.Value = false;
 					}
-					/*
-                    try {
-						var nn = updates.FirstOrDefault(x => x.Name == item.Name);
-						item.NewVersion = updates.First(x => x.Name == item.Name).Version;
-						if( item.Attribute == Define.NOT_UPDATE)
-						{
-							item.IsSelected.Value = false;
-						}
-					}
-                    catch (Exception e)
-                    {
-						Debug.WriteLine($"Exception:{e.Message}");
-						// 要素が見つからない場合は例外が発生する
-						item.NewVersion = "N/A";
-                        item.IsSelected.Value = false;
-                    }
-					*/
 				}
             }
 			// ユニット選択のトグルボタンの初期値

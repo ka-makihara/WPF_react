@@ -67,13 +67,15 @@ namespace WpfApp1_cmd.Models
         public long   Size { get; set; }
         public ModuleInfo? Parent { get; set; }
 
-        public void UpdateParent(bool? value)
-        {
-            Parent?.UpdateParent(value);
-        }
+		public void Update(bool? value)
+		{
+			Parent?.UpdateSelf(value);
+		}
+
         public UnitVersion(bool sel)
         {
 			IsSelected.Value = sel;
+			IsSelected.Subscribe(x => Update(x));
 		}
 	}
 

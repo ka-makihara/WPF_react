@@ -39,6 +39,7 @@ using WpfApp1_cmd.Models;
 using FluentFTP;
 using Renci.SshNet;
 using System.Windows.Threading;
+using MahApps.Metro.IconPacks;
 
 namespace WpfApp1_cmd.ViewModel
 {
@@ -430,6 +431,8 @@ namespace WpfApp1_cmd.ViewModel
 			OnPropertyChanged(nameof(TreeViewItems));
 
 			await Progress.CloseAsync();
+
+			//ShowLineInfoResultDialog();
 		}
 
 		/// <summary>
@@ -517,6 +520,27 @@ namespace WpfApp1_cmd.ViewModel
 				return true;
 			}
 			return false;
+		}
+
+		private void ShowItems()
+		{
+			foreach(var lcu in TreeViewItems)
+			{
+				Debug.WriteLine($"{lcu.Name}:{ ((lcu.IsSelected.Value == true) ? "True":"False")}");
+				foreach (var machine in lcu.Children)
+				{
+					Debug.WriteLine($"    {machine.Name}:{((machine.IsSelected.Value == true) ? "True":"False")}");
+					foreach (var module in machine.Children)
+					{
+						Debug.WriteLine($"       {module.Name}:{((module.IsSelected.Value == true) ? "True":"False")}");
+						foreach (var unit in module.UnitVersions)
+						{
+							Debug.WriteLine($"          {unit.Name}:{((unit.IsSelected.Value == true) ? "True" : "False")}");
+						}
+					}
+				}
+			}
+
 		}
 
 		/// <summary>
@@ -657,6 +681,7 @@ namespace WpfApp1_cmd.ViewModel
 			HomeCommand.Subscribe(() =>
 			{
 				ActiveView = viewModeTable["UpdateVersionView"];
+				ShowItems();
 			});
 			/*
 						ButtonCommand = new DelegateCommand(async () =>
@@ -838,6 +863,10 @@ namespace WpfApp1_cmd.ViewModel
 				foreach (MachineInfo machine in lcu.Children)
 				{
 					machine.UpdateChildren(chk);
+					foreach (ModuleInfo module in machine.Children)
+					{
+						module.UpdateChildren(chk);
+					}
 				}
 			}
 			else if (item is MachineInfo)
@@ -853,10 +882,7 @@ namespace WpfApp1_cmd.ViewModel
 			{
 				ModuleInfo module = item as ModuleInfo;
 				bool? chk = item.IsSelected.Value;
-				foreach (UnitVersion unit in module.UnitVersions)
-				{
-					unit.IsSelected.Value = (chk == true);
-				}
+				module.UpdateChildren(chk);
 			}
 		}
 
@@ -1144,7 +1170,7 @@ namespace WpfApp1_cmd.ViewModel
 
 			if (backupPath != null)
 			{
-				//ret = await BackupUnitData(backupPath);
+				ret = await BackupUnitData(backupPath);
 			}
 
 			if (ret == true)
@@ -1311,7 +1337,7 @@ namespace WpfApp1_cmd.ViewModel
 						//
 						try
 						{
-							AddLog($"{lcu.Name}::{machine.Name}::{module.Name}::Backup Start");
+							AddLog($"[BACKUP] {lcu.Name};{machine.Name};{module.Name}=Backup Start");
 							string bkupPath = path + $"\\{hd}{lcu.Name.Split(":")[0]}_{machine.Name.Split(":")[0]}_{module.Name}";
 
 							if (Directory.Exists(bkupPath) == false)
@@ -1322,7 +1348,7 @@ namespace WpfApp1_cmd.ViewModel
 							bool ret = await DownloadModuleFiles(lcu, machine, module, bkupPath, token);
 							//await Task.Delay(3000,token);
 
-							AddLog($"{lcu.Name}::{machine.Name}::{module.Name}::Backup End");
+							AddLog($"[BACKUP] {lcu.Name};{machine.Name};{module.Name}=Backup End");
 
 							// LCU 上に作成、転送したファイルを削除する
 							//lcu.LcuCtrl.ClearFtpFolders(Define.LCU_ROOT_PATH);
@@ -1562,6 +1588,7 @@ namespace WpfApp1_cmd.ViewModel
 		public async Task<bool> DownloadModuleFiles(LcuInfo lcu, MachineInfo machine, ModuleInfo module, string backupPath, CancellationToken token)
 		{
 			bool ret;
+			string retMsg;
 
 			if (UpdateInfos == null)
 			{
@@ -1574,8 +1601,12 @@ namespace WpfApp1_cmd.ViewModel
 			//List<string> folders = module.UnitVersions.Select(x => Path.GetDirectoryName(x.Path)).ToList().Distinct().ToList();
 			List<string> folders = module.UpdateFiles().Select(x => x).ToList().Distinct().ToList();
 
+			folders.Add( $"/{Define.MC_PERIPHERAL_PATH}{Define.UPDATE_INFO_FILE}");
+
+			retMsg = await lcu.LcuCtrl.LCU_Command(SetLcu.Command(lcu.LcuId));
+
 			//LCU上にフォルダを作成する(装置からファイルを取得するフォルダ,装置と同じフォルダ構造をLCUのFTP下に作る)
-			string lcuRoot = $"LCU_{module.Pos}/MCFiles";
+			string lcuRoot = $"LCU_{lcu.LcuId}/MCFiles";
 			//string lcuRoot = "/MCFiles";
 			ret = lcu.LcuCtrl.CreateFtpFolders(folders, lcuRoot);
 			if (ret == false)
@@ -1586,7 +1617,7 @@ namespace WpfApp1_cmd.ViewModel
 
 			try
 			{
-				AddLog($"[DownLoad] {lcu.Name}:{machine.Name}:{module.Name}=GetMcFileList");
+				AddLog($"[DownLoad] {lcu.Name};{machine.Name};{module.Name}=GetMcFileList");
 				List<string> mcFiles = [];
 				List<string> lcuFiles = [];
 
@@ -1594,7 +1625,7 @@ namespace WpfApp1_cmd.ViewModel
 				string mcPass = GetMcPass();
 				foreach (var folder in folders)
 				{
-					AddLog($"[DownLoad] {lcu.Name}:{folder}=WebApi(GetMCFileList)");
+					AddLog($"[DownLoad] {folder}");
 					string cmdRet = await lcu.LcuCtrl.LCU_Command(GetMcFileList.Command(machine.Name, module.Pos, mcUser, mcPass, folder), token);
 					GetMcFileList? list = GetMcFileList.FromJson(cmdRet);
 
@@ -1608,7 +1639,7 @@ namespace WpfApp1_cmd.ViewModel
 								foreach (var file in item.list)
 								{
 									mcFiles.Add(file.name);
-									lcuFiles.Add(lcuRoot + file.name);
+									lcuFiles.Add("/MCFiles" + file.name);
 								}
 							}
 						}
@@ -1616,11 +1647,11 @@ namespace WpfApp1_cmd.ViewModel
 				}
 
 				//装置からLCUにファイルを取得する
-				string retMsg = await lcu.LcuCtrl.LCU_Command(GetMcFiles.Command(machine.Name, module.Pos, mcUser, mcPass, mcFiles, lcuFiles), token);
+				retMsg = await lcu.LcuCtrl.LCU_Command(GetMcFiles.Command(machine.Name, module.Pos, mcUser, mcPass, mcFiles, lcuFiles), token);
 
 				if (retMsg == "" || retMsg == "Internal Server Error")
 				{
-					AddLog($"[DownLoad] {lcu.Name}:{machine.Name}:{module.Name}=WebApi(GetMCFile) Error");
+					AddLog($"[DownLoad] {lcu.Name};{machine.Name};{module.Name}=WebApi(GetMCFile) Error");
 					return false;
 				}
 				// LCU からFTPでファイルを取得 
@@ -1631,7 +1662,7 @@ namespace WpfApp1_cmd.ViewModel
 			}
 			catch (Exception e)
 			{
-				AddLog($"[DownLoad] {lcu.Name}:{machine.Name}:{module.Name}=DownloadModuleFiles Error");
+				AddLog($"[DownLoad] {lcu.Name};{machine.Name};{module.Name}=DownloadModuleFiles Error");
 				throw;
 			}
 			return ret;
@@ -2270,6 +2301,7 @@ namespace WpfApp1_cmd.ViewModel
 					if (only == true && parser.GetValue(unit, "Version") == UpdateInfos[idx].Version)
 					{
 						//同じバージョンは対象外とするオプション指定の場合
+						AddLog($"[UnitVersion] {lcu.LcuCtrl.Name};{machine.Name};{module.Name}:{unit}=Skip(same version)");
 						continue;
 					}
 					CreateUnitVersionList(versions, unit, UpdateInfos[idx].Version, module);
@@ -2281,6 +2313,11 @@ namespace WpfApp1_cmd.ViewModel
 					{
 						//存在するユニット以外も対象とする場合(--matchUnit==false or --matchUnit 未定義)
 						CreateUnitVersionList(versions, unit, "N/A", module);
+					}
+					else
+					{
+						//存在するユニットのみを対象とする(--matchUnit==true)
+						AddLog($"[UnitVersion] {lcu.LcuCtrl.Name};{machine.Name};{module.Name}:{unit}=Skip(not found)");
 					}
 				}
 			}
@@ -2329,6 +2366,29 @@ namespace WpfApp1_cmd.ViewModel
 				Progress?.SetMessage($"reading {lcu.LcuCtrl.Name}");
 				bool ret = await UpdateLcuInfo(lcu, token);
 				lcu.IsSelected.Value = ret;
+
+				//LCU下の装置、モジュール、ユニット数を取得
+				int machineCount = lcu.Children.Count(x => x.IsSelected.Value != false);
+				int moduleCount = lcu.Children.SelectMany(x => x.Children).Count(x => x.IsSelected.Value != false);
+				int unitCount = lcu.Children.SelectMany(x => x.Children).SelectMany(x => x.UnitVersions).Count(x => x.IsSelected.Value != false);
+				AddLog($"[LineInfo] {lcu.Name};Machine={machineCount};Module={moduleCount};Unit={unitCount}");
+
+				foreach (var machine in lcu.Children)
+				{
+					if (machine.IsSelected.Value == false)
+					{
+						continue;
+					}
+					int mduleCount = machine.Children.Count(x => x.IsSelected.Value != false);
+					foreach (var module in machine.Children)
+					{
+						if (module.IsSelected.Value == false)
+						{
+							continue;
+						}
+						int unit = module.UnitVersions.Count(x => x.IsSelected.Value == true);
+					}
+				}
 			}
 
 			// 選択されていない(LCU情報が取得できない) LCU(Line)を削除
@@ -2354,6 +2414,7 @@ namespace WpfApp1_cmd.ViewModel
 			if (ping == false)
 			{
 				AddLog($"[ERROR] {lcu.Name}=Access Fail");
+				AddLog($"[LineInfo]:{lcu.Name}=Access Fail");
 				return false;
 			}
 
@@ -2384,6 +2445,7 @@ namespace WpfApp1_cmd.ViewModel
 				if (versionInfo == null)
 				{
 					AddLog($"[ERROR] {lcu.Name}=LcuVersion Get Error");
+					AddLog($"[LineInfo] {lcu.Name};LcuVersion Get Error");
 					return false;
 				}
 				lcu.Version = versionInfo.First(x => x.itemName == "Fuji LCU Communication Server Service").itemVersion;
@@ -2399,6 +2461,9 @@ namespace WpfApp1_cmd.ViewModel
 					lcu.IsSelected.Value = false;
 					lcu.IsUpdateOk = false;
 					AddLog($"[ERROR] {lcu.Name}=DiskSpace Error({lcu.DiskSpace}<{UpdateDataSize})");
+					AddLog($"[LineInfo] {lcu.Name};DiskSpace Error({lcu.DiskSpace}<{UpdateDataSize})");
+
+					return false;
 				}
 			}
 
@@ -2412,6 +2477,7 @@ namespace WpfApp1_cmd.ViewModel
 				if (response.Contains("errorCode"))
 				{
 					AddLog($"[ERROR] {lcu.Name};get lines error");
+					AddLog($"[LineInfo] {lcu.Name};get linesInfomation error");
 					return false;
 				}
 
@@ -2502,6 +2568,19 @@ namespace WpfApp1_cmd.ViewModel
 			await this._dialogCoordinator.ShowMetroDialogAsync(this, customDialog);
 
 			return customDialog; 
+		}
+
+		public async Task<CustomDialog> ShowLineInfoResultDialog()
+		{
+			var customDialog = new CustomDialog { Title = "Line Info Result" };
+			var dataContext = new LineInfoResultDialogViewModel(InstanceData =>
+			{
+				// キャンセルボタンが押されたときの処理
+				this._dialogCoordinator.HideMetroDialogAsync(this, customDialog);
+			});
+			customDialog.Content = new LineInfoResultDialog { DataContext = dataContext };
+			await this._dialogCoordinator.ShowMetroDialogAsync(this, customDialog);
+			return customDialog;
 		}
 
 	}

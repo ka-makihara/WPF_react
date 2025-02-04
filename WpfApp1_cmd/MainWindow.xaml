@@ -15,6 +15,7 @@
         xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
         xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
         GlowBrush="{DynamicResource MahApps.Brushes.Accent}"
+        BorderThickness="1"
         mahApps:DialogParticipation.Register="{Binding}"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen"
@@ -27,23 +28,29 @@
         Title="TransferTool" Height="800" Width="850">
 
     <Window.Resources>
-      <local:RichTextItemsToDocumentConverter x:Key="RichTextItemsToDocumentConverter" />
-      <!--
-        <DataTemplate DataType="{x:Type vm:MaterialDialogViewModel}">
-            <view:MaterialDialog/>
-        </DataTemplate>
-        -->
-      <!-- TreeView の右クリックメニューのリソース(Tagプロパティに代入しておいた、DataContextから値を取り出してCommandに設定) -->
-      <ContextMenu x:Key="SampleContextMenu">
-        <MenuItem Header="Menu1"
-                  Command="{Binding Path=PlacementTarget.Tag.TreeViewCommand, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
-                  CommandParameter="{Binding Path=PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"/>
-        <MenuItem Header="Menu2"
-                  Command="{Binding Path=PlacementTarget.Tag.TreeViewCommand, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
-                  CommandParameter="{Binding Path=PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"/>
-    </ContextMenu>
-    <BooleanToVisibilityConverter x:Key="BoolToVisible"/>
+        <local:RichTextItemsToDocumentConverter x:Key="RichTextItemsToDocumentConverter" />
+        <BooleanToVisibilityConverter x:Key="BoolToVisible"/>
+
+        <!-- TreeView の右クリックメニューのリソース(Tagプロパティに代入しておいた、DataContextから値を取り出してCommandに設定) -->
+        <ContextMenu x:Key="SampleContextMenu">
+            <MenuItem Header="Menu1"
+                      Command="{Binding Path=PlacementTarget.Tag.TreeViewCommand, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                      CommandParameter="{Binding Path=PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"/>
+            <MenuItem Header="Menu2"
+                      Command="{Binding Path=PlacementTarget.Tag.TreeViewCommand, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                      CommandParameter="{Binding Path=PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"/>
+        </ContextMenu>
    </Window.Resources>
+
+    <mahApps:MetroWindow.Flyouts>
+        <mah:FlyoutsControl x:Name="flyoutsControl">
+            <mahApps:Flyout x:Name="ModalFlyout" Header="Modal" IsModal="True" Position="Right">
+                <StackPanel Height="80" Margin="5 5 5 5" Orientation="Horizontal">
+                    <TextBlock>Modal Flyout</TextBlock>
+                </StackPanel>
+            </mahApps:Flyout>
+        </mah:FlyoutsControl>
+    </mahApps:MetroWindow.Flyouts>
 
     
 

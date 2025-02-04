@@ -38,31 +38,6 @@ namespace WpfApp1_cmd.Models
         // LCUの名前は、LcuCtrl.Name で取得する
         //    LcuCtrl.Name は  LCUのPC名(==IPAddress)であり、アクセスに使用
 
-		private void CheckSelf()
-		{
-			int cntTrue = Children.Where(x => x.IsSelected.Value == true).ToList().Count();
-			int cntNull = Children.Where(x => x.IsSelected.Value == null).ToList().Count();
-			if (cntTrue == 0 && cntNull == 0)
-			{
-				IsSelected.Value = false;
-			}
-			else if ((cntTrue + cntNull) == Children.Count)
-			{
-				IsSelected.Value = true;
-			}
-			else
-			{
-				IsSelected.Value = null;
-			}
-		}
-
-		public void UpdateParent(bool? value)
-		{
-			CheckSelf();
-
-			//LcuInfo は最上位なので、親がいない
-		}
-
 		private string? _ftpUser;
         public string? FtpUser { get => _ftpUser; set => _ftpUser = value; }
 
@@ -80,15 +55,51 @@ namespace WpfApp1_cmd.Models
             machine.Parent = this;
         }
 
-        public LcuInfo(string name, int id=0)
+		/// <summary>
+		/// 子の選択状態を更新(全て選択/全て選択解除, viewModelで使用)
+		/// </summary>
+		/// <param name="value"></param>
+		public void UpdateChildren(bool? value)
+		{
+			foreach( var machine in Children)
+			{
+				machine.IsSelected.Value = value;
+			}
+		}
+
+		public void UpdateSelf(bool? value)
+		{
+			if( IsSelected.Value == value)
+			{
+				return;
+			}
+
+			int trueCount = Children.Count(x => x.IsSelected.Value == true);
+
+			if (value == true)
+			{
+				//全ての子が選択されている==true, 一つでも選択されていない==null
+				IsSelected.Value = (trueCount == Children.Count) ? true : null ;
+			}
+			else
+			{
+				//子が一つでも選択されている==null, 全て選択されていない==false
+				IsSelected.Value = (trueCount != 0) ? null : false ;
+			}
+		}
+		public void Update(bool? value)
+		{
+			//親がいないので何もしない
+		}
+
+		public LcuInfo(string name, int id=0)
         {
             _machines.ObserveAddChanged().Subscribe(x => AddMachine(x));
-			//IsSelected.Subscribe(x => Update(x));
+			IsSelected.Subscribe(x => Update(x));
 
 			LcuId = id;
 			_lcuCtrl = new(name,id);
         }
-
 
         public string Version { get; set; } = "V1.00";
         private LcuCtrl _lcuCtrl;
@@ -101,39 +112,6 @@ namespace WpfApp1_cmd.Models
 
     public class MachineInfo : CheckableItem
     {
-		private void CheckSelf()
-		{
-			int cntTrue = Children.Where(x => x.IsSelected.Value == true).ToList().Count();
-			int cntNull = Children.Where(x => x.IsSelected.Value == null).ToList().Count();
-
-			if (cntTrue == 0 && cntNull == 0)
-            {
-                IsSelected.Value = false;
-            }
-            else if ((cntTrue + cntNull) == Children.Count)
-            {
-                IsSelected.Value = true;
-            }
-            else
-            {
-                IsSelected.Value = null;
-            }
-		}
-
-		public void UpdateParent(bool? value)
-		{
-			CheckSelf();	
-			Parent?.UpdateParent(value);
-		}
-		public void UpdateChildren(bool? value)
-		{
-			CheckSelf();
-			foreach (var child in Children)
-			{
-				child.UpdateChildren(value);
-			}
-		}
-
 		private Machine? _machine;
         public Machine? Machine { get => _machine; set => _machine = value; }
 
@@ -158,23 +136,51 @@ namespace WpfApp1_cmd.Models
         private void AddBase(BaseInfo baseInfo)
         {
             baseInfo.Parent = this;
-            //Debug.WriteLine($"AddBase: {baseInfo.Name}");
         }
         private void AddModule(ModuleInfo module)
         {
             module.Parent = this;
-            //Debug.WriteLine($"AddModule: {module.Name}");
         }
 
+		public void UpdateSelf(bool? value)
+		{
+			int trueCount = Children.Count(x => x.IsSelected.Value == true);
+
+			if (value == true)
+			{
+				//全ての子が選択されている==true, 一つでも選択されていない==null
+				IsSelected.Value = (trueCount == Children.Count) ? true : null ;
+			}
+			else
+			{
+				//子が一つでも選択されている==null, 全て選択されていない==false
+				IsSelected.Value = (trueCount != 0) ? null : false ;
+			}
+		}
+
+		/// <summary>
+		/// 子の選択状態を更新(全て選択/全て選択解除, viewModelで使用)
+		/// </summary>
+		/// <param name="value"></param>
+		public void UpdateChildren(bool? value)
+		{
+			foreach (var module in Children)
+			{
+				module.IsSelected.Value = value;
+			}
+		}
+
+		public void Update(bool? value)
+		{
+			Parent?.UpdateSelf(value);
+		}
 
         public MachineInfo()
         {
             _bases.ObserveAddChanged().Subscribe(x => AddBase(x));
             _modules.ObserveAddChanged().Subscribe(x => AddModule(x));
-            //IsSelected.Subscribe(x => Update(x));
+            IsSelected.Subscribe(x => Update(x));
         }
-
-        //public bool? IsParentSelected => Parent.IsSelected.Value;
     }
 
     public class BaseInfo : CheckableItem
@@ -218,41 +224,6 @@ namespace WpfApp1_cmd.Models
 
     public class ModuleInfo : CheckableItem
     {
-		private void CheckSelf()
-		{
-			// ユニットバージョンの選択状態は true/false のみ
-            int cnt = UnitVersions.Where(x => x.IsSelected.Value == true).ToList().Count();
-
-            if (cnt == 0)
-            {
-                IsSelected.Value = false;
-            }
-            else if (cnt == UnitVersions.Count)
-            {
-                IsSelected.Value = true;
-            }
-            else
-            {
-                IsSelected.Value = null;
-            }
-		}
-
-	    public void UpdateParent(bool? value)
-        {
-			CheckSelf();	
-			Parent?.UpdateParent(value);
-        }
-
-		public void UpdateChildren(bool? value)
-		{
-			CheckSelf();
-
-			foreach (var unit in UnitVersions)
-			{
-				unit.IsSelected.Value = value;
-			}
-		}
-
 		private Module? _module;
         public Module? Module { get => _module; set => _module = value; }
 
@@ -294,10 +265,43 @@ namespace WpfApp1_cmd.Models
             Debug.WriteLine($"AddUnitVersion: {unitVersion.Name}");
         }
 
-        public ModuleInfo()
+		public void UpdateSelf(bool? value)
+		{
+			int trueCount = UnitVersions.Count(x => x.IsSelected.Value == true);
+
+			if (value == true)
+			{
+				//全ての子が選択されている==true, 一つでも選択されていない==null
+				IsSelected.Value = (trueCount == UnitVersions.Count) ? true : null ;
+			}
+			else
+			{
+				//子が一つでも選択されている==null, 全て選択されていない==false
+				IsSelected.Value = (trueCount != 0) ? null : false ;
+			}
+		}
+
+		/// <summary>
+		/// 子の選択状態を更新(全て選択/全て選択解除, viewModelで使用)
+		/// </summary>
+		/// <param name="value"></param>
+		public void UpdateChildren(bool? value)
+		{
+			foreach (var unit in UnitVersions)
+			{
+				unit.IsSelected.Value = value;
+			}
+		}
+
+		public void Update(bool? value)
+		{
+			Parent?.UpdateSelf(value);
+		}
+
+		public ModuleInfo()
         {
             UnitVersions.ObserveAddChanged().Subscribe(x => AddUnitVersion(x));
-            //IsSelected.Subscribe(x => Update(x));
+            IsSelected.Subscribe(x => Update(x));
         }
     }
 }

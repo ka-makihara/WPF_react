@@ -27,6 +27,9 @@
     <Compile Update="View\LcuView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="View\LineInfoResultDialog.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="View\MachineView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -81,6 +84,9 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Update="View\LcuView.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="View\LineInfoResultDialog.xaml">
       <SubType>Designer</SubType>
     </Page>
     <Page Update="View\MachineView.xaml">
