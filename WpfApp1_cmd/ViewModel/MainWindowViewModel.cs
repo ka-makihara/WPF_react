@@ -522,20 +522,29 @@ namespace WpfApp1_cmd.ViewModel
 			return false;
 		}
 
+		private static string GetSelectionString(bool? value)
+		{
+			return value switch
+			{
+				true => "True",
+				false => "False",
+				_ => "Null",
+			};
+		}
 		private void ShowItems()
 		{
 			foreach(var lcu in TreeViewItems)
 			{
-				Debug.WriteLine($"{lcu.Name}:{ ((lcu.IsSelected.Value == true) ? "True":"False")}");
+				Debug.WriteLine($"{lcu.Name}:{GetSelectionString(lcu.IsSelected.Value)}");
 				foreach (var machine in lcu.Children)
 				{
-					Debug.WriteLine($"    {machine.Name}:{((machine.IsSelected.Value == true) ? "True":"False")}");
+					Debug.WriteLine($"    {machine.Name}:{GetSelectionString(machine.IsSelected.Value)}");
 					foreach (var module in machine.Children)
 					{
-						Debug.WriteLine($"       {module.Name}:{((module.IsSelected.Value == true) ? "True":"False")}");
+						Debug.WriteLine($"       {module.Name}:{GetSelectionString(module.IsSelected.Value)}");
 						foreach (var unit in module.UnitVersions)
 						{
-							Debug.WriteLine($"          {unit.Name}:{((unit.IsSelected.Value == true) ? "True" : "False")}");
+							Debug.WriteLine($"          {unit.Name}:{GetSelectionString(unit.IsSelected.Value)}");
 						}
 					}
 				}
@@ -847,6 +856,10 @@ namespace WpfApp1_cmd.ViewModel
 
 		}
 
+		/// <summary>
+		/// ツリービューのチェックボックスが変更されたときの処理
+		/// </summary>
+		/// <param name="x">TreeView Item</param>
 		private void TreeViewChkCmd(object x)
 		{
 			CheckableItem item = x as CheckableItem;
@@ -856,9 +869,8 @@ namespace WpfApp1_cmd.ViewModel
 				return;
 			}
 
-			if (item is LcuInfo)
+			if (item is LcuInfo lcu)
 			{
-				LcuInfo lcu = item as LcuInfo;
 				bool? chk = item.IsSelected.Value;  // 値を取得しておく、(UpdateChildren()で子が更新されると IsSelected.Value 値が更新されてしまうので)
 				foreach (MachineInfo machine in lcu.Children)
 				{
@@ -869,18 +881,16 @@ namespace WpfApp1_cmd.ViewModel
 					}
 				}
 			}
-			else if (item is MachineInfo)
+			else if (item is MachineInfo machine)
 			{
-				MachineInfo machine = item as MachineInfo;
 				bool? chk = item.IsSelected.Value;
 				foreach (ModuleInfo module in machine.Children)
 				{
 					module.UpdateChildren(chk);
 				}
 			}
-			else if (item is ModuleInfo)
+			else if (item is ModuleInfo module)
 			{
-				ModuleInfo module = item as ModuleInfo;
 				bool? chk = item.IsSelected.Value;
 				module.UpdateChildren(chk);
 			}
@@ -955,8 +965,7 @@ namespace WpfApp1_cmd.ViewModel
 					}
 					cts.Dispose();
 
-					ModuleInfo? item = SelectedItem as ModuleInfo;
-					if (item != null)
+					if (SelectedItem is ModuleInfo item)
 					{
 						ActiveView = viewModeTable[$"ModuleView_{item.Name}"];
 					}
@@ -2150,8 +2159,7 @@ namespace WpfApp1_cmd.ViewModel
 					CanExecuteLcuCommand.Value = false; //LCU コマンドを実行不可にする
 					if (viewModeTable.ContainsKey($"ModuleView_{item.Name}") == false)
 					{
-						ModuleInfo module = item as ModuleInfo;
-						if (module != null)
+						if (item is ModuleInfo module)
 						{
 							viewModeTable.Add($"ModuleView_{item.Name}", new ModuleViewModel(item.Name, module.UnitVersions, UpdateInfos));
 						}
@@ -2224,8 +2232,6 @@ namespace WpfApp1_cmd.ViewModel
 				UnitGroup = UnitLink.units.Where(x => x.components.Find(y => y == unit) != null).FirstOrDefault()?.name
 			};
 			versions.Add(version);
-
-			//return version;
 		}
 
 		/// <summary>
@@ -2321,6 +2327,7 @@ namespace WpfApp1_cmd.ViewModel
 					}
 				}
 			}
+
 			return versions;
 		}
 
@@ -2365,7 +2372,14 @@ namespace WpfApp1_cmd.ViewModel
 			{
 				Progress?.SetMessage($"reading {lcu.LcuCtrl.Name}");
 				bool ret = await UpdateLcuInfo(lcu, token);
+
 				lcu.IsSelected.Value = ret;
+				int c = lcu.Children.Count(x => x.IsSelected.Value == true);
+				if (c != lcu.Children.Count)
+				{
+					int f = lcu.Children.Count(x => x.IsSelected.Value == null);
+					lcu.IsSelected.Value = (c == 0 && f == 0) ? false : null;
+				}
 
 				//LCU下の装置、モジュール、ユニット数を取得
 				int machineCount = lcu.Children.Count(x => x.IsSelected.Value != false);
@@ -2537,11 +2551,22 @@ namespace WpfApp1_cmd.ViewModel
 							if (ret != null)
 							{
 								moduleItem.UnitVersions = ret;
+
+								// ユニットの選択状態を反映させる
+								// (基本的には全チェック状態だが、オプションによっては非チェックの状態がある)
+								int tt = moduleItem.UnitVersions.Count(x => x.IsSelected.Value == true);
+								moduleItem.IsSelected.Value = (tt == moduleItem.UnitVersions.Count) ? true : null;
 							}
 							else
 							{
 								moduleItem.IsSelected.Value = false;
 							}
+						}
+						int tc = machine.Children.Count(x => x.IsSelected.Value == true);
+						if (tc != machine.Children.Count)
+						{
+							int fc = machine.Children.Count(x => x.IsSelected.Value == false);
+							machine.IsSelected.Value = (fc == machine.Children.Count) ? false : null;
 						}
 					}
 					lcu.Children.Add(machine);

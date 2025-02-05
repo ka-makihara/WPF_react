@@ -75,6 +75,7 @@ namespace WpfApp1_cmd.Models
 			}
 
 			int trueCount = Children.Count(x => x.IsSelected.Value == true);
+			int nullCount = Children.Count(x => x.IsSelected.Value == null);
 
 			if (value == true)
 			{
@@ -84,7 +85,7 @@ namespace WpfApp1_cmd.Models
 			else
 			{
 				//子が一つでも選択されている==null, 全て選択されていない==false
-				IsSelected.Value = (trueCount != 0) ? null : false ;
+				IsSelected.Value = (trueCount == 0 && nullCount == 0) ? false : null ;
 			}
 		}
 		public void Update(bool? value)
@@ -145,6 +146,7 @@ namespace WpfApp1_cmd.Models
 		public void UpdateSelf(bool? value)
 		{
 			int trueCount = Children.Count(x => x.IsSelected.Value == true);
+			int nullCount = Children.Count(x => x.IsSelected.Value == null);
 
 			if (value == true)
 			{
@@ -154,8 +156,9 @@ namespace WpfApp1_cmd.Models
 			else
 			{
 				//子が一つでも選択されている==null, 全て選択されていない==false
-				IsSelected.Value = (trueCount != 0) ? null : false ;
+				IsSelected.Value = (nullCount == 0 && trueCount == 0) ? false : null ;
 			}
+			Parent?.UpdateSelf(value);
 		}
 
 		/// <summary>
@@ -268,6 +271,7 @@ namespace WpfApp1_cmd.Models
 		public void UpdateSelf(bool? value)
 		{
 			int trueCount = UnitVersions.Count(x => x.IsSelected.Value == true);
+			int nullCount = UnitVersions.Count(x => x.IsSelected.Value == null);
 
 			if (value == true)
 			{
@@ -277,7 +281,7 @@ namespace WpfApp1_cmd.Models
 			else
 			{
 				//子が一つでも選択されている==null, 全て選択されていない==false
-				IsSelected.Value = (trueCount != 0) ? null : false ;
+				IsSelected.Value = (trueCount == 0 && nullCount == 0) ? false : null ;
 			}
 		}
 

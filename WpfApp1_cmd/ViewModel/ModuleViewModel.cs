@@ -106,11 +106,17 @@ namespace WpfApp1_cmd.ViewModel
 			}
 		}
 
+		/// <summary>
+		/// コンストラクタ
+		/// </summary>
+		/// <param name="name">モジュール名</param>
+		/// <param name="unitVersions">バージョンリスト</param>
+		/// <param name="updates">アップデートデータリスト</param>
 		public ModuleViewModel(string name, ReactiveCollection<UnitVersion> unitVersions, ObservableCollection<UpdateInfo> updates)
         {
             UnitVersions = unitVersions;
             _updates = updates;
-			ModuleName = "Transfer Selection : " + name;
+			ModuleName = "Transfer Selection : " + name;    //ビューのタイトルに表示する文字列
 
 			ICollectionView cvs = CollectionViewSource.GetDefaultView(UnitVersions);
             cvs.GroupDescriptions.Add(new PropertyGroupDescription("UnitGroup"));
@@ -126,9 +132,6 @@ namespace WpfApp1_cmd.ViewModel
 
 			foreach (var item in UnitVersions)
             {
-                // IsSelected プロパティが変更されたときに、IsSelectedChk メソッドを呼び出す
-                //item.IsSelected.Subscribe(x => IsSelectedChk(item,x));
-
                 if (updates != null)
                 {
 					var uv = updates.FirstOrDefault(x => x.Name == item.Name);
