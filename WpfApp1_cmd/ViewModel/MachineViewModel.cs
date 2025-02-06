@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -37,17 +38,47 @@ namespace WpfApp1_cmd.ViewModel
 			}
 		}
 
+		private bool? GetModulesSelection(ReactiveCollection<ModuleInfo> modules)
+		{
+			int allTrue = 0;
+			int allFalse = 0;
+			int allNull = 0;
+
+			foreach (var module in modules)
+            {
+				int tc = module.UnitVersions.Count(x => x.IsSelected.Value == true);
+				int nc = module.UnitVersions.Count(x => x.IsSelected.Value == false);
+				if (tc == module.UnitVersions.Count)
+				{
+					allTrue++;
+				}
+				else if (nc == module.UnitVersions.Count)
+				{
+					allFalse++;
+				}
+				else
+				{
+					allNull++;
+				}
+            }
+			if( allTrue == modules.Count )
+			{
+				return true;
+			}
+			else if( allFalse == modules.Count )
+			{
+				return false;
+			}
+			return null;
+		}
+
 		public MachineViewModel(ReactiveCollection<ModuleInfo> modules)
         {
             Modules = modules;
 
-            foreach (var item in Modules)
-            {
-				item.IsSelected.Subscribe(x => SelectModules(item,x));
-			}
-
 			// 全選択用のチェックボックスの状態を管理するプロパティの初期化
-            IsAllSelected = new ReactivePropertySlim<bool?>(true);
+			bool? sel = GetModulesSelection(modules);
+            IsAllSelected = new ReactivePropertySlim<bool?>(sel);
             IsAllSelected.Subscribe(OnIsAllSelectedChanged);
 
 			// チェックボックスの状態変更時の処理を登録
@@ -61,15 +92,16 @@ namespace WpfApp1_cmd.ViewModel
             {
                 foreach (var module in Modules)
                 {
-                    module.IsSelected.Value = isChecked.Value;
-                }
+					module.IsSelected.Value = isChecked;
+					SelectModules(module, isChecked);
+				}
             }
         }
 
 		private void OnCheckBoxCommandExecuted(ModuleInfo module)
         {
             // チェックボックスの状態変更時の処理をここに記述
-            Console.WriteLine($"Module {module.Name} is checked: {module.IsSelected.Value}");
+            Debug.WriteLine($"Module {module.Name} is checked: {module.IsSelected.Value}");
 
             // 全選択用のチェックボックスの状態を更新
             var selectedStates = Modules.Select(m => m.IsSelected.Value).Distinct().ToList();
@@ -81,6 +113,7 @@ namespace WpfApp1_cmd.ViewModel
             {
                 IsAllSelected.Value = null;
             }
+			SelectModules(module, module.IsSelected.Value);
         }
     }
 }
