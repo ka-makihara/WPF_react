@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
              xmlns:viewmodel="clr-namespace:WpfApp1_cmd.ViewModel"
              d:DataContext="{d:DesignInstance Type=viewmodel:MachineViewModel}"
              xmlns:local="clr-namespace:WpfApp1_cmd.View"
@@ -13,7 +14,20 @@
         <!-- 意味不明だが必要　-->
         <FrameworkElement x:Name="DataContextProxy" DataContext="{Binding}" />
 
-        <DataGrid AutoGenerateColumns="False"
+        <mah:MetroHeader mah:HeaderedControlHelper.HeaderFontSize="22" Header="MachineList">
+            <mah:MetroHeader.HeaderTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Vertical" UseLayoutRounding="True">
+                        <Grid>
+                            <TextBlock Margin="0,4" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                                       Text="{Binding RelativeSource={RelativeSource AncestorType=mah:MetroHeader}, Path=DataContext.MachineName}" />
+                        </Grid>
+                        <Separator />
+                    </StackPanel>
+                </DataTemplate>
+            </mah:MetroHeader.HeaderTemplate>
+
+            <DataGrid AutoGenerateColumns="False"
                   ItemsSource="{Binding Modules}"
                   FontSize="20"
                   CanUserAddRows="False"
@@ -22,51 +36,45 @@
                   GridLinesVisibility="All"
                   IsReadOnly="False"
                   >
-            <DataGrid.Columns>
-                <DataGridTemplateColumn >
-                    <DataGridTemplateColumn.HeaderStyle>
-                        <Style TargetType="{x:Type DataGridColumnHeader}" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
-                            <Setter Property="HorizontalContentAlignment" Value="Center" />
-                        </Style>
-                    </DataGridTemplateColumn.HeaderStyle>
-                    <DataGridTemplateColumn.Header>
-                        <CheckBox Content="ALL" IsChecked="{Binding DataContext.IsAllSelected.Value, Source={x:Reference DataContextProxy}, Mode=TwoWay}" FontSize="15" VerticalAlignment="Center"/>
-                    </DataGridTemplateColumn.Header>
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <CheckBox IsChecked="{Binding IsSelected.Value, UpdateSourceTrigger=PropertyChanged}"
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn >
+                        <DataGridTemplateColumn.HeaderStyle>
+                            <Style TargetType="{x:Type DataGridColumnHeader}" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
+                                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                            </Style>
+                        </DataGridTemplateColumn.HeaderStyle>
+                        <DataGridTemplateColumn.Header>
+                            <CheckBox Content="ALL" IsChecked="{Binding DataContext.IsAllSelected.Value, Source={x:Reference DataContextProxy}, Mode=TwoWay}" FontSize="15" VerticalAlignment="Center"/>
+                        </DataGridTemplateColumn.Header>
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <CheckBox IsChecked="{Binding IsSelected.Value, UpdateSourceTrigger=PropertyChanged}"
                                       Command="{Binding DataContext.CheckBoxCommand, Source={x:Reference DataContextProxy}}"
                                       CommandParameter="{Binding}" />
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
 
-                <materialDesign:DataGridTextColumn 
+                    <materialDesign:DataGridTextColumn 
                         EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnPopupEditingStyle}"
                         ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"
                         Header="ID" FontSize="14" FontFamily="Arial" Width="70" MinWidth="70" Binding="{Binding ID}" IsReadOnly="True">
-                </materialDesign:DataGridTextColumn>
+                    </materialDesign:DataGridTextColumn>
 
-                 <materialDesign:DataGridTextColumn 
+                    <materialDesign:DataGridTextColumn 
                         EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnPopupEditingStyle}"
                         ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"
                         Header="Name" FontSize="14" FontFamily="Arial" Width="100" MinWidth="100" Binding="{Binding Name}" IsReadOnly="True">
-                </materialDesign:DataGridTextColumn>
+                    </materialDesign:DataGridTextColumn>
 
-                <materialDesign:DataGridTextColumn
+                    <materialDesign:DataGridTextColumn
                         EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnPopupEditingStyle}"
                         ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"
                         Header="Pos" FontSize="14" FontFamily="Arial" Width="80" MinWidth="80" Binding="{Binding Pos}" IsReadOnly="True">
-                </materialDesign:DataGridTextColumn>
+                    </materialDesign:DataGridTextColumn>
 
-                <!--
-                <materialDesign:DataGridTextColumn
-                        EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnPopupEditingStyle}"
-                        ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"
-                        Header="IPAddress" FontSize="16" FontFamily="Arial" Width="140" MinWidth="140" Binding="{Binding IPAddress}" IsReadOnly="True">
-                </materialDesign:DataGridTextColumn>
-                -->
-            </DataGrid.Columns> 
-        </DataGrid>         
+                </DataGrid.Columns>
+            </DataGrid>
+        </mah:MetroHeader>
     </Grid>
 </UserControl>

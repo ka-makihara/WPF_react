@@ -12,6 +12,7 @@ namespace WpfApp1_cmd.ViewModel
 {
     class MachineViewModel : ViewModelBase
     {
+		public string MachineName { get; set; } = "Machine";
         private ReactiveCollection<ModuleInfo> _modules;
         public ReactiveCollection<ModuleInfo> Modules
         {
@@ -72,9 +73,10 @@ namespace WpfApp1_cmd.ViewModel
 			return null;
 		}
 
-		public MachineViewModel(ReactiveCollection<ModuleInfo> modules)
+		public MachineViewModel(string name, ReactiveCollection<ModuleInfo> modules)
         {
             Modules = modules;
+			MachineName = $"{name}:{modules.Count} modules";
 
 			// 全選択用のチェックボックスの状態を管理するプロパティの初期化
 			bool? sel = GetModulesSelection(modules);

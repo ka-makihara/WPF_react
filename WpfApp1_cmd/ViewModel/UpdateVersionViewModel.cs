@@ -22,7 +22,8 @@ namespace WpfApp1_cmd.ViewModel
                 SetProperty(ref _updates, value);
             }
         }
-        public UpdateVersionViewModel(ReactiveCollection<UpdateInfo> updates)
+		public string VersionName { get; set; } = "VersionList";
+		public UpdateVersionViewModel(ReactiveCollection<UpdateInfo> updates)
         {
             Updates = updates;
         }

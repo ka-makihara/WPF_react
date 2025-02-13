@@ -5,6 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:WpfApp1_cmd.View"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
              xmlns:viewmodel="clr-namespace:WpfApp1_cmd.ViewModel"
              d:DataContext="{d:DesignInstance Type=viewmodel:UpdateVersionViewModel}"
              mc:Ignorable="d" 
@@ -13,7 +14,19 @@
      <!-- 意味不明だが必要　-->
         <FrameworkElement x:Name="DataContextProxy" DataContext="{Binding}" />
 
-        <DataGrid AutoGenerateColumns="False"
+        <mah:MetroHeader mah:HeaderedControlHelper.HeaderFontSize="22" Header="VersionList">
+            <mah:MetroHeader.HeaderTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Vertical" UseLayoutRounding="True">
+                        <Grid>
+                            <TextBlock Margin="0,4" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                                       Text="{Binding RelativeSource={RelativeSource AncestorType=mah:MetroHeader}, Path=DataContext.VersionName}" />
+                        </Grid>
+                        <Separator />
+                    </StackPanel>
+                </DataTemplate>
+            </mah:MetroHeader.HeaderTemplate>
+            <DataGrid AutoGenerateColumns="False"
                   ItemsSource="{Binding Updates}"
                   FontSize="20"
                   CanUserAddRows="False"
@@ -21,8 +34,8 @@
                   AlternatingRowBackground="#666666"
                   IsReadOnly="False"
                   >
-            <DataGrid.Columns>
-                <!--
+                <DataGrid.Columns>
+                    <!--
                 <DataGridCheckBoxColumn Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}"
                                         EditingElementStyle="{StaticResource MaterialDesignDataGridCheckBoxColumnEditingStyle}"
                                         ElementStyle="{StaticResource MaterialDesignDataGridCheckBoxColumnStyle}"
@@ -40,19 +53,19 @@
                 </DataGridCheckBoxColumn>
                 -->
 
-                 <materialDesign:DataGridTextColumn 
+                    <materialDesign:DataGridTextColumn 
                         EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnPopupEditingStyle}"
                         ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"
                         Header="UnitName" FontSize="16" FontFamily="Arial" Width="200" MinWidth="200" Binding="{Binding Name}" IsReadOnly="True">
-                </materialDesign:DataGridTextColumn>
+                    </materialDesign:DataGridTextColumn>
 
-                <materialDesign:DataGridTextColumn
+                    <materialDesign:DataGridTextColumn
                         EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnPopupEditingStyle}"
                         ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"
                         Header="Version" FontSize="16" FontFamily="Arial" Width="150" MinWidth="150" Binding="{Binding Version}" IsReadOnly="True">
-                </materialDesign:DataGridTextColumn>
+                    </materialDesign:DataGridTextColumn>
 
-                <!-- 最終的には消去する
+                    <!-- 最終的には消去する
                 <materialDesign:DataGridTextColumn
                         EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnPopupEditingStyle}"
                         ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"
@@ -60,7 +73,8 @@
                 </materialDesign:DataGridTextColumn>
                 -->
 
-            </DataGrid.Columns> 
-        </DataGrid> 
+                </DataGrid.Columns>
+            </DataGrid>
+        </mah:MetroHeader>
     </Grid>
 </UserControl>

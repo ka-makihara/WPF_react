@@ -2134,7 +2134,7 @@ namespace WpfApp1_cmd.ViewModel
 					CanExecuteLcuCommand.Value = true;
 					if (viewModeTable.ContainsKey($"LcuView_{item.Name}") == false)
 					{
-						viewModeTable.Add($"LcuView_{item.Name}", new LcuViewModel(TreeViewItems.Where(x => x.Name == item.Name).First().Children));
+						viewModeTable.Add($"LcuView_{item.Name}", new LcuViewModel(item.Name,TreeViewItems.Where(x => x.Name == item.Name).First().Children));
 					}
 					ActiveView = viewModeTable[$"LcuView_{item.Name}"];
 					break;
@@ -2149,7 +2149,7 @@ namespace WpfApp1_cmd.ViewModel
 							{
 								continue;
 							}
-							viewModeTable.Add($"MachineView_{item.Name}", new MachineViewModel(lcu.Children.Where(x => x.Name == item.Name).First().Children));
+							viewModeTable.Add($"MachineView_{item.Name}", new MachineViewModel(item.Name,lcu.Children.Where(x => x.Name == item.Name).First().Children));
 							break;
 						}
 					}

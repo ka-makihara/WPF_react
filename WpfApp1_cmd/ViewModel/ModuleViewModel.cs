@@ -149,6 +149,13 @@ namespace WpfApp1_cmd.ViewModel
 						item.IsSelected.Value = false;
 					}
 				}
+				// Model 側でも Subscribeしているが、
+				// ここで Subscribe しても上書きされない(Subscribe が重複して登録されるっぽい=>チェックボックス操作で両方が呼ばれる)
+				item.IsSelected.Subscribe(_ =>
+                {
+                    OnPropertyChanged(nameof(IsAllSelected));
+					OnPropertyChanged(nameof(IsSelectedGroup));
+				});
             }
 			// ユニット選択のトグルボタンの初期値
 			IsUnitSelectToggleEnabled.Value = true;
@@ -165,7 +172,8 @@ namespace WpfApp1_cmd.ViewModel
             }
             set {
                 SelectAll(value, UnitVersions);
-            }
+				OnPropertyChanged();
+			}
         }
         private void SelectAll(bool? select, IEnumerable<UnitVersion> units)
         {
@@ -175,9 +183,9 @@ namespace WpfApp1_cmd.ViewModel
 			}
 			foreach (var unit in units)
 			{
-				if (unit.Attribute != Define.NOT_UPDATE) {
+				//if (unit.Attribute != Define.NOT_UPDATE) {
 					unit.IsSelected.Value = select;
-				}
+				//}
             }
         }
 

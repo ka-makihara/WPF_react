@@ -19,18 +19,20 @@ namespace WpfApp1_cmd.ViewModel
             set => SetProperty(ref _lcuData, value);
         }
         */
+		public string MachineName { get; set; } = "Machine";
         private ReactiveCollection<MachineInfo> _machineInfos;
         public ReactiveCollection<MachineInfo> MachineInfos
         {
             get => _machineInfos;
             set => SetProperty(ref _machineInfos, value);
         }
-        public LcuViewModel( ReactiveCollection<MachineInfo> machineInfos)
+        public LcuViewModel(string name, ReactiveCollection<MachineInfo> machineInfos)
         {
             MachineInfos = machineInfos;
+			MachineName = $"{name}:{machineInfos.Count} Machines";
 
-            // IsSelected プロパティが変更されたときに、IsAllSelected プロパティを更新する
-            foreach(var item in MachineInfos)
+			// IsSelected プロパティが変更されたときに、IsAllSelected プロパティを更新する
+			foreach (var item in MachineInfos)
             {
                 item.IsSelected.Subscribe(_ =>
                 {

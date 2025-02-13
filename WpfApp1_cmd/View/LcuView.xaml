@@ -4,7 +4,8 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:WpfApp1_cmd.View"
-              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
              xmlns:viewmodel="clr-namespace:WpfApp1_cmd.ViewModel"
              d:DataContext="{d:DesignInstance Type=viewmodel:LcuViewModel}"
              mc:Ignorable="d" 
@@ -13,7 +14,19 @@
         <!-- 意味不明だが必要　-->
         <FrameworkElement x:Name="DataContextProxy" DataContext="{Binding}" />
 
-        <DataGrid AutoGenerateColumns="False"
+        <mah:MetroHeader mah:HeaderedControlHelper.HeaderFontSize="22" Header="LcuList">
+            <mah:MetroHeader.HeaderTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Vertical" UseLayoutRounding="True">
+                        <Grid>
+                            <TextBlock Margin="0,4" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                                       Text="{Binding RelativeSource={RelativeSource AncestorType=mah:MetroHeader}, Path=DataContext.MachineName}" />
+                        </Grid>
+                        <Separator />
+                    </StackPanel>
+                </DataTemplate>
+            </mah:MetroHeader.HeaderTemplate>
+            <DataGrid AutoGenerateColumns="False"
                   ItemsSource="{Binding MachineInfos}"
                   FontSize="20"
                   CanUserAddRows="False"
@@ -22,43 +35,44 @@
                   GridLinesVisibility="All"
                   IsReadOnly="False"
                   >
-            <DataGrid.Columns>
-                <DataGridCheckBoxColumn Binding="{Binding IsSelected.Value, UpdateSourceTrigger=PropertyChanged}"
+                <DataGrid.Columns>
+                    <DataGridCheckBoxColumn Binding="{Binding IsSelected.Value, UpdateSourceTrigger=PropertyChanged}"
                                         EditingElementStyle="{StaticResource MaterialDesignDataGridCheckBoxColumnEditingStyle}"
                                         ElementStyle="{StaticResource MaterialDesignDataGridCheckBoxColumnStyle}"
                                         >
-                    <DataGridCheckBoxColumn.Header>
-                        <Border Background="Transparent">
-                            <CheckBox Content="All" IsChecked="{Binding DataContext.IsAllSelected, Source={x:Reference DataContextProxy}}" />
-                        </Border> 
-                    </DataGridCheckBoxColumn.Header>
-                    <DataGridCheckBoxColumn.HeaderStyle>
-                       <Style TargetType="{x:Type DataGridColumnHeader}" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}" >
-                            <Setter Property="HorizontalContentAlignment" Value="Center" />
-                        </Style> 
-                    </DataGridCheckBoxColumn.HeaderStyle>
-                </DataGridCheckBoxColumn>
+                        <DataGridCheckBoxColumn.Header>
+                            <Border Background="Transparent">
+                                <CheckBox Content="All" IsChecked="{Binding DataContext.IsAllSelected, Source={x:Reference DataContextProxy}}" />
+                            </Border>
+                        </DataGridCheckBoxColumn.Header>
+                        <DataGridCheckBoxColumn.HeaderStyle>
+                            <Style TargetType="{x:Type DataGridColumnHeader}" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}" >
+                                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                            </Style>
+                        </DataGridCheckBoxColumn.HeaderStyle>
+                    </DataGridCheckBoxColumn>
 
 
-                 <materialDesign:DataGridTextColumn 
+                    <materialDesign:DataGridTextColumn 
                         EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnPopupEditingStyle}"
                         ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"
                         Header="Name" FontSize="14" FontFamily="Arial" Width="100" MinWidth="100" Binding="{Binding Name}" IsReadOnly="True">
-                </materialDesign:DataGridTextColumn>
+                    </materialDesign:DataGridTextColumn>
 
-                <materialDesign:DataGridTextColumn
+                    <materialDesign:DataGridTextColumn
                         EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnPopupEditingStyle}"
                         ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"
                         Header="MachineType" FontSize="14" FontFamily="Arial" Width="100" MinWidth="180" Binding="{Binding MachineType}" IsReadOnly="True">
-                </materialDesign:DataGridTextColumn>
+                    </materialDesign:DataGridTextColumn>
 
-                <materialDesign:DataGridTextColumn
+                    <materialDesign:DataGridTextColumn
                         EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnPopupEditingStyle}"
                         ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"
                         Header="ModelName" FontSize="14" FontFamily="Arial" Width="100" MinWidth="150" Binding="{Binding ModelName}" IsReadOnly="True">
-                </materialDesign:DataGridTextColumn>
+                    </materialDesign:DataGridTextColumn>
 
-            </DataGrid.Columns> 
-        </DataGrid>         
+                </DataGrid.Columns>
+            </DataGrid>
+        </mah:MetroHeader>
     </Grid>
 </UserControl>
