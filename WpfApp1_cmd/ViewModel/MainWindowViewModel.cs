@@ -1177,15 +1177,46 @@ namespace WpfApp1_cmd.ViewModel
 
 			string? backupPath = Options.GetOption("--backup");
 
+			// バックアップを実行
+			/*
 			if (backupPath != null)
 			{
-				ret = await BackupUnitData(backupPath);
+				Progress = await Metro.ShowProgressAsync("Backup Unit soft", "");
+				Progress.SetCancelable(true); // キャンセルボタンを表示する
+				Progress.SetProgress(0);
+				Progress.Minimum = 0;
+				Progress.Maximum = 1000;
+
+				//ret = await BackupUnitData(backupPath);
+				Task backUpTask = Task.Run(() => { Task<bool> task1 = BackupUnitData(backupPath, token); });
+				bool isBackupCancel = false;
+				while (true)
+				{
+					if (Progress.IsCanceled == true)
+					{
+						await Progress.CloseAsync();
+						isBackupCancel = await StopTransferExecute();
+						if (isBackupCancel == true)
+						{
+							// バックアップ中止
+							break;
+						}
+						// 再開
+						Progress = await Metro.ShowProgressAsync("Backup Unit soft", "");
+						Progress.SetCancelable(true); // キャンセルボタンを表示する
+					}
+					await Task.Delay(100);  //Delay することで、プログレスウインドウの表示が更新される
+				}
+				if (isBackupCancel == false)
+				{
+					await Progress.CloseAsync();
+				}
 			}
+			*/
 
 			if (ret == true)
 			{
 				Progress = await Metro.ShowProgressAsync("Unit Soft Transfer...", "");
-				//Progress.SetIndeterminate();// 進捗(?)をそれらしく流す・・・
 				Progress.SetCancelable(true); // キャンセルボタンを表示する
 				Progress.SetProgress(0);
 				Progress.Minimum = 0;
@@ -1215,7 +1246,6 @@ namespace WpfApp1_cmd.ViewModel
 						}
 						// 再開
 						Progress = await Metro.ShowProgressAsync("Unit Soft Transfer...", "");
-						//Progress.SetIndeterminate();// 進捗(?)をそれらしく流す・・・
 						Progress.SetCancelable(true); // キャンセルボタンを表示する
 
 						CanTransferFlag.Value = true;
@@ -1313,10 +1343,10 @@ namespace WpfApp1_cmd.ViewModel
 		///  選択状態にある装置のデータをバックアップする
 		/// </summary>
 		/// <returns></returns>
-		public async Task<bool> BackupUnitData(string path)
+		public async Task<bool> BackupUnitData(string path, CancellationToken token)
 		{
-			CancelTokenSrc = new CancellationTokenSource();
-			CancellationToken token = CancelTokenSrc.Token;
+			//CancelTokenSrc = new CancellationTokenSource();
+		//	CancellationToken token = CancelTokenSrc.Token;
 			DateTime dt = DateTime.Now;
 
 			string hd = dt.ToString("yyyyMMdd_HHmmss_");
@@ -1355,7 +1385,6 @@ namespace WpfApp1_cmd.ViewModel
 							}
 
 							bool ret = await DownloadModuleFiles(lcu, machine, module, bkupPath, token);
-							//await Task.Delay(3000,token);
 
 							AddLog($"[BACKUP] {lcu.Name};{machine.Name};{module.Name}=Backup End");
 
@@ -1861,9 +1890,18 @@ namespace WpfApp1_cmd.ViewModel
 			string mcPass = GetMcPass();
 			foreach (var (unit, folder) in unitFolders)
 			{
-				if (module.UnitVersions.First(x => x.Name == unit).IsSelected.Value == false)
+				try
 				{
-					//選択されていないユニットは転送しない
+					if (module.UnitVersions.First(x => x.Name == unit).IsSelected.Value == false)
+					{
+						//選択されていないユニットは転送しない
+						AddLog($"[Transfer] {lcu.Name};{machine.Name};{module.Name}:{unit}=Skip");
+						continue;
+					}
+				}
+				catch (Exception e)
+				{
+					//オプションによっては選択されていない、同一バージョンで除外されている、ユニットがある場合がある
 					AddLog($"[Transfer] {lcu.Name};{machine.Name};{module.Name}:{unit}=Skip");
 					continue;
 				}
@@ -2140,31 +2178,34 @@ namespace WpfApp1_cmd.ViewModel
 					break;
 				case MachineType.Machine:
 					CanExecuteLcuCommand.Value = false; // LCU コマンドを実行不可にする
-					if (viewModeTable.ContainsKey($"MachineView_{item.Name}") == false)
+					string lcuName = ((MachineInfo)item).Parent.Name;
+					if (viewModeTable.ContainsKey($"MachineView_{lcuName}_{item.Name}") == false)
 					{
-						string lcuName = (item as MachineInfo).Parent.Name;
 						foreach (var lcu in TreeViewItems)
 						{
 							if (lcu.Children == null || lcu.Name != lcuName)
 							{
 								continue;
 							}
-							viewModeTable.Add($"MachineView_{item.Name}", new MachineViewModel(item.Name,lcu.Children.Where(x => x.Name == item.Name).First().Children));
+							//var obj = lcu.Children.Where(x => x.Name == item.Name).First().Children;
+
+							viewModeTable.Add($"MachineView_{lcuName}_{item.Name}", new MachineViewModel(item.Name,lcu.Children.Where(x => x.Name == item.Name).First().Children));
 							break;
 						}
 					}
-					ActiveView = viewModeTable[$"MachineView_{item.Name}"];
+					ActiveView = viewModeTable[$"MachineView_{lcuName}_{item.Name}"];
 					break;
 				case MachineType.Module:
 					CanExecuteLcuCommand.Value = false; //LCU コマンドを実行不可にする
-					if (viewModeTable.ContainsKey($"ModuleView_{item.Name}") == false)
+					string machineName = ((ModuleInfo)item).Parent.Name;
+					if (viewModeTable.ContainsKey($"ModuleView_{machineName}_{item.Name}") == false)
 					{
 						if (item is ModuleInfo module)
 						{
-							viewModeTable.Add($"ModuleView_{item.Name}", new ModuleViewModel(item.Name, module.UnitVersions, UpdateInfos));
+							viewModeTable.Add($"ModuleView_{machineName}_{item.Name}", new ModuleViewModel(item.Name, module.UnitVersions, UpdateInfos));
 						}
 					}
-					ActiveView = viewModeTable[$"ModuleView_{item.Name}"];
+					ActiveView = viewModeTable[$"ModuleView_{machineName}_{item.Name}"];
 					break;
 			}
 		}
@@ -2232,6 +2273,7 @@ namespace WpfApp1_cmd.ViewModel
 				UnitGroup = UnitLink.units.Where(x => x.components.Find(y => y == unit) != null).FirstOrDefault()?.name
 			};
 			versions.Add(version);
+			Debug.WriteLine($"[UnitVersion] {module.Name}:{unit}={version.CurVersion}=>{version.NewVersion}");
 		}
 
 		/// <summary>
@@ -2291,7 +2333,7 @@ namespace WpfApp1_cmd.ViewModel
 			//   --matchUnit が指定されている場合は、UpdateCommon.inf に記載されているユニットのみを対象とする
 			//   --diffVersionOnly が指定されている場合は、バージョンが同一のユニットは対象外とする
 			bool match = Options.GetOptionBool("--matchUnit", false);
-			bool only = Options.GetOptionBool("--diffVersionOnly", false);
+			bool diffOnly = Options.GetOptionBool("--diffVersionOnly", false);
 
 			foreach (var unit in sec)
 			{
@@ -2304,7 +2346,7 @@ namespace WpfApp1_cmd.ViewModel
 
 				if (idx != -1 && UpdateInfos != null)
 				{
-					if (only == true && parser.GetValue(unit, "Version") == UpdateInfos[idx].Version)
+					if ( diffOnly == true && parser.GetValue(unit, "Version") == UpdateInfos[idx].Version)
 					{
 						//同じバージョンは対象外とするオプション指定の場合
 						AddLog($"[UnitVersion] {lcu.LcuCtrl.Name};{machine.Name};{module.Name}:{unit}=Skip(same version)");

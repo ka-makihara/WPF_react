@@ -68,15 +68,15 @@
                         <GroupStyle.HeaderTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">
+                                    <!--
                                     <CheckBox IsChecked="{Binding DataContext.IsSelectedGroup, Source={x:Reference DataContextProxy}}" >
-                                        <!--
-                                    <CheckBox >
+                                    -->
+                                    <CheckBox
                                         IsChecked="{Binding DataContext.IsGroupChecked, 
-                                              RelativeSource={RelativeSource AncestorType=DataGrid}}" >
+                                              RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                   Command="{Binding DataContext.GroupCheckCommand2, 
                                             RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                   CommandParameter="{Binding}" >
-                                  -->
                                   
                                         <CheckBox.Style>
                                             <Style BasedOn="{StaticResource MahApps.Styles.CheckBox.Win10}" TargetType="{x:Type CheckBox}">

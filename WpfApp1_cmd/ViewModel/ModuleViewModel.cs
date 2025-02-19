@@ -192,11 +192,19 @@ namespace WpfApp1_cmd.ViewModel
 		/// <summary>
 		///  グループヘッダーのチェックボックス表示で、初期値としてチェックを入れるかどうか
 		/// </summary>
+		private bool _isSelectedGroup = true;
 		public bool IsSelectedGroup
 		{
-			get;
-			set;
-		} = true;
+			get
+			{
+				return _isSelectedGroup;
+			}
+			set
+			{
+				Debug.WriteLine($"IsSelectedGroup");
+				SetProperty(ref _isSelectedGroup, value);
+			}
+		}// = true;
 
 		/// <summary>
 		/// チェックボックスの表示を行うかどうか(未使用)
