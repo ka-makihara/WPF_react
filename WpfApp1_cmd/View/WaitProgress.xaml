@@ -8,11 +8,11 @@
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
              xmlns:mahApps="http://metro.mahapps.com/winfx/xaml/controls"
-             d:DesignHeight="450" d:DesignWidth="800">
+             d:DesignHeight="100" d:DesignWidth="100">
     <Grid>
         <StackPanel Orientation="Vertical" >
-            <TextBlock Text="{Binding ProgMsg}" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center" Margin="20"/>
-            <mahApps:ProgressRing Foreground="{DynamicResource AccentColorBrush}" IsActive="True" />
+            <TextBlock Text="{Binding ProgMsg}" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center" Margin="10"/>
+            <mahApps:ProgressRing Foreground="{DynamicResource AccentColorBrush}" IsActive="True" Height="32" Width="30"/>
         </StackPanel> 
     </Grid>
 </UserControl>

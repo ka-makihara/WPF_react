@@ -2,7 +2,7 @@
   "profiles": {
     "WpfApp1_cmd": {
       "commandName": "Project",
-      "commandLineArgs": "--dataFolder C:\\Users\\ka.makihara\\develop\\UpdateData\r\n--backup=C:\\Users\\ka.makihara\\Backup\r\n--matchUnit=false\r\n--diffVersionOnly=false\r\n--dbName=XEPDB1\r\n--dbUser=makihara\r\n--dbPass=wildgeese"
+      "commandLineArgs": "--dataFolder C:\\Users\\ka.makihara\\develop\\UpdateData\r\n--backup=C:\\Users\\ka.makihara\\Backup\r\n--matchUnit=true\r\n--diffVerOnly=true\r\n--mode=user\r\n--dbName=XEPDB1\r\n--dbUser=makihara\r\n--dbPass=wildgeese"
     }
   }
 }

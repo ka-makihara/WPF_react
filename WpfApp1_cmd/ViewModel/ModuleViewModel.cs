@@ -20,7 +20,7 @@ namespace WpfApp1_cmd.ViewModel
         private ObservableCollection<UpdateInfo>? _updates = null;
         private void IsSelectedChk(UnitVersion item, bool? value)
         {
-			if (Options.GetOptionBool("--diffVersionOnly", false) == true)
+			if (Options.GetOptionBool("--diffVerOnly") == true)
 			{
 				// バージョンが違うものしかチェックが更新できないようにする
 				var uv = _updates.FirstOrDefault(x => x.Name == item.Name);
@@ -105,6 +105,14 @@ namespace WpfApp1_cmd.ViewModel
 				}
 			}
 		}
+		public static bool IsUnitSelectToggleVisible
+		{
+			get
+			{
+				string mode = Options.GetOption("--mode", "user");
+				return mode == "administrator";
+			}
+		}
 
 		/// <summary>
 		/// コンストラクタ
@@ -159,6 +167,11 @@ namespace WpfApp1_cmd.ViewModel
             }
 			// ユニット選択のトグルボタンの初期値
 			IsUnitSelectToggleEnabled.Value = true;
+
+			//ユニット選択のトグルボタン、チェックボックスの表示を切り替える(--mode=user/administrator, 未定義は administrator 以外とする)
+			string mode = Options.GetOption("--mode", "user");
+			IsUnitCheckBoxEnabled = (mode == "administrator");
+			IsChkVisibled = (mode == "administrator");
 		}
 
 		/// <summary>
@@ -204,12 +217,12 @@ namespace WpfApp1_cmd.ViewModel
 				Debug.WriteLine($"IsSelectedGroup");
 				SetProperty(ref _isSelectedGroup, value);
 			}
-		}// = true;
+		}
 
 		/// <summary>
 		/// チェックボックスの表示を行うかどうか(未使用)
 		/// </summary>
-		private bool _isChkVisibled = true;
+		private bool _isChkVisibled;
 		public bool IsChkVisibled
 		{
 			get => _isChkVisibled;
@@ -219,7 +232,7 @@ namespace WpfApp1_cmd.ViewModel
 		/// <summary>
 		/// チェックボックスを有効にするかどうか
 		/// </summary>
-		private bool _isCheckBoxEnabled = true; // 初期状態ではチェックボックスを有効にする
+		private bool _isCheckBoxEnabled;
 		public bool IsUnitCheckBoxEnabled
 		{
 			get => _isCheckBoxEnabled;

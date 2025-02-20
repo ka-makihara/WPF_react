@@ -153,7 +153,7 @@ namespace WpfApp1_cmd
 		/// <param name="opt">オプション名</param>
 		/// <param name="value">デフォルト値</param>
 		/// <returns></returns>
-		public static bool GetOptionBool(string opt, bool value)
+		public static bool GetOptionBool(string opt)
 		{
 			if (OptionsDic.ContainsKey(opt))
 			{

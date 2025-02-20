@@ -33,6 +33,7 @@
                   HeadersVisibility="All"
                   AlternatingRowBackground="#666666"
                   GridLinesVisibility="All"
+                  MinHeight="350"
                   IsReadOnly="False"
                   >
                 <DataGrid.Columns>

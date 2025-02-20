@@ -96,13 +96,13 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <Menu IsMainMenu="True" Grid.ColumnSpan="2">
+        <Menu IsMainMenu="True" Grid.ColumnSpan="2" >
             <MenuItem Header="_File" Visibility="{Binding IsFileMenuEnabled, Converter={StaticResource BoolToVisible}}">
                 <MenuItem Header="Read UpdateData" Icon="{materialDesign:PackIcon Kind=PresentOpen}" Command="{Binding FileOpenCommand}" />
                 <Separator />
                 <MenuItem Header="Exit" Icon="{materialDesign:PackIcon Kind=ExitToApp}" InputGestureText="Ctrl+E" Command="{Binding QuitApplicationCommand}" />
             </MenuItem>
-            <MenuItem Header="_LCU" Visibility="{Binding IsLcuMenuEnabled, Converter={StaticResource BoolToVisible}}">
+            <MenuItem Header="_LCU" Visibility="{Binding IsLcuMenuEnabled, Converter={StaticResource BoolToVisible}}" >
                 <MenuItem Header="ConnectionCheck" Icon="{materialDesign:PackIcon Kind=Network}" Command="{Binding LcuNetworkChkCommand}" />
                 <MenuItem Header="Check Disk Space" Icon="{materialDesign:PackIcon Kind=DiscFull}" Command="{Binding LcuDiskChkCommand}" />
             </MenuItem>
