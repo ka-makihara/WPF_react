@@ -72,6 +72,9 @@ namespace WpfApp1_cmd.ViewModel
 
 		public ReactiveCommand<RoutedEventArgs> GroupCheckCommand { get; }
 
+		public ReactiveCommand<UnitVersion> CheckBoxCommand { get; }
+		public ReactiveCommand AllSelectCommand { get; }
+
 		public string ModuleName { get; set; } = "Module";
 		/// <summary>
 		/// グループヘッダーのチェックボックス変更時の処理(コマンド)
@@ -114,6 +117,20 @@ namespace WpfApp1_cmd.ViewModel
 			}
 		}
 
+		private void UpdateGroupCheck(UnitVersion m)
+		{
+			OnPropertyChanged(nameof(IsGroupChecked));
+		}
+
+		private void OnAllSelectCommandExecuted()
+		{
+			var newValue = IsAllSelected.Value == true;
+			foreach (var unit in UnitVersions)
+			{
+				unit.IsSelected.Value = newValue;
+			}
+		}
+
 		/// <summary>
 		/// コンストラクタ
 		/// </summary>
@@ -134,6 +151,13 @@ namespace WpfApp1_cmd.ViewModel
 
 			GroupCheckCommand2 = new ReactiveCommand<CollectionViewGroup>();
 			GroupCheckCommand2.Subscribe(e => GroupCheck2(e));
+
+			CheckBoxCommand = new ReactiveCommand<UnitVersion>();
+			//CheckBoxCommand.Subscribe(item => IsSelectedChk(item, item.IsSelected.Value));
+			CheckBoxCommand.Subscribe(x => UpdateGroupCheck(x));
+
+			AllSelectCommand = new ReactiveCommand();
+			AllSelectCommand.Subscribe(OnAllSelectCommandExecuted);
 
 			//有効/無効が切り替わったときに、チェックボックスの有効/無効を切り替える
 			IsUnitSelectToggleEnabled.Subscribe(x => IsUnitCheckBoxEnabled = x);

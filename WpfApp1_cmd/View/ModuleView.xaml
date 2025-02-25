@@ -106,10 +106,40 @@
                 </DataGrid.GroupStyle>
                 
                 <DataGrid.Columns>
+                    <DataGridTemplateColumn Header="Select">
+                        <DataGridTemplateColumn.HeaderTemplate>
+                            <DataTemplate>
+                                <CheckBox Content="All"
+                                    IsChecked="{Binding DataContext.IsAllSelected, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                    Command="{Binding DataContext.AllSelectCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}">
+                                </CheckBox>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.HeaderTemplate>
+                        <DataGridTemplateColumn.HeaderStyle>
+                            <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
+                                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                            </Style>
+                        </DataGridTemplateColumn.HeaderStyle>
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <CheckBox IsChecked="{Binding IsSelected.Value, UpdateSourceTrigger=PropertyChanged}"
+                                    Command="{Binding DataContext.CheckBoxCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                    CommandParameter="{Binding}">
+                                    <CheckBox.Style>
+                                        <Style TargetType="CheckBox" BasedOn="{StaticResource MaterialDesignDataGridCheckBoxColumnEditingStyle}">
+                                            <Setter Property="IsEnabled" Value="{Binding DataContext.IsUnitCheckBoxEnabled, Source={x:Reference DataContextProxy}}" />
+                                            <Setter Property="Visibility" Value="{Binding DataContext.IsUnitCheckBoxEnabled, Source={x:Reference DataContextProxy}, Converter={StaticResource BoolVisibilityConverter}}" />
+                                            <Setter Property="ToolTip" Value="{Binding UpdateStatus}" />
+                                        </Style>
+                                    </CheckBox.Style>
+                                </CheckBox>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                     <!--
                      <DataGridCheckBoxColumn Binding="{Binding IsSelected.Value, UpdateSourceTrigger=PropertyChanged}" >
                         <DataGridCheckBoxColumn.ElementStyle>
                             <Style TargetType="CheckBox" BasedOn="{StaticResource MaterialDesignDataGridCheckBoxColumnEditingStyle}">
-                                <!-- IsEnabled or Visivility どちらか一方だけで良いと思うが、最終的に決める-->
                                 <Setter Property="IsEnabled" Value="{Binding DataContext.IsUnitCheckBoxEnabled, Source={x:Reference DataContextProxy}}" />
                                 <Setter Property="Visibility" Value="{Binding DataContext.IsUnitCheckBoxEnabled, Source={x:Reference DataContextProxy}, Converter={StaticResource BoolVisibilityConverter}}" />
                                 <Setter Property="ToolTip" Value="{Binding UpdateStatus}" />
@@ -128,14 +158,8 @@
                                 <CheckBox Content="All" IsChecked="{Binding DataContext.IsAllSelected, Source={x:Reference DataContextProxy}}" />
                             </Border> 
                         </DataGridCheckBoxColumn.Header>
-                        <!--
-                        <DataGridCheckBoxColumn.HeaderStyle>
-                            <Style TargetType="{x:Type DataGridColumnHeader}" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}" >
-                                <Setter Property="HorizontalContentAlignment" Value="Center" />
-                            </Style> 
-                        </DataGridCheckBoxColumn.HeaderStyle>
-                        -->
                     </DataGridCheckBoxColumn>
+                    -->
 
                     <materialDesign:DataGridTextColumn 
                         EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnPopupEditingStyle}"

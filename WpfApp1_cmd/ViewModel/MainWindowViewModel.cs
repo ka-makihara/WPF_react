@@ -191,9 +191,9 @@ namespace WpfApp1_cmd.ViewModel
 
 		// 「Transfer」「Stop」「App Quit」のフラグ
 		public ReactiveProperty<bool> CanTransferStartFlag { get; } = new ReactiveProperty<bool>(true);
-		public ReactiveProperty<bool> CanTransferStopFlag { get; } = new ReactiveProperty<bool>(false);
+		//public ReactiveProperty<bool> CanTransferStopFlag { get; } = new ReactiveProperty<bool>(false);
 		public ReactiveProperty<bool> CanAppQuitFlag { get; } = new ReactiveProperty<bool>(true);
-		public ReactivePropertySlim<bool> CanTransferFlag { get; } = new ReactivePropertySlim<bool>(true);
+		//public ReactivePropertySlim<bool> CanTransferFlag { get; } = new ReactivePropertySlim<bool>(true);
 
 		// 処理のキャンセルトークン
 		//   変数に保持しておくことで、「Stop」ボタンでキャンセルできる->イベント処理内で、Cancel() しているので
@@ -760,6 +760,9 @@ namespace WpfApp1_cmd.ViewModel
 			StartTransferCommand = CanTransferStartFlag.ToReactiveCommandSlim();
 			StartTransferCommand.Subscribe(() => StartTransfer());
 
+			//CanTransferFlag.Value = false;
+			CanTransferStartFlag.Value = false;
+
 			//StopTransferCommand = CanTransferStopFlag.ToReactiveCommandSlim();
 			//StopTransferCommand.Subscribe(() => StopTransferExecute() );
 
@@ -1272,7 +1275,7 @@ namespace WpfApp1_cmd.ViewModel
 					{
 						await Progress.CloseAsync();
 
-						CanTransferFlag.Value = false;
+						//CanTransferFlag.Value = false;
 						isCancel = await StopTransferExecute();
 						if (isCancel == true)
 						{
@@ -1282,7 +1285,7 @@ namespace WpfApp1_cmd.ViewModel
 						Progress = await Metro.ShowProgressAsync("Unit Soft Transfer...", "");
 						Progress.SetCancelable(true); // キャンセルボタンを表示する
 
-						CanTransferFlag.Value = true;
+						//CanTransferFlag.Value = true;
 					}
 					await Task.Delay(100);  //Delay することで、プログレスウインドウの表示が更新される
 				}
@@ -1293,7 +1296,6 @@ namespace WpfApp1_cmd.ViewModel
 			}
 
 			CanTransferStartFlag.Value = true;
-			//CanTransferStopFlag.Value = false;
 			CanAppQuitFlag.Value = true;
 
 			//転送結果ウインドウを表示する
@@ -1725,11 +1727,11 @@ namespace WpfApp1_cmd.ViewModel
 		/// </summary>
 		private async Task<bool> WaitTransferState(CancellationToken? token)
 		{
-			if (CanTransferFlag.Value == false)
+			if (CanTransferStartFlag.Value == false)
 			{
 				while (true)
 				{
-					if (CanTransferFlag.Value == true)
+					if (CanTransferStartFlag.Value == true)
 					{
 						break;
 					}
@@ -1745,21 +1747,6 @@ namespace WpfApp1_cmd.ViewModel
 			}
 			return true;
 		}
-
-		/*
-		private List<string> CreateUpdateFileList(List<string> folders)
-		{
-			List<string> files = [];
-
-			foreach (var folder in folders)
-			{
-				string[] fs = Directory.GetFiles(folder, "*", SearchOption.AllDirectories);
-				files.AddRange(fs);
-			}
-
-			return files;
-		}
-		*/
 
 		/// <summary>
 		/// アップデート対象のフォルダを取得する
