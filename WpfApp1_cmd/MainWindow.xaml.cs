@@ -54,5 +54,6 @@ namespace WpfApp1_cmd
             // TextBox を最終行にスクロールする
             logMessage.ScrollToEnd();
         }
+
     }
 }

@@ -189,13 +189,12 @@ namespace WpfApp1_cmd.ViewModel
 					OnPropertyChanged(nameof(IsSelectedGroup));
 				});
             }
-			// ユニット選択のトグルボタンの初期値
-			IsUnitSelectToggleEnabled.Value = true;
 
 			//ユニット選択のトグルボタン、チェックボックスの表示を切り替える(--mode=user/administrator, 未定義は administrator 以外とする)
 			string mode = Options.GetOption("--mode", "user");
-			IsUnitCheckBoxEnabled = (mode == "administrator");
-			IsChkVisibled = (mode == "administrator");
+
+			IsUnitCheckBoxEnabled = (mode == "administrator");  // ユニット選択のトグルボタンの初期値(administrator のときのみ有効)
+			IsChkVisibled = (mode == "administrator");          // ユニットチェックボックスの表示の初期値(administrator のときのみ表示)
 		}
 
 		/// <summary>
@@ -266,6 +265,15 @@ namespace WpfApp1_cmd.ViewModel
 		public bool IsGroupChecked
 		{
 			get;
+			/*
+		{
+			if( current == null)
+			{
+				return false;
+			}
+			return true;
+		}
+			*/
 			set;
 		} = true;
 		/*

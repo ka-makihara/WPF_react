@@ -25,11 +25,32 @@ namespace WpfApp1_cmd.Models
         public MachineType? ItemType { get => _itemType; set => _itemType = value; }
 
         public ReactivePropertySlim<bool?> IsSelected { get; set; } = new ReactivePropertySlim<bool?>(true);
-        public ReactivePropertySlim<bool?> IsExpanded { get; set; } = new ReactivePropertySlim<bool?>(true);
+        public ReactivePropertySlim<bool?> IsExpanded { get; set; } = new ReactivePropertySlim<bool?>(false);
 
         public CheckableItem()
         {
         }
+
+		public string GetViewName()
+		{
+			string viewName = "";
+
+			if (this is LcuInfo lcuInfo)
+			{
+				viewName = $"LcuView_{Name}";
+			}
+			else if (this is MachineInfo machineInfo)
+			{
+				string lcuName = machineInfo.Parent.Name;
+				viewName = $"MachineView_{lcuName}_{Name}";
+			}
+			else if (this is ModuleInfo moduleInfo)
+			{
+				string machineName = moduleInfo.Parent.Name;
+				viewName = $"ModuleView_{machineName}_{Name}";
+			}
+			return viewName;
+		}
     }
 
     public class LcuInfo : CheckableItem
@@ -248,8 +269,17 @@ namespace WpfApp1_cmd.Models
         public int Pos { get => Module.LogicalPos; }
         public string IPAddress { get; set; } = ""; // 本来Moduleにはない情報だが、アクセスの利便性のために追加
         public IniFileParser? UpdateInfo { get; set; } = null;
+		public string[] UpdateStrings;
 
-        public List<string> UpdateFiles()
+		public void SetUpdateInfo(string path)
+		{
+			UpdateInfo = new IniFileParser(path);
+
+			//UpdateCommon.inf　を読み込んでおく
+			UpdateStrings = System.IO.File.ReadAllLines(path, Encoding.GetEncoding(Define.TXT_ENCODING));	
+		}
+
+		public List<string> UpdateFiles()
         {
             List<string> paths = [];
 

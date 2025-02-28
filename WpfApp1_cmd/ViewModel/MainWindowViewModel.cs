@@ -166,7 +166,7 @@ namespace WpfApp1_cmd.ViewModel
 			}
 		}
 		private string DataFolder { get; set; } = "";   // UpdateCommon.inf のフォルダ
-		public long UpdateDataSize { get; set; } = 0;         // UpdateCommon.inf のフォルダのサイズ
+		public long UpdateDataSize { get; set; } = 0;   // UpdateCommon.inf のフォルダのサイズ
 
 		public string DialogTitle { get; set; } = "Dialog Title";
 		public string DialogText { get; set; } = "Dialog Text";
@@ -189,11 +189,9 @@ namespace WpfApp1_cmd.ViewModel
 		public ReactiveCommand LcuNetworkChkCommand { get; } = new ReactiveCommand();
 		public ReactiveCommand LcuDiskChkCommand { get; } = new ReactiveCommand();
 
-		// 「Transfer」「Stop」「App Quit」のフラグ
+		// 「Transfer」「Quit」のフラグ
 		public ReactiveProperty<bool> CanTransferStartFlag { get; } = new ReactiveProperty<bool>(true);
-		//public ReactiveProperty<bool> CanTransferStopFlag { get; } = new ReactiveProperty<bool>(false);
 		public ReactiveProperty<bool> CanAppQuitFlag { get; } = new ReactiveProperty<bool>(true);
-		//public ReactivePropertySlim<bool> CanTransferFlag { get; } = new ReactivePropertySlim<bool>(true);
 
 		// 処理のキャンセルトークン
 		//   変数に保持しておくことで、「Stop」ボタンでキャンセルできる->イベント処理内で、Cancel() しているので
@@ -209,17 +207,17 @@ namespace WpfApp1_cmd.ViewModel
 
 		// TreeView の選択項目が変更されたときのコマンド
 		public ReactiveCommand<RoutedPropertyChangedEventArgs<object>> TreeViewSelectedItemChangedCommand { get; }
-		//public ReactivePropertySlim<bool> TreeViewIsSelected { get; } = new ReactivePropertySlim<bool>(false);
+
+		public ReactiveCommand<MouseButtonEventArgs> TreeViewMouseLeftButtonDownCommand { get; }
 
 		// 転送制御ボタン
 		public ReactiveCommandSlim StartTransferCommand { get; } = new ReactiveCommandSlim();
-		//public ReactiveCommandSlim StopTransferCommand { get; } = new ReactiveCommandSlim();
 		public ReactiveCommandSlim QuitApplicationCommand { get; } = new ReactiveCommandSlim();
 
 		public ReactiveCommandSlim HomeCommand { get; } = new ReactiveCommandSlim();
 
 		// TreeViewを操作可能か
-		public ReactiveProperty<bool> IsTreeEnabled { get; } = new ReactiveProperty<bool>(true);
+		public ReactivePropertySlim<bool> IsTreeEnabled { get; } = new ReactivePropertySlim<bool>(true);
 
 		//メニューの有効無効
 		public bool IsFileMenuEnabled { get; set; } = true;
@@ -237,6 +235,7 @@ namespace WpfApp1_cmd.ViewModel
 		public int TransferSuccessCount { get; set; } = 0;  // PostMcFile での成功数
 		public long TransferCount { get; set; } = 0;          // 転送数(ユニット数)
 		public long TransferedCount { get; set; } = 0;        // 転送済み数(ユニット数)
+		private bool IsBackupedData { get; set; } = false;    // バックアップデータを読み込んだかどうか
 
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -390,6 +389,7 @@ namespace WpfApp1_cmd.ViewModel
 				LogWriter.WriteLine("Start Application");
 			}
 		}
+
 		/// <summary>
 		/// 起動時、Windowsのロード後に呼ばれる
 		/// </summary>
@@ -609,6 +609,7 @@ namespace WpfApp1_cmd.ViewModel
 				}
 			}
 		}
+
 		/// <summary>
 		/// コンストラクタ
 		/// </summary>
@@ -754,17 +755,14 @@ namespace WpfApp1_cmd.ViewModel
 			TreeViewSelectedItemChangedCommand = new ReactiveCommand<RoutedPropertyChangedEventArgs<object>>();
 			TreeViewSelectedItemChangedCommand.Subscribe(args => TreeViewSelectedItemChanged(args));
 
-			//TreeViewIsSelected.Subscribe(x => { Debug.WriteLine($"TreeViewIsSelected:{x}"); });
+			TreeViewMouseLeftButtonDownCommand = new ReactiveCommand<MouseButtonEventArgs>();
+			TreeViewMouseLeftButtonDownCommand.Subscribe(args => TreeViewMouseLeftButtonDown(args));
 
 			// 転送制御ボタン
 			StartTransferCommand = CanTransferStartFlag.ToReactiveCommandSlim();
 			StartTransferCommand.Subscribe(() => StartTransfer());
 
-			//CanTransferFlag.Value = false;
-			CanTransferStartFlag.Value = false;
-
-			//StopTransferCommand = CanTransferStopFlag.ToReactiveCommandSlim();
-			//StopTransferCommand.Subscribe(() => StopTransferExecute() );
+			CanTransferStartFlag.Value = true;
 
 			QuitApplicationCommand = CanAppQuitFlag.ToReactiveCommandSlim();
 			QuitApplicationCommand.Subscribe(() => ApplicationShutDown());
@@ -842,7 +840,6 @@ namespace WpfApp1_cmd.ViewModel
 							AddLog($"ComputerID={computerId} LcuName={lcuName}");
 							lcuList.Add($"{name}={lcuName}={computerId}");
 						}
-
 					}
 				}
 				catch (Exception ex)
@@ -852,6 +849,36 @@ namespace WpfApp1_cmd.ViewModel
 			}
 			return lcuList;
 		}
+
+		/// <summary>
+		/// チェックボックスのチェック状態を取得
+		/// </summary>
+		/// <typeparam name="Type"></typeparam>
+		/// <param name="list"></param>
+		/// <returns></returns>
+		private static bool? CheckState<Type>(ReactiveCollection<Type> list)
+			where Type : CheckableItem
+		{
+			int tc = list.Where(x => x.IsSelected.Value == true).Count();
+			int fc = list.Where(x => x.IsSelected.Value == false).Count();
+
+			if (tc == list.Count)
+			{
+				//全チェック
+				return true;
+			}
+			else if (fc == list.Count)
+			{
+				//全、未チェック
+				return false;
+			}
+			else
+			{
+				//一部チェック
+				return null;
+			}
+		}
+
 		/// <summary>
 		/// 
 		/// </summary>
@@ -907,78 +934,224 @@ namespace WpfApp1_cmd.ViewModel
 		}
 
 		/// <summary>
+		/// ツリービューの選択項目を全てクリアする
+		/// </summary>
+		private void ClearSelectedItems()
+		{
+			foreach (var lcu in TreeViewItems)
+			{
+				lcu.IsSelected.Value = false;
+				foreach (var machine in lcu.Children)
+				{
+					machine.IsSelected.Value = false;
+					foreach (var module in machine.Children)
+					{
+						module.IsSelected.Value = false;
+						foreach (var unit in module.UnitVersions)
+						{
+							unit.IsSelected.Value = false;
+						}
+					}
+				}
+			}
+		}
+
+		/// <summary>
+		/// バックアップデータの情報をチェックする
+		/// </summary>
+		/// <param name="info">UpdateCommon.inf の一行目(バックアップデータで追記されている)</param>
+		/// <returns>-1=該当ライン無し、-2=該当装置無し、-3=該当モジュール無し</returns>
+		private int CheckBackupInfo(string lcuName, string machineName, string moduleName)
+		{
+			//var (line, machine, module, date) = info.Split('=')[1].Split(';') switch { var a => (a[0], a[1], a[2], a[3]) };
+			/*
+			if( strings[0].Split('=')[1].Split(';') is [var line, var machine, var module, var date] )
+			{
+				Debug.WriteLine($"{line}::{machine}::{module}::{date}");
+			}
+			*/
+
+			LcuInfo? lcu = TreeViewItems.FirstOrDefault(x => x.Name == lcuName);
+			if (lcu == null)
+			{
+				return -1;  // 該当ライン無し
+			}
+			MachineInfo? mc = lcu.Children.FirstOrDefault(x => x.Name == machineName);
+			if(mc == null)
+			{
+				return -2; // 該当装置無し
+			}
+
+			ModuleInfo? md = mc.Children.FirstOrDefault(x => x.Name == moduleName);
+			if (md == null)
+			{
+				return -3;  // 該当モジュール無し
+			}
+
+			return 0;
+		}
+
+		/// <summary>
+		/// ビューをクリアする
+		/// </summary>
+		/// <param name="viewName"></param>
+		private void ClearView(string viewName)
+		{
+			foreach (var key in viewModeTable.Keys)
+			{
+				if (key.Contains(viewName))
+				{
+					viewModeTable.Remove(key);
+				}
+			}
+		}
+
+		/// <summary>
 		///  ユニットアップデートデータのフォルダを選択して読み込む
 		/// </summary>
 		public async void FileOpenCmd()
 		{
+			string? backupPath = Options.GetOption("--backup");
+
+			if (backupPath == null)
+			{
+				backupPath = @"C:\";
+			}
+
 			using (var cofd = new CommonOpenFileDialog()
 			{
 				Title = "フォルダを選択してください",
-				InitialDirectory = @"C:\Users\ka.makihara\develop",
+				//InitialDirectory = @"C:\Users\ka.makihara\Backup\20250226_110316_LINE-B_localhost_44-R",
+				InitialDirectory = backupPath,
 				//フォルダ選択モード
 				IsFolderPicker = true,
 			})
 			{
+				string infoFilePath = "";
 				if (cofd.ShowDialog() == CommonFileDialogResult.Ok)
 				{
-					AddLog($"FileOpenCommand={cofd.FileName}");
-					if (Path.Exists(cofd.FileName + "\\UpdateCommon.inf") == false)
+					infoFilePath = cofd.FileName;
+					AddLog($"FileOpenCommand={infoFilePath}");
+
+					// 指定されたフォルダに UpdateCommon.inf が存在するかチェック
+					if (Path.Exists(infoFilePath + "\\" + Define.UPDATE_INFO_FILE) == false)
 					{
-						AddLog("UpdateCommon.inf が見つかりません");
-						var result = await MsgBox.Show("Error", "ErrorCode=E004", "Can not Found UpdateInfo", "UpdateCommon.inf not exist.", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "DataGridView");
-						return;
+						// 指定されたフォルダの Fuji/System3/Program/Peripheral に UpdateCommon.inf が存在するかチェック
+						if (Path.Exists(infoFilePath + "\\" + Define.MC_PERIPHERAL_PATH + Define.UPDATE_INFO_FILE) == true)
+						{
+							//UpdateCommon.inf のパスを設定
+							infoFilePath = (infoFilePath + "\\" + Define.MC_PERIPHERAL_PATH).Replace("/", "\\");
+						}
+						else
+						{
+							//UpdateCommon.inf が存在しない
+							AddLog($"[ERROR] Path={infoFilePath} UpdateCommon.inf が見つかりません");
+							var result = await MsgBox.Show("Error", "ErrorCode=E004", "Can not Found UpdateInfo", "UpdateCommon.inf not exist.", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "DataGridView");
+							return;
+						}
 					}
-					UpdateInfos = ReadUpdateCommon(cofd.FileName + "\\UpdateCommon.inf");
 
-					DirectoryInfo di = new DirectoryInfo(cofd.FileName);
+					// バックアップデータかどうかをチェック(バックアップデータは一行目に情報が追加されている)
+					IsBackupedData = false;
+					string[] strings = System.IO.File.ReadAllLines(infoFilePath + "\\" + Define.UPDATE_INFO_FILE);
+					var (line, machine, module, date) = strings[0].Split('=')[1].Split(';') switch { var a => (a[0], a[1], a[2], a[3]) };
 
+					if (strings[0].Contains("UpdateInfo=") == true)
+					{
+						// バックアップデータの場合
+						if( CheckBackupInfo(line, machine, module) < 0)
+						{
+							//バックアップデータの情報が不正
+							//現在のNeximDBのライン情報と一致しない(ライン、装置、モジュールが見つからない)
+							await MsgBox.Show("Error", "ErrorCode=E005", $"{line}-{machine}-{module}", "Backup Data Error", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "DataGridView");
+							return;
+						}
+						var ret = await MsgBox.Show("Info", $"{line}={machine}={module}", "Backup Data", "Load Backup Data ?", (int)(MsgDlgType.OK_CANCEL | MsgDlgType.ICON_INFO), "DataGridView");
+						if ((string)ret == "CANCEL")
+						{
+							return;
+						}
+						IsBackupedData = true;
+					}
+					AddLog($"Load BackupData={infoFilePath}");
+
+					UpdateInfos = ReadUpdateCommon(infoFilePath + "\\" + Define.UPDATE_INFO_FILE);
+
+					//アップデートデータのサイズを取得
+					DirectoryInfo di = new DirectoryInfo(infoFilePath);
 					long dataSize = Utility.GetDirectorySize(di);
 
 					//バージョン情報ビューの更新
 					viewModeTable["UpdateVersionView"] = new UpdateVersionViewModel(UpdateInfos);
 
-					//アップデートデータが変更されたので、 モジュールのバージョン情報をクリアする
-					foreach (LcuInfo lcu in TreeViewItems)
+					//アップデートデータが変更されたので、 ツリーアイテムの選択をクリアする
+					ClearSelectedItems();
+
+					//モジュールビュー,ビューデータを削除
+					ClearView("ModuleView");
+					TreeViewItems
+						.SelectMany(lcu => lcu.Children)
+						.SelectMany(machine => machine.Children)
+						.ToList()
+						.ForEach(module => module.UnitVersions.Clear());
+
+					CancellationTokenSource cts = new CancellationTokenSource();
+
+					if (IsBackupedData == true)
 					{
-						foreach (MachineInfo machine in lcu.Children)
+						// モジュールビューを再生成する
+
+						//一致するモジュールを検索して、バージョン情報を取得する
+						var item = TreeViewItems
+									.Where(lcu => lcu.Name == line)
+									.SelectMany(lcu => lcu.Children)
+									.Where(machineItem => machineItem.Name == machine)
+									.SelectMany(machineItem => machineItem.Children)
+									.FirstOrDefault(moduleItem => moduleItem.Name == module);
+
+						if (item != null)
 						{
-							foreach (ModuleInfo module in machine.Children)
+							//一致するモジュールがある場合
+							LcuInfo? lcuInfo = TreeViewItems.FirstOrDefault(x => x.Name == line);
+							MachineInfo? machineInfo = lcuInfo?.Children.FirstOrDefault(x => x.Name == machine);
+							ModuleInfo? moduleInfo = machineInfo?.Children.FirstOrDefault(x => x.Name == module);
+
+							// モジュールからバージョン情報を取得して、モジュールビューを生成する
+							IsBackupedData = false; // 一時的に false にしておく -> CheckBox のチェック状態をOnにするため
+
+							var retVersion = await CreateVersionInfo(lcuInfo, machineInfo, moduleInfo, cts.Token);
+							if (retVersion != null)
 							{
-								module.UnitVersions.Clear();
+								moduleInfo.UnitVersions = retVersion;
+
+								string viewName = item.GetViewName();
+								viewModeTable.Add(viewName, new ModuleViewModel(moduleInfo.Name, moduleInfo.UnitVersions, UpdateInfos));
+
+								moduleInfo.IsSelected.Value = CheckState<UnitVersion>(moduleInfo.UnitVersions);
+
+								//該当のツリービューを展開する
+								lcuInfo.IsExpanded.Value = true;
+								machineInfo.IsExpanded.Value = true;
+								moduleInfo.IsExpanded.Value = true;
 							}
+							IsBackupedData = true; // 以降はバックアップデータを読み込んだ事にする -> 他モジュールのチェックボックスをflase状態にするため
+						}
+						else
+						{
+							//ロードしたバックアップデータのライン、装置、モジュールが見つからない
+							AddLog($"Not Found Module:{line}-{machine}-{module}");
+							await MsgBox.Show("Error", "ErrorCode=E005", $"{line}:{machine}:{module}", "Data mismatch", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "DataGridView");
 						}
 					}
-
-					// モジュールビューを再生成する
-					CancellationTokenSource cts = new CancellationTokenSource();
-					foreach (LcuInfo lcu in TreeViewItems)
+					else
 					{
-						foreach (MachineInfo machine in lcu.Children)
-						{
-							foreach (ModuleInfo module in machine.Children)
-							{
-								var ret = await CreateVersionInfo(lcu, machine, module, cts.Token);
-								if (ret != null)
-								{
-									module.UnitVersions = ret;
-									if (viewModeTable.ContainsKey($"ModuleView_{module.Name}") == true)
-									{
-										viewModeTable[$"ModuleView_{module.Name}"] = new ModuleViewModel(module.Name,module.UnitVersions, UpdateInfos);
-									}
-									else
-									{
-										viewModeTable.Add($"ModuleView_{module.Name}", new ModuleViewModel(module.Name,module.UnitVersions, UpdateInfos));
-									}
-								}
-							}
-						}
+						//バックアップデータでない場合
+
 					}
 					cts.Dispose();
 
-					if (SelectedItem is ModuleInfo item)
-					{
-						ActiveView = viewModeTable[$"ModuleView_{item.Name}"];
-					}
+					SelectedItem = null;
+					ActiveView = viewModeTable["UpdateVersionView"];
 				}
 			}
 		}
@@ -1041,6 +1214,9 @@ namespace WpfApp1_cmd.ViewModel
 			CancelTokenSrc.Dispose();
 
 			long diskSpace = long.Parse(info.Find(x => x.driveLetter == "D").free);
+
+
+			//var data = await lcu.LcuCtrl.LCU_Command(GetDir.Command("C:\\users\\ka.makihara"), token);
 
 			return diskSpace;
 		}
@@ -1179,8 +1355,8 @@ namespace WpfApp1_cmd.ViewModel
 		private bool IsTransfering = false;
 		private async void StartTransfer()
 		{
-			(long units, long files) = GetTransferFiles();
-			TransferCount = files;
+			(long lines, long machines, long modules, long units, long files) = GetTransferFiles();
+			TransferCount = modules;
 			TransferedCount = 0;
 			TransferErrorCount = 0;
 			TransferSuccessCount = 0;
@@ -1195,7 +1371,7 @@ namespace WpfApp1_cmd.ViewModel
 			}
 
 			DialogTitle = "確認";
-			DialogText = $"{units} ユニット\n{TransferCount}個のファイルを転送します。\n開始しますか？";
+			DialogText = $"{modules} モジュールへファイルを転送します。\n開始しますか？";
 			var r = await DialogHost.Show(new MyMessageBox(), "DataGridView");
 			DialogHost.CloseDialogCommand.Execute(null, null);
 
@@ -1209,13 +1385,12 @@ namespace WpfApp1_cmd.ViewModel
 			CancellationToken token = CancelTokenSrc.Token;
 
 			//転送操作のボタンの有効/無効を設定
-			CanTransferStartFlag.Value = false;
+			CanTransferStartFlag.Value = true;
 			CanAppQuitFlag.Value = false;
 
 			string? backupPath = Options.GetOption("--backup");
 
 			// バックアップを実行
-			/*
 			if (backupPath != null)
 			{
 				Progress = await Metro.ShowProgressAsync("Backup Unit soft", "");
@@ -1249,7 +1424,6 @@ namespace WpfApp1_cmd.ViewModel
 					await Progress.CloseAsync();
 				}
 			}
-			*/
 
 			if (ret == true)
 			{
@@ -1302,7 +1476,7 @@ namespace WpfApp1_cmd.ViewModel
 			var showResult = await MsgBox.Show("Info",
 									$"Success={TransferSuccessCount}",
 									$"Fail={TransferErrorCount}",
-									"Show Transfer Details",
+									"Show Transfer Details ?",
 									(int)(MsgDlgType.OK_CANCEL | MsgDlgType.ICON_INFO), "DataGridView");
 			if ((string)showResult == "OK")
 			{
@@ -1368,7 +1542,9 @@ namespace WpfApp1_cmd.ViewModel
 		/// <summary>
 		///  選択状態にある装置のデータをバックアップする
 		/// </summary>
-		/// <returns></returns>
+		/// <param name="path">バックアップ先フォルダ</param>
+		/// <param name="token">キャンセルトークン</param>
+		/// <returns>bool</returns>
 		public async Task<bool> BackupUnitData(string path, CancellationToken token)
 		{
 			//CancelTokenSrc = new CancellationTokenSource();
@@ -1403,6 +1579,8 @@ namespace WpfApp1_cmd.ViewModel
 						try
 						{
 							AddLog($"[BACKUP] {lcu.Name};{machine.Name};{module.Name}=Backup Start");
+
+							//バックアップ先フォルダ名
 							string bkupPath = path + $"\\{hd}{lcu.Name.Split(":")[0]}_{machine.Name.Split(":")[0]}_{module.Name}";
 
 							if (Directory.Exists(bkupPath) == false)
@@ -1497,10 +1675,14 @@ namespace WpfApp1_cmd.ViewModel
 		/// 転送するユニットデータファイルの数を取得する
 		/// </summary>
 		/// <returns>転送するファイル数</returns>
-		public (long, long) GetTransferFiles()
+		public (long, long, long, long, long) GetTransferFiles()
 		{
-			long files = 0;
+			long lines = 0;
+			long machines = 0;
+			long modules = 0;
 			long units = 0;
+			long files = 0;
+
 
 			//対象のユニット数をカウント
 			foreach (var item in TreeViewItems)
@@ -1509,18 +1691,21 @@ namespace WpfApp1_cmd.ViewModel
 				{
 					continue;
 				}
+				lines++;
 				foreach (var machine in item.Children)
 				{
 					if (machine.IsSelected.Value == false)
 					{
 						continue;
 					}
+					machines++;
 					foreach (var module in machine.Children)
 					{
 						if (module.IsSelected.Value == false)
 						{
 							continue;
 						}
+						modules++;
 						foreach (var unit in module.UnitVersions)
 						{
 							if (unit.IsSelected.Value == true)
@@ -1532,7 +1717,7 @@ namespace WpfApp1_cmd.ViewModel
 					}
 				}
 			}
-			return (units,files);
+			return (lines, machines, modules, units,files);
 		}
 
 		/// <summary>
@@ -1649,12 +1834,21 @@ namespace WpfApp1_cmd.ViewModel
 				return false;
 			}
 
+			// moduleからUpdateCommon.inf を取り出す
+			ret = await GetModuleUpdateInfo(lcu, machine, module);
+			if(ret == false)
+			{
+				AddLog($"[DownLoad] {lcu.Name};{machine.Name};{module.Name}=GetModuleUpdateInfo Error");
+				return false;
+			}
+
 			//装置から取得したUpdateCommon.inf のパスのみを取り出してリスト化(重複を削除)
 			//    ※パスはファイル名を含むので、ファイル名を削除してフォルダのみを取り出す
 			//      WebAPIに装置からフォルダを含む一覧を取得するコマンドがないため、UpdateCommon.inf のパスを利用する
 			//List<string> folders = module.UnitVersions.Select(x => Path.GetDirectoryName(x.Path)).ToList().Distinct().ToList();
 			List<string> folders = module.UpdateFiles().Select(x => x).ToList().Distinct().ToList();
 
+			//UpdateCommon.inf のパスを追加(UpdateCommon.inf は必ず存在する)
 			folders.Add( $"/{Define.MC_PERIPHERAL_PATH}{Define.UPDATE_INFO_FILE}");
 
 			retMsg = await lcu.LcuCtrl.LCU_Command(SetLcu.Command(lcu.LcuId));
@@ -1713,6 +1907,15 @@ namespace WpfApp1_cmd.ViewModel
 
 				//LCU 上に作成したファイルを削除
 				ret = lcu.LcuCtrl.ClearFtpFolders(lcuRoot);
+
+				//UpdateCommon.inf の先頭にバックアップ情報を追記する
+				DateTime dt = DateTime.Now;
+				string infoFile = backupPath + "\\" + Define.MC_PERIPHERAL_PATH + Define.UPDATE_INFO_FILE;
+				string[] data = System.IO.File.ReadAllLines(infoFile, Encoding.GetEncoding(Define.TXT_ENCODING));
+				string[] newData = new string[data.Length + 1];
+				newData[0] = $"#UpdateInfo={lcu.Name};{machine.Name};{module.Name};{dt.ToString("yyyy/MM/dd HH:mm:ss")}";
+				Array.Copy(data, 0, newData, 1, data.Length);
+				StringsToFile(newData, infoFile);
 			}
 			catch (Exception e)
 			{
@@ -1871,12 +2074,18 @@ namespace WpfApp1_cmd.ViewModel
 			{
 				return false;
 			}
-			// (装置から)UpdateCommon.inf ファイルを取得
-			string tmp = Path.GetTempPath();
-			ret = await GetMcPeripheralFile(lcu, machine, module, Define.UPDATE_INFO_FILE, tmp);
 
-			// UpdateCommon.inf ファイルを読み込んで string[] としておく(各行がstring)
-			string[] lines = System.IO.File.ReadAllLines(tmp + Define.UPDATE_INFO_FILE, Encoding.GetEncoding(Define.TXT_ENCODING));
+			if (module.UnitVersions.Count == 0)
+			{
+				// アップデートバージョンが未生成の場合は 取得した UpdateCommon.inf から生成する 
+				var version = await CreateVersionInfo(lcu, machine, module, token);
+				if (version != null)
+				{
+					module.UnitVersions = version;
+				}
+			}
+
+			string[] lines = module.UpdateStrings;
 
 			// UpdateCommon.inf の Path のフォルダにファイルを転送する
 			//   ※ UpdateCommon.inf に記載されているデータは存在するものとする
@@ -1978,7 +2187,12 @@ namespace WpfApp1_cmd.ViewModel
 				DateTime dt = DateTime.Now;
 				Array.Resize(ref lines, lines.Length + 1);
 				lines[^1] = $";UpdateCommon.inf({dt:yyyy/MM/dd HH:mm:ss})";
+				string tmp = Path.GetTempPath();
+
+				//string[] をファイルに書き込む
 				StringsToFile(lines, tmp + Define.UPDATE_INFO_FILE);
+
+				// ファイル(UpdateCommon.inf)を モジュールに転送
 				ret = await PutMcPeripheralFile(lcu, machine, module, Define.UPDATE_INFO_FILE, tmp);
 			}
 
@@ -2012,14 +2226,14 @@ namespace WpfApp1_cmd.ViewModel
 		/// <param name="machine"></param>
 		/// <param name="module"></param>
 		/// <param name="peripheralFile"></param>
-		/// <param name="targetPath"></param>
+		/// <param name="localPath"></param>
 		/// <returns></returns>
-		private static async Task<bool> PutMcPeripheralFile(LcuInfo lcu, MachineInfo machine, ModuleInfo module, string peripheralFile, string targetPath)
+		private static async Task<bool> PutMcPeripheralFile(LcuInfo lcu, MachineInfo machine, ModuleInfo module, string peripheralFile, string localPath)
 		{
 			string mcFile = Define.MC_PERIPHERAL_PATH + peripheralFile;
 			string lcuFile = $"/MCFiles/" + peripheralFile;
 			//装置へファイルを転送
-			return await lcu.LcuCtrl.PutMachineFile(machine.Name, module.Pos, mcFile, lcuFile, targetPath);
+			return await lcu.LcuCtrl.PutMachineFile(machine.Name, module.Pos, mcFile, lcuFile, localPath);
 		}
 
 		/// <summary>
@@ -2052,6 +2266,7 @@ namespace WpfApp1_cmd.ViewModel
 		/// <param name="path"></param>
 		private static void StringsToFile(string[] lines, string path)
 		{
+			// string[] をファイルに書き込む append = false で上書き
 			StreamWriter outFile = new(path, false, Encoding.GetEncoding(Define.TXT_ENCODING));
 			foreach (var line in lines)
 			{
@@ -2156,12 +2371,80 @@ namespace WpfApp1_cmd.ViewModel
 			return ret;
 		}
 */
+
+		/// <summary>
+		/// ツリーのマウス左ボタンダウン処理(Expand/Collapseでも呼ばれる)
+		/// 　※SelectedItemChanged より先に呼び出される。
+		/// </summary>
+		/// <param name="e"></param>
+		public async void TreeViewMouseLeftButtonDown(MouseButtonEventArgs e)
+		{
+			string viewName = "";
+
+			if (e.OriginalSource is FrameworkElement element && element.DataContext is CheckableItem item)
+			{
+				Debug.WriteLine($"MouseLeftButtonDown={item.Name}:{item.ItemType}");
+				viewName = item.GetViewName();
+
+				//現在のビューのキーを取得
+				string key = viewModeTable.FirstOrDefault(x => x.Value == ActiveView).Key;
+
+				SelectedItem = item;
+
+				if (key != viewName)
+				{
+					//表示しているビューが選択された項目と異なっている場合は、ビューを切り替える
+					if (viewModeTable.ContainsKey(viewName) == true)
+					{
+						// ビューが生成済みである場合は、生成済みのビューを表示する
+						ActiveView = viewModeTable[viewName];
+					}
+					else
+					{
+						// 一度もツリーを操作していない場合は、選択されたアイテムを選択状態にする
+						switch (item.ItemType)
+						{
+							case MachineType.LCU:
+								var machines = TreeViewItems.Where(x => x.Name == item.Name).First().Children;
+								viewModeTable.Add(viewName, new LcuViewModel(item.Name, machines));
+								break;
+							case MachineType.Machine:
+								var modules = TreeViewItems.SelectMany(lcu => lcu.Children).Where(x => x.Name == item.Name).First().Children;
+								viewModeTable.Add(viewName, new MachineViewModel(item.Name, modules));
+								break;
+							case MachineType.Module:
+								ModuleInfo moduleInfo = (ModuleInfo)item;
+								MachineInfo machineInfo = moduleInfo.Parent;
+								LcuInfo lcu = machineInfo.Parent;
+
+								//時間がかかるので、プログレスダイアログを表示
+								var dlg = DialogHost.Show(new WaitProgress("Reading Update Info..."),"DataGridView");
+
+								var version = await CreateVersionInfo(lcu, machineInfo, moduleInfo, null);
+								if (version != null)
+								{
+									moduleInfo.UnitVersions = version;
+								}
+								DialogHost.CloseDialogCommand.Execute(null, null);
+
+								viewModeTable.Add(viewName, new ModuleViewModel(item.Name, moduleInfo.UnitVersions, UpdateInfos));
+								break;
+						}
+						ActiveView = viewModeTable[viewName];
+					}
+				}
+			}
+		}
+
 		/// <summary>
 		///  ツリーの選択状態が変更されたときの処理
 		/// </summary>
 		/// <param name="e"></param>
 		public async void TreeViewSelectedItemChanged(RoutedPropertyChangedEventArgs<object> e)
 		{
+			Debug.WriteLine("TreeViewSelectedItemChanged");
+
+			/*
 			CheckableItem? item = e.NewValue as CheckableItem;
 
 			if (item == null)
@@ -2170,41 +2453,33 @@ namespace WpfApp1_cmd.ViewModel
 			}
 			SelectedItem = item;
 			//AddLog($"TreeViewSelectedItemChanged={item.Name}:{item.ItemType}");
+			string viewName = item.GetViewName();
 
 			switch (item.ItemType)
 			{
 				case MachineType.LCU:
 					CanExecuteLcuCommand.Value = true;
-					if (viewModeTable.ContainsKey($"LcuView_{item.Name}") == false)
+					if (viewModeTable.ContainsKey(viewName) == false)
 					{
-						viewModeTable.Add($"LcuView_{item.Name}", new LcuViewModel(item.Name,TreeViewItems.Where(x => x.Name == item.Name).First().Children));
+						var machines = TreeViewItems.Where(x => x.Name == item.Name).First().Children;
+						viewModeTable.Add(viewName, new LcuViewModel(item.Name,machines) );
 					}
-					ActiveView = viewModeTable[$"LcuView_{item.Name}"];
+					ActiveView = viewModeTable[viewName];
 					break;
 				case MachineType.Machine:
 					CanExecuteLcuCommand.Value = false; // LCU コマンドを実行不可にする
-					string lcuName = ((MachineInfo)item).Parent.Name;
-					if (viewModeTable.ContainsKey($"MachineView_{lcuName}_{item.Name}") == false)
+					if (viewModeTable.ContainsKey(viewName) == false)
 					{
-						foreach (var lcu in TreeViewItems)
-						{
-							if (lcu.Children == null || lcu.Name != lcuName)
-							{
-								continue;
-							}
-							//var obj = lcu.Children.Where(x => x.Name == item.Name).First().Children;
-
-							viewModeTable.Add($"MachineView_{lcuName}_{item.Name}", new MachineViewModel(item.Name,lcu.Children.Where(x => x.Name == item.Name).First().Children));
-							break;
-						}
+						var modules = TreeViewItems.SelectMany(lcu => lcu.Children).Where(x => x.Name == item.Name).First().Children;
+						viewModeTable.Add(viewName, new MachineViewModel(item.Name,modules) );
 					}
-					ActiveView = viewModeTable[$"MachineView_{lcuName}_{item.Name}"];
+					ActiveView = viewModeTable[viewName];
 					break;
 				case MachineType.Module:
 					CanExecuteLcuCommand.Value = false; //LCU コマンドを実行不可にする
 					string machineName = ((ModuleInfo)item).Parent.Name;
 
-					if (viewModeTable.ContainsKey($"ModuleView_{machineName}_{item.Name}") == false)
+					if (viewModeTable.ContainsKey(viewName) == false)
 					{
 						if (item is ModuleInfo module)
 						{
@@ -2223,27 +2498,24 @@ namespace WpfApp1_cmd.ViewModel
 								}
 								DialogHost.CloseDialogCommand.Execute(null, null);
 							}
-							int tc = module.UnitVersions.Count(x => x.IsSelected.Value == true);
-							int fc = module.UnitVersions.Count(x => x.IsSelected.Value == false);
-							if( fc == module.UnitVersions.Count)
-							{
-								module.IsSelected.Value = false;
-							}
-							else if(tc == module.UnitVersions.Count)
-							{
-								module.IsSelected.Value = true;
-							}
-							else
-							{
-								module.IsSelected.Value = null;
-							}
+							module.IsSelected.Value = CheckState<UnitVersion>(module.UnitVersions);
 
-							viewModeTable.Add($"ModuleView_{machineName}_{item.Name}", new ModuleViewModel(item.Name, module.UnitVersions, UpdateInfos));
+							viewModeTable.Add(viewName, new ModuleViewModel(item.Name, module.UnitVersions, UpdateInfos));
 						}
 					}
-					ActiveView = viewModeTable[$"ModuleView_{machineName}_{item.Name}"];
+					ActiveView = viewModeTable[viewName];
+					if( item is ModuleInfo moduleInfo)
+					{
+						if( moduleInfo.UnitVersions.Count == 0 )
+						{
+							await MsgBox.Show("Info", $"Module:{moduleInfo.Name}",
+												      "There are no units to update.",
+													  "", (int)(MsgDlgType.OK | MsgDlgType.ICON_INFO), "DataGridView");
+						}
+					}
 					break;
 			}
+			*/
 		}
 
 		/// <summary>
@@ -2287,8 +2559,11 @@ namespace WpfApp1_cmd.ViewModel
 			}
 
 			bool sel;
-			if (int.Parse(parser.GetValue(unit, "Attribute")) == Define.NOT_UPDATE || newVer == "N/A")
+			if (int.Parse(parser.GetValue(unit, "Attribute")) == Define.NOT_UPDATE || newVer == "N/A" || IsBackupedData == true )
 			{
+				//Attribute が 2 の場合はアップデート禁止
+				//ユニットが対象外
+				//バックアップデータの場合
 				sel = false;
 			}
 			else
@@ -2313,6 +2588,35 @@ namespace WpfApp1_cmd.ViewModel
 		}
 
 		/// <summary>
+		/// LCUからモジュールのアップデート情報(UpdateCommon.inf)を取得する
+		/// </summary>
+		/// <param name="lcu"></param>
+		/// <param name="machine"></param>
+		/// <param name="module"></param>
+		/// <returns></returns>
+		public async Task<bool> GetModuleUpdateInfo(LcuInfo lcu, MachineInfo machine, ModuleInfo module)
+		{
+			bool bRet;
+
+			if (module.UpdateInfo == null)
+			{
+				// (装置から)UpdateCommon.inf ファイルを取得
+				string tmpDir = Path.GetTempPath();
+				bRet = await GetMcPeripheralFile(lcu, machine, module, Define.UPDATE_INFO_FILE, tmpDir);
+				if( bRet == false)
+				{
+					return false;
+				}
+
+				// UpdateCommon.inf を読み込んで iniFile, string[] にセット
+				module.SetUpdateInfo(tmpDir + Define.UPDATE_INFO_FILE);
+
+				//テンポラリに生成したファイルを削除
+				System.IO.File.Delete(tmpDir + Define.UPDATE_INFO_FILE);
+			}
+			return true;
+		}
+		/// <summary>
 		/// LCUからユニットバージョン情報を取得する
 		/// </summary>
 		/// <param name="lcu">LcuInfo</param>
@@ -2333,31 +2637,13 @@ namespace WpfApp1_cmd.ViewModel
 			Progress?.SetMessage($"{lcu.LcuCtrl.Name};{machine.Name};{module.Name} Get Update Info");
 
 			// UpdateCommon.inf をLCUを経由して取得する
-			if (module.UpdateInfo == null)
+			ret = await GetModuleUpdateInfo(lcu, machine, module);
+			if( ret == false)
 			{
-				string tmpDir = Path.GetTempPath();
-
-				string mcFile = Define.MC_PERIPHERAL_PATH + Define.UPDATE_INFO_FILE;
-				//string lcuFile = $"LCU_{module.Pos}/MCFiles/" + Define.UPDATE_INFO_FILE;
-				string lcuFile = "/MCFiles/" + Define.UPDATE_INFO_FILE;
-
-				//LCU選択(本来のLCUでは不要、デバッグ環境の都合で追加、本来のLCUにこのコマンドを送ってもエラーになる)
-				string retMsg = await lcu.LcuCtrl.LCU_Command(SetLcu.Command(lcu.LcuId));
-
-				//装置から UpdateCommon.inf を取得(lcuFile)してテンポラリに保存
-				ret = await lcu.LcuCtrl.GetMachineFile(machine.Name, module.Pos, mcFile, lcuFile, tmpDir, token);
-
-				if (ret == false)
-				{
-					AddLog($"{lcu.LcuCtrl.Name};{machine.Name};{module.Pos}={mcFile} Get error");
-					return null;
-				}
-				// IniFilePaeser に読み込む
-				module.UpdateInfo = new(tmpDir + Define.UPDATE_INFO_FILE);
-
-				//テンポラリに生成したファイルを削除
-				System.IO.File.Delete(tmpDir + Define.UPDATE_INFO_FILE);
+				AddLog($"{lcu.LcuCtrl.Name};{machine.Name};{module.Name}={Define.UPDATE_INFO_FILE} Get error");
+				return null;
 			}
+
 			IniFileParser parser = module.UpdateInfo;
 
 			List<string> sec = parser.SectionCount();  //[Unit]セクションのリストを取得
@@ -2445,6 +2731,7 @@ namespace WpfApp1_cmd.ViewModel
 				Progress?.SetMessage($"reading {lcu.LcuCtrl.Name}");
 				bool ret = await UpdateLcuInfo(lcu, token);
 
+				/*
 				lcu.IsSelected.Value = ret;
 				int c = lcu.Children.Count(x => x.IsSelected.Value == true);
 				if (c != lcu.Children.Count)
@@ -2452,6 +2739,8 @@ namespace WpfApp1_cmd.ViewModel
 					int f = lcu.Children.Count(x => x.IsSelected.Value == null);
 					lcu.IsSelected.Value = (c == 0 && f == 0) ? false : null;
 				}
+				*/
+				lcu.IsSelected.Value = CheckState<MachineInfo>(lcu.Children);
 
 				//LCU下の装置、モジュール、ユニット数を取得
 				int machineCount = lcu.Children.Count(x => x.IsSelected.Value != false);
@@ -2477,8 +2766,9 @@ namespace WpfApp1_cmd.ViewModel
 				}
 			}
 
-			// 選択されていない(LCU情報が取得できない) LCU(Line)を削除
-			List<LcuInfo> tmpList = TreeViewItems.Where(x => x.IsSelected.Value == false).ToList();
+			// LCU下に装置が無い LCU(Line)を削除
+			//List<LcuInfo> tmpList = TreeViewItems.Where(x => x.IsSelected.Value == false).ToList();
+			List<LcuInfo> tmpList = TreeViewItems.Where(x => x.Children.Count == 0).ToList();
 			foreach (var item in tmpList)
 			{
 				TreeViewItems.Remove(item);
@@ -2553,10 +2843,10 @@ namespace WpfApp1_cmd.ViewModel
 						baseInfo.Children.Add(moduleItem);
 						machine.Children.Add(moduleItem);
 
-						// とりあえず全ユニットを選択状態にする
+						// とりあえず全装置を選択状態にする
 						machine.IsSelected.Value = true;
 						/*
-						// ユニット情報を取得
+						// モジュールのユニット情報を取得
 						var ret = await CreateVersionInfo(lcu, machine, moduleItem, token);
 						if (ret != null)
 						{
@@ -2572,7 +2862,7 @@ namespace WpfApp1_cmd.ViewModel
 							moduleItem.IsSelected.Value = false;
 						}
 						*/
-					}
+		}
 					/*
 					int tc = machine.Children.Count(x => x.IsSelected.Value == true);
 					if (tc != machine.Children.Count)

@@ -145,11 +145,17 @@
             </GroupBox>
             <GridSplitter Grid.Column="1" Style="{StaticResource VerticalGridSplitter}" />
             -->
-            <TreeView x:Name="lineView" Grid.Column="0" ItemsSource="{Binding TreeViewItems}" IsEnabled="{Binding IsTreeEnabled.Value, Mode=TwoWay}" >
+            <TreeView x:Name="lineView" Grid.Column="0" ItemsSource="{Binding TreeViewItems}" IsEnabled="{Binding IsTreeEnabled.Value, Mode=TwoWay}"
+                      VirtualizingPanel.IsVirtualizing="True"
+                      VirtualizingPanel.VirtualizationMode="Recycling"
+                      >
                 <i:Interaction.Triggers>
                     <i:EventTrigger EventName="SelectedItemChanged">
                         <rp:EventToReactiveCommand Command="{Binding TreeViewSelectedItemChangedCommand}" />
                     </i:EventTrigger>
+                   <i:EventTrigger EventName="PreviewMouseLeftButtonDown">
+                       <rp:EventToReactiveCommand Command="{Binding TreeViewMouseLeftButtonDownCommand}" />
+                   </i:EventTrigger>
                 </i:Interaction.Triggers>
 
                 <TreeView.ItemContainerStyle>
@@ -157,23 +163,21 @@
                     <Style TargetType="{x:Type TreeViewItem}" BasedOn="{StaticResource MaterialDesignTreeViewItem}">
                         <Setter Property="Tag" Value="{Binding Path=DataContext, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type TreeView}}}" />
                         <Setter Property="ContextMenu" Value="{Binding Source={StaticResource SampleContextMenu}}"/>
+                        <Setter Property="IsExpanded" Value="{Binding IsExpanded.Value, Mode=TwoWay}" />
+                        <!-- MultiSelect で　IsSelected を Bind すると、チェックボックスが正しくチェックできない
+                        <Setter Property="IsSelected" Value="{Binding IsSelected.Value, Mode=TwoWay}" />
+                        -->
                     </Style>
                 </TreeView.ItemContainerStyle>
-
-                <TreeView.Resources>
-                    <Style TargetType="{x:Type TreeViewItem}" BasedOn="{StaticResource MaterialDesignTreeViewItem}">
-                        <Setter Property="IsExpanded" Value="{Binding IsExpanded.Value, Mode=TwoWay}" />
-                    </Style>
-                </TreeView.Resources>
              
                 <TreeView.ItemTemplate>
                     <HierarchicalDataTemplate ItemsSource="{Binding Children}">
                         <StackPanel Orientation="Horizontal">
                             <CheckBox IsChecked="{Binding IsSelected.Value, Mode=TwoWay}"
-                            Command="{Binding DataContext.TreeViewChkCommand, RelativeSource={RelativeSource FindAncestor,AncestorType={x:Type TreeView}}}"
-                            CommandParameter="{Binding}"
-                                      VerticalAlignment="Center" />
-                            <TextBlock Text="{Binding Name}" Margin="5,0,0,0" FontSize="16" IsEnabled="False"/>
+                                Command="{Binding DataContext.TreeViewChkCommand, RelativeSource={RelativeSource FindAncestor,AncestorType={x:Type TreeView}}}"
+                                CommandParameter="{Binding}"
+                                VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding Name}" Margin="5,0,0,0" FontSize="16" IsEnabled="False" />
                         </StackPanel>
                     </HierarchicalDataTemplate>
                 </TreeView.ItemTemplate>
