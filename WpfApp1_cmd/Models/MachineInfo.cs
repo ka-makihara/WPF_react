@@ -51,7 +51,7 @@ namespace WpfApp1_cmd.Models
 			}
 			return viewName;
 		}
-    }
+	}
 
     public class LcuInfo : CheckableItem
     {

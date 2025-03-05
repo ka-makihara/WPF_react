@@ -1,10 +1,12 @@
-﻿using System.Configuration;
+﻿using Reactive.Bindings;
+using System.Configuration;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows;
+using WpfApp1_cmd.Models;
 
 namespace WpfApp1_cmd
 {
@@ -183,6 +185,35 @@ namespace WpfApp1_cmd
 				size += GetDirectorySize(di);
 			}
 			return size;
+		}
+
+		/// <summary>
+		/// チェックボックスのチェック状態を取得
+		/// </summary>
+		/// <typeparam name="Type"></typeparam>
+		/// <param name="list"></param>
+		/// <returns></returns>
+		public static bool? CheckState<Type>(ReactiveCollection<Type> list)
+			where Type : CheckableItem
+		{
+			int tc = list.Where(x => x.IsSelected.Value == true).Count();
+			int fc = list.Where(x => x.IsSelected.Value == false).Count();
+
+			if (tc == list.Count)
+			{
+				//全チェック
+				return true;
+			}
+			else if (fc == list.Count)
+			{
+				//全、未チェック
+				return false;
+			}
+			else
+			{
+				//一部チェック
+				return null;
+			}
 		}
 	}
 

@@ -72,14 +72,16 @@
                                 <StackPanel Orientation="Horizontal" Background="DarkBlue">
                                     <!--
                                     <CheckBox IsChecked="{Binding DataContext.IsSelectedGroup, Source={x:Reference DataContextProxy}}" >
+                                        IsChecked="{Binding DataContext.IsGroupChecked, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                     -->
                                     <CheckBox
                                         IsChecked="{Binding DataContext.IsGroupChecked, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                        Command="{Binding DataContext.GroupCheckCommand2, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                        CommandParameter="{Binding}" >
+                                        Command="{Binding DataContext.GroupCheckCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                        CommandParameter="{Binding}"
+                                        >
                                   
                                         <CheckBox.Style>
-                                            <Style BasedOn="{StaticResource MahApps.Styles.CheckBox.Win10}" TargetType="{x:Type CheckBox}">
+                                            <Style BasedOn="{StaticResource MahApps.Styles.CheckBox}" TargetType="{x:Type CheckBox}">
                                                 <Setter Property="HorizontalAlignment" Value="Stretch" />
                                                 <Setter Property="MinHeight" Value="0" />
                                                 <Setter Property="MinWidth" Value="0" />
@@ -87,7 +89,7 @@
                                         </CheckBox.Style>
                                         <i:Interaction.Triggers>
                                             <i:EventTrigger EventName="Click">
-                                                <rp:EventToReactiveCommand Command="{Binding DataContext.GroupCheckCommand, Source={x:Reference DataContextProxy}}" />
+                                                <rp:EventToReactiveCommand Command="{Binding DataContext.GroupCheckClick, Source={x:Reference DataContextProxy}}" />
                                             </i:EventTrigger>
                                         </i:Interaction.Triggers>
                                     </CheckBox>

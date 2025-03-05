@@ -856,6 +856,7 @@ namespace WpfApp1_cmd.ViewModel
 		/// <typeparam name="Type"></typeparam>
 		/// <param name="list"></param>
 		/// <returns></returns>
+		/*
 		private static bool? CheckState<Type>(ReactiveCollection<Type> list)
 			where Type : CheckableItem
 		{
@@ -878,9 +879,10 @@ namespace WpfApp1_cmd.ViewModel
 				return null;
 			}
 		}
+		*/
 
 		/// <summary>
-		/// 
+		///  TreeView で右クリックメニューでの実行
 		/// </summary>
 		/// <param name="x"></param>
 		private void TreeViewMenu(object x)
@@ -1127,7 +1129,7 @@ namespace WpfApp1_cmd.ViewModel
 								string viewName = item.GetViewName();
 								viewModeTable.Add(viewName, new ModuleViewModel(moduleInfo.Name, moduleInfo.UnitVersions, UpdateInfos));
 
-								moduleInfo.IsSelected.Value = CheckState<UnitVersion>(moduleInfo.UnitVersions);
+								moduleInfo.IsSelected.Value = Utility.CheckState<UnitVersion>(moduleInfo.UnitVersions);
 
 								//該当のツリービューを展開する
 								lcuInfo.IsExpanded.Value = true;
@@ -2740,7 +2742,7 @@ namespace WpfApp1_cmd.ViewModel
 					lcu.IsSelected.Value = (c == 0 && f == 0) ? false : null;
 				}
 				*/
-				lcu.IsSelected.Value = CheckState<MachineInfo>(lcu.Children);
+				lcu.IsSelected.Value = Utility.CheckState<MachineInfo>(lcu.Children);
 
 				//LCU下の装置、モジュール、ユニット数を取得
 				int machineCount = lcu.Children.Count(x => x.IsSelected.Value != false);
