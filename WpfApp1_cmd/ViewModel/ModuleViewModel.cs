@@ -16,7 +16,31 @@ using WpfLcuCtrlLib;
 
 namespace WpfApp1_cmd.ViewModel
 {
-    internal class ModuleViewModel : ViewModelBase
+	partial class UnitGroup  :ViewModelBase
+	{
+		private bool? _status;
+		public bool? Status
+		{
+			get => _status;
+			set
+			{
+				if( _status != value)
+				{
+					_status = value;
+					OnPropertyChanged( nameof(Status) );
+				}
+			}
+		}
+		public List<UnitVersion>? Units { get; set; }
+
+		public void UpdateStatus()
+		{
+			if( Units == null) { return; }
+			Status = Utility.CheckState(Units);
+		}
+	}
+
+	internal class ModuleViewModel : ViewModelBase
     {
         private ObservableCollection<UpdateInfo>? _updates = null;
         private void IsSelectedChk(UnitVersion item, bool? value)
@@ -77,28 +101,7 @@ namespace WpfApp1_cmd.ViewModel
 		public ReactiveCommand<CollectionViewGroup> GroupCheckCommand { get; }	// グループヘッダーのチェックボックス・コマンド	
 
 		public string ModuleName { get; set; } = "Module";
-		/// <summary>
-		/// グループヘッダーのチェックボックス変更時の処理(クリックイベント)
-		///  コマンド実行後によびだされる
-		/// </summary>
-		/// <param name="e"></param>
-		private void GroupCheckClickEvent(RoutedEventArgs e)
-		{
-			if(e.Source is CheckBox checkBox)
-			{
-				//bool? isChecked = group.Items.OfType<UnitVersion>().All(x => x.IsSelected.Value == true);
-				bool? isChecked = checkBox.IsChecked;
-				if (checkBox.DataContext is CollectionViewGroup group)
-				{
-					foreach (UnitVersion item in group.Items.Cast<UnitVersion>())
-					{
-						Debug.WriteLine($"{item.Name}:{item.CurVersion}->{item.NewVersion}");
-						item.IsSelected.Value = isChecked;
-					}
-				}
-			}
-		}
-
+		
 		/// <summary>
 		/// ユニット選択のトグルボタンの表示を切り替える
 		///   ユーザーモードでは表示しない -> ユニット毎のチェックボックスを表示しない
@@ -125,6 +128,27 @@ namespace WpfApp1_cmd.ViewModel
 		}
 
 		public ICollectionView UnitVersionGroupView {get; set; }
+
+		//private Dictionary<string, UnitGroup> _unitGroup;
+		private OrderedDictionary<string, UnitGroup> _unitGroup;
+
+		private void InitGroupStatus()
+		{
+			_unitGroup = [];
+
+			var groups = UnitVersionGroupView.Groups.Cast<CollectionViewGroup>().ToList();
+
+			foreach(var group in groups)
+			{
+				var units = group.Items.Cast<UnitVersion>().ToList();
+				UnitGroup ug = new()
+				{
+					Units = units,
+					Status = Utility.CheckState(units)
+				};
+				_unitGroup.Add((string)group.Name, ug);
+			}
+		}
 
 		/// <summary>
 		/// コンストラクタ
@@ -182,7 +206,12 @@ namespace WpfApp1_cmd.ViewModel
 				// ここで Subscribe しても上書きされない(Subscribe が重複して登録されるっぽい=>チェックボックス操作で両方が呼ばれる)
 				item.IsSelected.Subscribe(_ =>
                 {
-					UpdateGroupCheck(null);
+					//Debug.WriteLine("IsSelected Subscribe");
+					//_groupIdx = 0;
+					//UpdateGroupCheck(null);
+					//OnPropertyChanged(nameof(IsGroupChecked));
+					//OnPropertyChanged(nameof(IsAllSelected));
+					//UpdateGroupCheckState();
 				});
             }
 
@@ -191,6 +220,8 @@ namespace WpfApp1_cmd.ViewModel
 
 			IsUnitCheckBoxEnabled = (mode == "administrator");  // ユニット選択のトグルボタンの初期値(administrator のときのみ有効)
 			IsChkVisibled = (mode == "administrator");          // ユニットチェックボックスの表示の初期値(administrator のときのみ表示)
+
+			InitGroupStatus();
 		}
 
 		/// <summary>
@@ -203,7 +234,6 @@ namespace WpfApp1_cmd.ViewModel
 			}
             set {
                 SelectAll(value, UnitVersions);
-				//OnPropertyChanged();
 			}
         }
         private void SelectAll(bool? select, IEnumerable<UnitVersion> units)
@@ -218,7 +248,8 @@ namespace WpfApp1_cmd.ViewModel
 					unit.IsSelected.Value = select;
 				//}
             }
-			UpdateGroupCheck(null);
+			UnitVersionGroupView.Refresh();
+			Debug.WriteLine("SelecaAll()");
         }
 
 		/// <summary>
@@ -250,46 +281,83 @@ namespace WpfApp1_cmd.ViewModel
 			get
 			{
 				//UnitVersionGroupView.Groups.Cast<CollectionViewGroup>().ToList().ForEach(group => Debug.WriteLine($"{group.Name}"));
+				UnitGroup ug = _unitGroup.ElementAt(_groupIdx).Value;
+				var data = _unitGroup.GetAt(_groupIdx);
+
+				Debug.WriteLine($"Index[{_groupIdx}]:{data.Key}={ug.Status}");
+
+				_groupIdx++;
+				if( _groupIdx >= _unitGroup.Count)
+				{
+					_groupIdx = 0;
+				}
+				return ug.Status;
+				/*
 				if (UnitVersionGroupView.Groups.Count <= _groupIdx)
 				{
 					return null;
 				}
 				// グループ名を取得
+				ICollectionView cvs = CollectionViewSource.GetDefaultView(UnitVersions);
+				var nn = cvs.Groups.Cast<CollectionViewGroup>().ToList();
 				var groupName = UnitVersionGroupView.Groups.Cast<CollectionViewGroup>().ToList()[_groupIdx].Name;
 				var group = UnitVersionGroupView.Groups.Cast<CollectionViewGroup>().ToList()[_groupIdx].Items;
 
 				int trueCount = group.Cast<UnitVersion>().Count(x => x.IsSelected.Value == true);
 
-				Debug.WriteLine($"IsGroupChecked:{groupName}");
 				_groupIdx++;
 				if (UnitVersionGroupView.Groups.Count <= _groupIdx)
 				{
 					_groupIdx = 0;
+					Debug.WriteLine("index=0");
 				}
 
 				if (trueCount == 0)
 				{
+					Debug.WriteLine($"IsGroupChecked:{groupName}=false");
 					return false;
 				}
 				else
 				{
+					string rr = (trueCount == group.Cast<UnitVersion>().Count()) ? "true" : "null";
+					Debug.WriteLine($"IsGroupChecked:{groupName}={rr}");
 					return (trueCount == group.Cast<UnitVersion>().Count()) ? true : null;
 				}
+				*/
 			}
 			set {
 				//set ではチェックボックスに何もしない(チェックボックスにアクセスする方法が分からない)
 				// command(GroupCheckCmd) で処理する
-				_groupIdx = 0;
 			}
 		}//=true;
 
+		private void UpdateGroupStatus(UnitVersion unit)
+		{
+			UnitGroup? ug = _unitGroup.GetValueOrDefault(unit.UnitGroup);
+			if( ug == null) { return;  }
+
+			ug.UpdateStatus();
+			OnPropertyChanged(nameof(IsGroupChecked));
+		}
+
 		private void UpdateGroupCheck(UnitVersion? m)
 		{
-			_groupIdx = 0;
-			OnPropertyChanged(nameof(IsGroupChecked));
-			_groupIdx = 0;
+			if (m != null)
+			{
+				Debug.WriteLine($"UpdateGroupCheck({m.Name})={m.IsSelected}");
+				UpdateGroupStatus(m);
+			}
+			else
+			{
+				Debug.WriteLine("UpdateGroupCheck(null)");
+			}
+
+		//	m.IsChecked = (m.IsChecked == false);
+
+			//OnPropertyChanged(nameof(IsGroupChecked));
             OnPropertyChanged(nameof(IsAllSelected));
-			_groupIdx = 0;
+
+			UnitVersionGroupView.Refresh();
 		}
 
 		/// <summary>
@@ -320,7 +388,50 @@ namespace WpfApp1_cmd.ViewModel
 			{
 				item.IsSelected.Value = chk;
 			}
-			UpdateGroupCheck(null);
+			Debug.WriteLine("GroupCheckCmd");
+		}
+
+		private void UpdateGroupCheckState()
+        {
+            ICollectionView cvs = CollectionViewSource.GetDefaultView(UnitVersions);
+            if (cvs.Groups == null) return;
+
+            foreach (CollectionViewGroup group in cvs.Groups)
+            {
+                var selected = group.Items.Cast<UnitVersion>().Select(item => item.IsSelected.Value).Distinct().ToList();
+                if (selected.Count == 1)
+                {
+                    _unitGroup[(string)group.Name].Status = selected.Single();
+                }
+                else
+                {
+                    _unitGroup[(string)group.Name].Status = null;
+                }
+                OnPropertyChanged(nameof(IsGroupChecked));
+            }
+        }
+
+		/// <summary>
+		/// グループヘッダーのチェックボックス変更時の処理(クリックイベント)
+		///  コマンド実行後によびだされる
+		/// </summary>
+		/// <param name="e"></param>
+		private void GroupCheckClickEvent(RoutedEventArgs e)
+		{
+			/*
+			if(e.Source is CheckBox checkBox)
+			{
+				bool? isChecked = checkBox.IsChecked;
+				if (checkBox.DataContext is CollectionViewGroup group)
+				{
+					foreach (UnitVersion item in group.Items.Cast<UnitVersion>())
+					{
+						Debug.WriteLine($"{item.Name}:{item.CurVersion}->{item.NewVersion}");
+						item.IsSelected.Value = isChecked;
+					}
+				}
+			}
+			*/
 		}
 	}
 }

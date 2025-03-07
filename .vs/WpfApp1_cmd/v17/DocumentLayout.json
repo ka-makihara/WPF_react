@@ -3,12 +3,20 @@
   "WorkspaceRootPath": "C:\\Users\\ka.makihara\\develop\\WPF_react\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{B1947DC4-DFB5-4EF9-BB2D-3E622D5CE72F}|WpfApp1_cmd\\WpfApp1_cmd.csproj|c:\\users\\ka.makihara\\develop\\wpf_react\\wpfapp1_cmd\\view\\moduleview.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{B1947DC4-DFB5-4EF9-BB2D-3E622D5CE72F}|WpfApp1_cmd\\WpfApp1_cmd.csproj|solutionrelative:wpfapp1_cmd\\view\\moduleview.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B1947DC4-DFB5-4EF9-BB2D-3E622D5CE72F}|WpfApp1_cmd\\WpfApp1_cmd.csproj|c:\\users\\ka.makihara\\develop\\wpf_react\\wpfapp1_cmd\\valueconverter\\grouptoischeckedconverter.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B1947DC4-DFB5-4EF9-BB2D-3E622D5CE72F}|WpfApp1_cmd\\WpfApp1_cmd.csproj|solutionrelative:wpfapp1_cmd\\valueconverter\\grouptoischeckedconverter.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{B1947DC4-DFB5-4EF9-BB2D-3E622D5CE72F}|WpfApp1_cmd\\WpfApp1_cmd.csproj|c:\\users\\ka.makihara\\develop\\wpf_react\\wpfapp1_cmd\\viewmodel\\moduleviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{B1947DC4-DFB5-4EF9-BB2D-3E622D5CE72F}|WpfApp1_cmd\\WpfApp1_cmd.csproj|solutionrelative:wpfapp1_cmd\\viewmodel\\moduleviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{B1947DC4-DFB5-4EF9-BB2D-3E622D5CE72F}|WpfApp1_cmd\\WpfApp1_cmd.csproj|c:\\users\\ka.makihara\\develop\\wpf_react\\wpfapp1_cmd\\view\\moduleview.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
-      "RelativeMoniker": "D:0:0:{B1947DC4-DFB5-4EF9-BB2D-3E622D5CE72F}|WpfApp1_cmd\\WpfApp1_cmd.csproj|solutionrelative:wpfapp1_cmd\\view\\moduleview.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+      "AbsoluteMoniker": "D:0:0:{B1947DC4-DFB5-4EF9-BB2D-3E622D5CE72F}|WpfApp1_cmd\\WpfApp1_cmd.csproj|c:\\users\\ka.makihara\\develop\\wpf_react\\wpfapp1_cmd\\models\\unitversion.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B1947DC4-DFB5-4EF9-BB2D-3E622D5CE72F}|WpfApp1_cmd\\WpfApp1_cmd.csproj|solutionrelative:wpfapp1_cmd\\models\\unitversion.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -28,11 +36,41 @@
         },
         {
           "DockedWidth": 278,
-          "SelectedChildIndex": 1,
+          "SelectedChildIndex": 3,
           "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{40ea2e6b-2121-4bb8-a43e-c83c04b51041}"
+            },
             {
               "$type": "Document",
               "DocumentIndex": 1,
+              "Title": "GroupToIsCheckedConverter.cs",
+              "DocumentMoniker": "C:\\Users\\ka.makihara\\develop\\WPF_react\\WpfApp1_cmd\\ValueConverter\\GroupToIsCheckedConverter.cs",
+              "RelativeDocumentMoniker": "WpfApp1_cmd\\ValueConverter\\GroupToIsCheckedConverter.cs",
+              "ToolTip": "C:\\Users\\ka.makihara\\develop\\WPF_react\\WpfApp1_cmd\\ValueConverter\\GroupToIsCheckedConverter.cs",
+              "RelativeToolTip": "WpfApp1_cmd\\ValueConverter\\GroupToIsCheckedConverter.cs",
+              "ViewState": "AgIAAAkAAAAAAAAAAAAAwBEAAAADAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-03-06T06:44:33.492Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "UnitVersion.cs",
+              "DocumentMoniker": "C:\\Users\\ka.makihara\\develop\\WPF_react\\WpfApp1_cmd\\Models\\UnitVersion.cs",
+              "RelativeDocumentMoniker": "WpfApp1_cmd\\Models\\UnitVersion.cs",
+              "ToolTip": "C:\\Users\\ka.makihara\\develop\\WPF_react\\WpfApp1_cmd\\Models\\UnitVersion.cs",
+              "RelativeToolTip": "WpfApp1_cmd\\Models\\UnitVersion.cs",
+              "ViewState": "AgIAAAQAAAAAAAAAAAAAwAsAAAArAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-03-06T06:09:34.411Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
               "Title": "ModuleView.xaml",
               "DocumentMoniker": "C:\\Users\\ka.makihara\\develop\\WPF_react\\WpfApp1_cmd\\View\\ModuleView.xaml",
               "RelativeDocumentMoniker": "WpfApp1_cmd\\View\\ModuleView.xaml",
@@ -44,13 +82,13 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 2,
               "Title": "ModuleViewModel.cs",
               "DocumentMoniker": "C:\\Users\\ka.makihara\\develop\\WPF_react\\WpfApp1_cmd\\ViewModel\\ModuleViewModel.cs",
               "RelativeDocumentMoniker": "WpfApp1_cmd\\ViewModel\\ModuleViewModel.cs",
               "ToolTip": "C:\\Users\\ka.makihara\\develop\\WPF_react\\WpfApp1_cmd\\ViewModel\\ModuleViewModel.cs",
               "RelativeToolTip": "WpfApp1_cmd\\ViewModel\\ModuleViewModel.cs",
-              "ViewState": "AgIAAG8AAAAAAAAAAAAiwGkAAAABAAAAAAAAAA==",
+              "ViewState": "AgIAAA4AAAAAAAAAAIAQwGcBAAAPAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-02-28T13:06:17.922Z",
               "EditorCaption": ""

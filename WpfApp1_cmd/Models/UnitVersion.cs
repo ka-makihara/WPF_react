@@ -79,6 +79,16 @@ namespace WpfApp1_cmd.Models
 			IsSelected.Value = sel;
 			IsSelected.Subscribe(x => Update(x));
 		}
+
+		private bool? _isChecked;
+		public bool? IsChecked
+		{
+			get => _isChecked;
+			set
+			{
+				SetProperty(ref _isChecked, value);
+			}
+		}
 	}
 
 	/// <summary>

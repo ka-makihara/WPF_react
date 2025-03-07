@@ -215,6 +215,29 @@ namespace WpfApp1_cmd
 				return null;
 			}
 		}
+
+		public static bool? CheckState<Type>(List<Type> list)
+			where Type : CheckableItem
+		{
+			int tc = list.Where(x => x.IsSelected.Value == true).Count();
+			int fc = list.Where(x => x.IsSelected.Value == false).Count();
+
+			if (tc == list.Count)
+			{
+				//全チェック
+				return true;
+			}
+			else if (fc == list.Count)
+			{
+				//全、未チェック
+				return false;
+			}
+			else
+			{
+				//一部チェック
+				return null;
+			}
+		}
 	}
 
 	/// <summary>
