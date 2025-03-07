@@ -10,6 +10,7 @@
              xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
              xmlns:viewmodel="clr-namespace:WpfApp1_cmd.ViewModel"
              xmlns:vc="clr-namespace:WpfApp1_cmd.ValueConverter"
+             xmlns:behaviors="clr-namespace:WpfApp1_cmd.Behavior"
              xmlns:core="clr-namespace:WpfApp1_cmd.Core"
              xmlns:models="clr-namespace:WpfApp1_cmd.Models"
              d:DataContext="{d:DesignInstance Type=viewmodel:ModuleViewModel}"
@@ -58,7 +59,14 @@
                       GridLinesVisibility="All"
                       MinHeight="300"
                       VirtualizingPanel.IsVirtualizingWhenGrouping="True">
-
+<!--
+                <DataGrid.Template>
+                    <ControlTemplate>
+                        <ScrollViewer behaviors:ScrollViewerBehavior.VerticalOffset="{Binding DataContext.ScrollPosition, Source={x:Reference DataContextProxy}}">
+                        </ScrollViewer>
+                    </ControlTemplate>
+                </DataGrid.Template>
+-->
                 <DataGrid.GroupStyle>
                     <GroupStyle ContainerStyle="{StaticResource MahApps.Styles.GroupItem.DataGrid}" >
                         <GroupStyle.HeaderTemplate>
@@ -83,11 +91,13 @@
                                                 <Setter Property="MinWidth" Value="0" />
                                             </Style>
                                         </CheckBox.Style>
+                                        <!-- GroupCheckCommand で処理しているので不要
                                         <i:Interaction.Triggers>
                                             <i:EventTrigger EventName="Click">
                                                 <rp:EventToReactiveCommand Command="{Binding DataContext.GroupCheckClick, Source={x:Reference DataContextProxy}}" />
                                             </i:EventTrigger>
                                         </i:Interaction.Triggers>
+                                        -->
                                     </CheckBox>
                                     <TextBlock VerticalAlignment="Center">
                                         <TextBlock.Text>

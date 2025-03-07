@@ -11,6 +11,11 @@ using WpfApp1_cmd.Models;
 
 namespace WpfApp1_cmd.ValueConverter
 {
+	/// <summary>
+	/// グループのチェック状態を取得するコンバータ
+	///   ※グループヘッダーにつけられたチェックボックスの状態(IsChecked)のプロパティにバインドする時のコンバーター
+	///   　value にはグループのアイテム(UnitVersionのリスト)が入る
+	/// </summary>
 	internal class GroupToIsCheckedConverter : IValueConverter
 	{
 		public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

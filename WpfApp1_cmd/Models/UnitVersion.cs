@@ -80,6 +80,10 @@ namespace WpfApp1_cmd.Models
 			IsSelected.Subscribe(x => Update(x));
 		}
 
+		/// <summary>
+		///  ※グループチェックボックスのプロパティ IsChecked にバインドしているため必要だが
+		///  　値はCoverter(GroupToIsCheckedConverter)で設定した値を利用しているため、ここでは何もしない(と思う)
+		/// </summary>
 		private bool? _isChecked;
 		public bool? IsChecked
 		{
