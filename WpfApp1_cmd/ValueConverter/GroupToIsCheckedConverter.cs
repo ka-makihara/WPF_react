@@ -30,7 +30,6 @@ namespace WpfApp1_cmd.ValueConverter
 				return Utility.CheckState(unitVersions.ToList());
 			}
 			return false;
-			//throw new NotImplementedException();
 		}
 
 		public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

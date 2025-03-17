@@ -81,12 +81,19 @@ namespace WpfApp1_cmd.ViewModel
 				if (idx != -1)
 				{
 					var s2 = s1.Substring(0, idx).Split(";");	//line, machine, module,unitを分割
-					var status = s1[(idx+1)..];                 // = 後の「結果」を取得
+					var status = s1[(idx+1)..].Split(":");   // = 後の「結果」を取得(OK, NG, Skip:<CurVersion -> NewVersion>)
 
-					var n = StatusList.FirstOrDefault(x => x.Name == status);
+					var n = StatusList.FirstOrDefault(x => x.Name == status[0]);
 					if (s2.Length > 3 && n != null)
 					{
-						ResultDataList.Add(new ResultData { LineName = s2[0], MachineName = s2[1], ModuleName = s2[2], UnitName = s2[3], Status = status });
+						ResultDataList.Add(new ResultData
+												{ LineName = s2[0],
+												  MachineName = s2[1],
+												  ModuleName = s2[2],
+												  UnitName = s2[3],
+												  Status = status[0],
+												  Detail = status[1] ?? "----"
+						});
 					}
 				}
 			}
@@ -149,6 +156,7 @@ namespace WpfApp1_cmd.ViewModel
 		public string ModuleName { get; set; }
 		public string UnitName { get; set; }
 		public string Status { get; set; }
+		public string Detail { get; set; }
 	}
 
 	public class NameData

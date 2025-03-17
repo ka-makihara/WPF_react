@@ -76,7 +76,15 @@ namespace WpfApp1_cmd.Models
 
         public UnitVersion(bool sel)
         {
-			IsSelected.Value = sel;
+			if( Attribute == Define.NOT_UPDATE)
+			{
+				IsSelected.Value = false;
+			}
+			else
+			{
+				IsSelected.Value = sel;
+			}
+			//IsSelected.Value = sel;
 			IsSelected.Subscribe(x => Update(x));
 		}
 

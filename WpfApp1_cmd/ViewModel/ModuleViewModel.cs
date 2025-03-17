@@ -124,7 +124,13 @@ namespace WpfApp1_cmd.ViewModel
 			var newValue = IsAllSelected.Value == true;
 			foreach (var unit in UnitVersions)
 			{
-				unit.IsSelected.Value = newValue;
+				if (unit.Attribute == Define.NOT_UPDATE)
+				{
+					unit.IsSelected.Value = false;
+				}
+				else {
+					unit.IsSelected.Value = newValue;
+				}
 			}
 		}
 
@@ -216,14 +222,17 @@ namespace WpfApp1_cmd.ViewModel
 				}
 				// Model 側でも Subscribeしているが、
 				// ここで Subscribe しても上書きされない(Subscribe が重複して登録されるっぽい=>チェックボックス操作で両方が呼ばれる)
-				item.IsSelected.Subscribe(_ =>
+				item.IsSelected.Subscribe( value =>
                 {
-					//Debug.WriteLine("IsSelected Subscribe");
-					//_groupIdx = 0;
-					//UpdateGroupCheck(null);
-					//OnPropertyChanged(nameof(IsGroupChecked));
-					//OnPropertyChanged(nameof(IsAllSelected));
-					//UpdateGroupCheckState();
+					Debug.WriteLine($"IsSelected Subscribe:{value}");
+					if(item.Attribute == Define.NOT_UPDATE)
+					{
+						item.IsSelected.Value = false;
+					}
+					else
+					{
+						IsSelectedChk(item, value);
+					}
 				});
             }
 
@@ -253,9 +262,9 @@ namespace WpfApp1_cmd.ViewModel
         {
 			foreach (var unit in units)
 			{
-				//if (unit.Attribute != Define.NOT_UPDATE) {
+				if (unit.Attribute != Define.NOT_UPDATE) {
 					unit.IsSelected.Value = select;
-				//}
+				}
             }
 			UnitVersionGroupView.Refresh();
 			Debug.WriteLine("SelecaAll()");

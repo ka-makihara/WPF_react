@@ -39,6 +39,11 @@ namespace WpfApp1_cmd.ViewModel
 			}
 		}
 
+		/// <summary>
+		/// モジュールに含まれるユニットの選択状態を取得して装置の選択状態を返す
+		/// </summary>
+		/// <param name="modules"></param>
+		/// <returns></returns>
 		private bool? GetModulesSelection(ReactiveCollection<ModuleInfo> modules)
 		{
 			int allTrue = 0;
@@ -55,6 +60,7 @@ namespace WpfApp1_cmd.ViewModel
 				}
 				else if (nc == module.UnitVersions.Count)
 				{
+					// ユニット情報が未取得の場合(UnitVersions.Count==0)は false とする
 					allFalse++;
 				}
 				else

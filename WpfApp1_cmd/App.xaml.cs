@@ -1,12 +1,15 @@
-﻿using Reactive.Bindings;
+﻿using MaterialDesignColors.Recommended;
+using Reactive.Bindings;
 using System.Configuration;
 using System.Data;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows;
 using WpfApp1_cmd.Models;
+using WpfApp1_cmd.ViewModel;
 
 namespace WpfApp1_cmd
 {
@@ -254,8 +257,30 @@ namespace WpfApp1_cmd
 
 		private static Mutex mutex;
 
+		public static void ChangeCulture(string cultureName)
+		{
+			CultureInfo culture = new CultureInfo(cultureName);
+			Thread.CurrentThread.CurrentCulture = culture;
+			Thread.CurrentThread.CurrentUICulture = culture;
+
+			// リソースを再読み込み
+			foreach (Window window in Current.Windows)
+			{
+				if (window.DataContext is ViewModelBase viewModel)
+				{
+					viewModel.OnPropertyChanged(null);
+				}
+			}
+		}
+
 		private void Application_Startup(object sender, StartupEventArgs e)
 		{
+			// Windowsのカルチャを取得して設定
+            CultureInfo currentCulture = CultureInfo.InstalledUICulture;
+            ChangeCulture(currentCulture.Name);
+            //ChangeCulture("ja-JP");
+            //ChangeCulture("en-US");
+
 			// 二重起動を防止
 			bool createdNew;
 			mutex = new Mutex(true, "WpfApp1_cmd", out createdNew);

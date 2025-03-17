@@ -6,6 +6,7 @@
         xmlns:local="clr-namespace:WpfApp1_cmd"
         xmlns:vm="clr-namespace:WpfApp1_cmd.ViewModel"
         xmlns:view="clr-namespace:WpfApp1_cmd.View"
+        xmlns:resources="clr-namespace:WpfApp1_cmd.Resources"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:rp="clr-namespace:Reactive.Bindings.Interactivity;assembly=ReactiveProperty.WPF"
         mc:Ignorable="d"
@@ -25,7 +26,7 @@
         IsCloseButtonEnabled="False"
         ShowCloseButton="False"
         Style="{StaticResource MaterialDesignWindow}"
-        Title="TransferTool" Height="800" Width="850">
+        Title="{x:Static resources:Resource.WindowTitle}" Height="800" Width="850">
 
     <Window.Resources>
         <local:RichTextItemsToDocumentConverter x:Key="RichTextItemsToDocumentConverter" />
@@ -218,9 +219,6 @@
                     </DataTemplate>
                     <DataTemplate DataType="{x:Type vm:ModuleViewModel}">
                         <view:ModuleView />
-                    </DataTemplate>
-                    <DataTemplate DataType="{x:Type vm:TransferResultViewModel}">
-                        <view:TransferResultView />
                     </DataTemplate>
                 </Grid.Resources>
 

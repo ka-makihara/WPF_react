@@ -36,6 +36,7 @@ using System.Text.RegularExpressions;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using WpfApp1_cmd.Models;
+using WpfApp1_cmd.Resources;
 using FluentFTP;
 using Renci.SshNet;
 using System.Windows.Threading;
@@ -402,7 +403,7 @@ namespace WpfApp1_cmd.ViewModel
 			Startup_log();
 
 			//progress
-			Progress = await Metro.ShowProgressAsync("Read Machine information ...", "");
+			Progress = await Metro.ShowProgressAsync("Read Line information ...", "");
 
 			Progress.SetIndeterminate();// 進捗(?)をそれらしく流す・・・
 			Progress.SetCancelable(true); // キャンセルボタンを表示する
@@ -492,7 +493,7 @@ namespace WpfApp1_cmd.ViewModel
 					long diskSpace = await LcuDiskChkCmd(lcu);
 					long diskMB = diskSpace / 1024 / 1024;
 					AddLog($"{lcu.Name}::DiskSpace={diskSpace}");
-					var result = await MsgBox.Show("Info", $"{lcu.Name}", $"DiskSpace={diskMB} MB", "", (int)(MsgDlgType.OK | MsgDlgType.ICON_INFO), "DataGridView");
+					var result = await MsgBox.Show(Resource.Confirm, $"{lcu.Name}", $"DiskSpace={diskMB} MB", "", (int)(MsgDlgType.OK | MsgDlgType.ICON_INFO), "DataGridView");
 				}
 			}
 		}
@@ -514,8 +515,9 @@ namespace WpfApp1_cmd.ViewModel
 				//展開するデータがディスク容量を超えていないかチェック
 				if (driveInfo.AvailableFreeSpace < fileInfo.Length)
 				{
+					ErrorInfo.ErrCode = ErrorCode.LCU_UPDATE_DISK_FULL;
 					AddLog($"Not enough disk space:{driveInfo.AvailableFreeSpace} < UpdateData::{fileInfo.Length}");
-					MsgBox.Show("Error", "ErrorCode=E003", "Not enough disk space", "Not enough disk space for UpdateData", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "DataGridView");
+					MsgBox.Show(Resource.Error, $"ErrorCode={ErrorInfo.ErrCode}", $"{ErrorInfo.GetErrMessage()}", Resource.NotEnoughDiskSpace, (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "DataGridView");
 					return false;
 				}
 				else
@@ -619,6 +621,8 @@ namespace WpfApp1_cmd.ViewModel
 
 			_dialogCoordinator = dialogCoordinator;
 
+			Debug.WriteLine($"{ErrorInfo.GetErrMessage(ErrorCode.LCU_CONNECT_ERROR)}");
+
 			// unitLink.json の読み込み(ユニットのリンク情報、デフォルト)
 			ReadUnitLink();
 
@@ -645,6 +649,7 @@ namespace WpfApp1_cmd.ViewModel
 					if (UpdateInfos == null)
 					{
 						AddLog($"Read Error:{infoFile}");
+						ErrorInfo.ErrCode = ErrorCode.UPDATE_READ_ERROR;
 					}
 					else
 					{
@@ -655,8 +660,9 @@ namespace WpfApp1_cmd.ViewModel
 				else
 				{
 					// UpdateCommon.inf が存在しない場合
-					AddLog($"Can not found Update Infoemation");
-					MsgBox.Show("Error", "ErrorCode=E001", "Not Found Update Data", "UpdateData", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "DataGridView");
+					ErrorInfo.ErrCode = ErrorCode.UPDATE_UNDEFINED_ERROR;
+					AddLog( $"{ErrorInfo.GetErrMessage()}" );
+					MsgBox.Show(Resource.Error, $"ErrorCode={ErrorInfo.ErrCode}", $"{ErrorInfo.GetErrMessage()}" , "UpdateData", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "DataGridView");
 				}
 			}
 			else
@@ -675,8 +681,7 @@ namespace WpfApp1_cmd.ViewModel
 				{ "BView", new BViewModel() },
 				{ "CView", new CViewModel() },
 				{ "UpdateVersionView", new UpdateVersionViewModel(UpdateInfos) },
-				{ "UnitVersionView", new UnitVersionViewModel(UpdateInfos) },
-				{ "TransferResultView", new TransferResultViewModel() }
+				{ "UnitVersionView", new UnitVersionViewModel(UpdateInfos) }
 			};
 			ActiveView = viewModeTable["UpdateVersionView"];
 			//ActiveView = viewModeTable["UnitVersionView"];
@@ -850,36 +855,6 @@ namespace WpfApp1_cmd.ViewModel
 			return lcuList;
 		}
 
-		/// <summary>
-		/// チェックボックスのチェック状態を取得
-		/// </summary>
-		/// <typeparam name="Type"></typeparam>
-		/// <param name="list"></param>
-		/// <returns></returns>
-		/*
-		private static bool? CheckState<Type>(ReactiveCollection<Type> list)
-			where Type : CheckableItem
-		{
-			int tc = list.Where(x => x.IsSelected.Value == true).Count();
-			int fc = list.Where(x => x.IsSelected.Value == false).Count();
-
-			if (tc == list.Count)
-			{
-				//全チェック
-				return true;
-			}
-			else if (fc == list.Count)
-			{
-				//全、未チェック
-				return false;
-			}
-			else
-			{
-				//一部チェック
-				return null;
-			}
-		}
-		*/
 
 		/// <summary>
 		///  TreeView で右クリックメニューでの実行
@@ -896,12 +871,12 @@ namespace WpfApp1_cmd.ViewModel
 		}
 
 		/// <summary>
-		/// ツリービューのチェックボックスが変更されたときの処理
+		/// ツリービューのチェックボックスがクリックされたときの処理
 		/// </summary>
 		/// <param name="x">TreeView Item</param>
 		private void TreeViewChkCmd(object x)
 		{
-			CheckableItem item = x as CheckableItem;
+			CheckableItem? item = x as CheckableItem;
 
 			if (item == null)
 			{
@@ -926,6 +901,7 @@ namespace WpfApp1_cmd.ViewModel
 				foreach (ModuleInfo module in machine.Children)
 				{
 					module.UpdateChildren(chk);
+					module.IsSelected.Value = chk;
 				}
 			}
 			else if (item is ModuleInfo module)
@@ -1048,7 +1024,8 @@ namespace WpfApp1_cmd.ViewModel
 						{
 							//UpdateCommon.inf が存在しない
 							AddLog($"[ERROR] Path={infoFilePath} UpdateCommon.inf が見つかりません");
-							var result = await MsgBox.Show("Error", "ErrorCode=E004", "Can not Found UpdateInfo", "UpdateCommon.inf not exist.", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "DataGridView");
+							ErrorInfo.ErrCode = ErrorCode.UPDATE_UNDEFINED_ERROR;
+							var result = await MsgBox.Show(Resource.Error, $"ErrorCode={ErrorInfo.ErrCode}", $"{ErrorInfo.GetErrMessage()}", "UpdateCommon.inf not exist.", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "DataGridView");
 							return;
 						}
 					}
@@ -1065,10 +1042,11 @@ namespace WpfApp1_cmd.ViewModel
 						{
 							//バックアップデータの情報が不正
 							//現在のNeximDBのライン情報と一致しない(ライン、装置、モジュールが見つからない)
-							await MsgBox.Show("Error", "ErrorCode=E005", $"{line}-{machine}-{module}", "Backup Data Error", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "DataGridView");
+							ErrorInfo.ErrCode = ErrorCode.BACKUP_DATA_MISSMATCH;
+							await MsgBox.Show(Resource.Error, $"ErrorCode={ErrorInfo.ErrCode}", $"{ErrorInfo.GetErrMessage()}",$"{line}-{machine}-{module}", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "DataGridView");
 							return;
 						}
-						var ret = await MsgBox.Show("Info", $"{line}={machine}={module}", "Backup Data", "Load Backup Data ?", (int)(MsgDlgType.OK_CANCEL | MsgDlgType.ICON_INFO), "DataGridView");
+						var ret = await MsgBox.Show(Resource.Info, $"{line}={machine}={module}", "Backup Data", "Load Backup Data ?", (int)(MsgDlgType.OK_CANCEL | MsgDlgType.ICON_INFO), "DataGridView");
 						if ((string)ret == "CANCEL")
 						{
 							return;
@@ -1142,12 +1120,13 @@ namespace WpfApp1_cmd.ViewModel
 						{
 							//ロードしたバックアップデータのライン、装置、モジュールが見つからない
 							AddLog($"Not Found Module:{line}-{machine}-{module}");
-							await MsgBox.Show("Error", "ErrorCode=E005", $"{line}:{machine}:{module}", "Data mismatch", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "DataGridView");
+							ErrorInfo.ErrCode = ErrorCode.BACKUP_DATA_MISSMATCH;
+							await MsgBox.Show(Resource.Error, $"ErrorCode={ErrorInfo.ErrCode}", $"{ErrorInfo.GetErrMessage()}", $"{line}:{machine}:{module}", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "DataGridView");
 						}
 					}
 					else
 					{
-						//バックアップデータでない場合
+						//バックアップデータでない場合(インストールディス等)
 
 					}
 					cts.Dispose();
@@ -1170,8 +1149,8 @@ namespace WpfApp1_cmd.ViewModel
 				bool ping = await CheckComputer(lcu.LcuCtrl.Name.Split(':')[0], 3);
 				if (ping == false)
 				{
-
-					var result = await MsgBox.Show("Error", "ErrorCode=E001", "IP Address Error", "サーバーに接続できませんでした", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "DataGridView");
+					ErrorInfo.ErrCode = ErrorCode.LCU_CONNECT_ERROR;
+					var result = await MsgBox.Show(Resource.Error, $"ErrorCode={ErrorInfo.ErrCode}", $"{ErrorInfo.GetErrMessage() }", "LCUに接続できませんでした", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "DataGridView");
 
 					if ((string)result == "OK")
 					{
@@ -1209,6 +1188,7 @@ namespace WpfApp1_cmd.ViewModel
 			List<LcuDiskInfo>? info = await lcu.LcuCtrl.LCU_DiskInfo(token);
 			if (info == null)
 			{
+				ErrorInfo.ErrCode = ErrorCode.LCU_DISK_INFO_ERROR;
 				AddLog($"{lcu.Name}::Don't get disk space information.");
 				CancelTokenSrc.Dispose();
 				return 0;
@@ -1358,22 +1338,27 @@ namespace WpfApp1_cmd.ViewModel
 		private async void StartTransfer()
 		{
 			(long lines, long machines, long modules, long units, long files) = GetTransferFiles();
-			TransferCount = modules;
+			TransferCount = files;
 			TransferedCount = 0;
 			TransferErrorCount = 0;
 			TransferSuccessCount = 0;
 
-			if (TransferCount == 0)
+			if (lines == 0 && machines == 0 && modules == 0)
 			{
-				var result = await MsgBox.Show("Info", "No target machine selected",
-													  "Please select Update machine.",
-													  "",
-													  (int)(MsgDlgType.OK | MsgDlgType.ICON_INFO), "DataGridView");
+				var result = await MsgBox.Show(Resource.Confirm, Resource.NoTargetMachine, Resource.TargetSelect, "", (int)(MsgDlgType.OK | MsgDlgType.ICON_INFO), "DataGridView");
 				return;
 			}
 
-			DialogTitle = "確認";
-			DialogText = $"{modules} モジュールへファイルを転送します。\n開始しますか？";
+			DialogTitle = Resource.Confirm;// "確認";
+			if (files == 0)
+			{
+				DialogText = $"{modules} Module\n{Resource.QuestionTransferStart}";
+			}
+			else
+			{
+				DialogText = $"{modules} Module {files} Files\n{Resource.QuestionTransferStart}";
+			}
+			DialogText = $"{modules} Module {files} Files\n{Resource.QuestionTransferStart}";
 			var r = await DialogHost.Show(new MyMessageBox(), "DataGridView");
 			DialogHost.CloseDialogCommand.Execute(null, null);
 
@@ -1397,17 +1382,22 @@ namespace WpfApp1_cmd.ViewModel
 			{
 				Progress = await Metro.ShowProgressAsync("Backup Unit soft", "");
 				Progress.SetCancelable(true); // キャンセルボタンを表示する
-				Progress.SetProgress(0);
-				Progress.Minimum = 0;
-				Progress.Maximum = 1000;
+				Progress.SetIndeterminate();// 進捗(?)をそれらしく流す・・・
 
-				//ret = await BackupUnitData(backupPath);
+				IsTransfering = true;
 				Task backUpTask = Task.Run(() => { Task<bool> task1 = BackupUnitData(backupPath, token); });
 				bool isBackupCancel = false;
 				while (true)
 				{
+					if (IsTransfering == false)
+					{
+						//転送が終了した
+						break;
+					}
 					if (Progress.IsCanceled == true)
 					{
+						CanTransferStartFlag.Value = true;  // 転送を中断(このフラグで、転送中止を待っているスレッドがあるので、このフラグを設定してから中断処理を行う)
+
 						await Progress.CloseAsync();
 						isBackupCancel = await StopTransferExecute();
 						if (isBackupCancel == true)
@@ -1418,12 +1408,25 @@ namespace WpfApp1_cmd.ViewModel
 						// 再開
 						Progress = await Metro.ShowProgressAsync("Backup Unit soft", "");
 						Progress.SetCancelable(true); // キャンセルボタンを表示する
+						Progress.SetIndeterminate();// 進捗(?)をそれらしく流す・・・
+
+						CanTransferStartFlag.Value = true;
 					}
 					await Task.Delay(100);  //Delay することで、プログレスウインドウの表示が更新される
 				}
 				if (isBackupCancel == false)
 				{
 					await Progress.CloseAsync();
+				}
+				else
+				{
+					var bRet = await MsgBox.Show(Resource.Confirm, $"{Resource.BackupCanceled}", $"{Resource.ContinueTransfer}", "", (int)(MsgDlgType.OK_CANCEL | MsgDlgType.ICON_INFO), "DataGridView");
+					if ((string)bRet == "CANCEL")
+					{
+						CanTransferStartFlag.Value = true;
+						CanAppQuitFlag.Value = true;
+						return;
+					}
 				}
 			}
 
@@ -1449,19 +1452,26 @@ namespace WpfApp1_cmd.ViewModel
 					}
 					if (Progress.IsCanceled == true)
 					{
-						await Progress.CloseAsync();
+						CanTransferStartFlag.Value = true;	// 転送を中断
+						
+						await Progress.CloseAsync();    // 進捗ダイアログを閉じる
 
-						//CanTransferFlag.Value = false;
 						isCancel = await StopTransferExecute();
 						if (isCancel == true)
 						{
+							AddLog("[Transfer] Cancel");
 							break;
 						}
 						// 再開
 						Progress = await Metro.ShowProgressAsync("Unit Soft Transfer...", "");
 						Progress.SetCancelable(true); // キャンセルボタンを表示する
+						Progress.Minimum = 0;
+						Progress.Maximum = 1000;
 
-						//CanTransferFlag.Value = true;
+						//プログレスを再表示(再生成?)した後で、転送を再開する
+						//　　(転送中にこのフラグを待っているスレッドがあるので、プログレスを生成(?)後にフラグを設定する事)
+						CanTransferStartFlag.Value = true;
+						AddLog("[Transfer] Restart");
 					}
 					await Task.Delay(100);  //Delay することで、プログレスウインドウの表示が更新される
 				}
@@ -1475,10 +1485,10 @@ namespace WpfApp1_cmd.ViewModel
 			CanAppQuitFlag.Value = true;
 
 			//転送結果ウインドウを表示する
-			var showResult = await MsgBox.Show("Info",
+			var showResult = await MsgBox.Show(Resource.Info,
 									$"Success={TransferSuccessCount}",
 									$"Fail={TransferErrorCount}",
-									"Show Transfer Details ?",
+									Resource.TransferInformation,
 									(int)(MsgDlgType.OK_CANCEL | MsgDlgType.ICON_INFO), "DataGridView");
 			if ((string)showResult == "OK")
 			{
@@ -1493,7 +1503,7 @@ namespace WpfApp1_cmd.ViewModel
 		{
 			AddLog("[Transfer] Command=Stop");
 
-			DialogTitle = "確認";
+			DialogTitle = Resource.Confirm;// "確認";
 			DialogText = "転送を中止しますか？";
 
 			var r = await DialogHost.Show(new MyMessageBox(), "DataGridView");
@@ -1517,8 +1527,8 @@ namespace WpfApp1_cmd.ViewModel
 		/// </summary>
 		private async void ApplicationShutDown()
 		{
-			DialogTitle = "確認";
-			DialogText = "アプリケーションを終了しますか？";
+			DialogTitle = Resource.Confirm;// "確認";
+			DialogText = Resource.QuitAppMsg;// "アプリケーションを終了しますか？";
 
 			var r = await DialogHost.Show(new MyMessageBox(), "DataGridView");
 			DialogHost.CloseDialogCommand.Execute(null, null);
@@ -1549,8 +1559,6 @@ namespace WpfApp1_cmd.ViewModel
 		/// <returns>bool</returns>
 		public async Task<bool> BackupUnitData(string path, CancellationToken token)
 		{
-			//CancelTokenSrc = new CancellationTokenSource();
-		//	CancellationToken token = CancelTokenSrc.Token;
 			DateTime dt = DateTime.Now;
 
 			string hd = dt.ToString("yyyyMMdd_HHmmss_");
@@ -1569,17 +1577,15 @@ namespace WpfApp1_cmd.ViewModel
 					}
 					foreach (var module in machine.Children)
 					{
-						if (module.IsSelected.Value == false || module.UnitVersions == null)
+						if (module.IsSelected.Value == false )
 						{
 							continue;
 						}
 
-						// UpdateCommon.inf の Path のフォルダにファイルを転送する
-						//   ※ UpdateCommon.inf に記載されているデータは存在するものとする
-						//       指定されたフォルダにあるUpdateCommon.inf を読み込んでいるので
-						//
+						/*
 						try
 						{
+						*/
 							AddLog($"[BACKUP] {lcu.Name};{machine.Name};{module.Name}=Backup Start");
 
 							//バックアップ先フォルダ名
@@ -1591,34 +1597,42 @@ namespace WpfApp1_cmd.ViewModel
 							}
 
 							bool ret = await DownloadModuleFiles(lcu, machine, module, bkupPath, token);
-
+							if( ret == false )
+							{
+								return false;
+							}
 							AddLog($"[BACKUP] {lcu.Name};{machine.Name};{module.Name}=Backup End");
 
-							// LCU 上に作成、転送したファイルを削除する
-							//lcu.LcuCtrl.ClearFtpFolders(Define.LCU_ROOT_PATH);
+							//転送が完了したので、転送中止ボタンが押されていないか確認
+							bool bt = await WaitTransferState(token);
+							if (bt == false)
+							{
+								AddLog($"[Backup] {lcu.Name};{machine.Name};{module.Name}=Transfer Stop");
+								return false;
+							}
+						/*
 						}
 						catch (Exception ex)
 						{
-							//if (CanTransferStopFlag.Value == false)
-							//{
-							//「Stop」ボタンが押された
-							DialogTitle = "確認";
-							DialogText = "転送を中止しますか？";
+							DialogTitle = Resource.Confirm;// "確認";
+							DialogText = Resource.QuitTransferMsg;// "転送を中止しますか？";
 							var r = await DialogHost.Show(new MyMessageBox(), "DataGridView");
 							DialogHost.CloseDialogCommand.Execute(null, null);
 
 							CancelTokenSrc.Dispose();
 							if (r != null && r.ToString() == "OK")
 							{
+								IsTransfering = false;
 								return false;
 							}
 							CancelTokenSrc = new CancellationTokenSource();
 							token = CancelTokenSrc.Token;
-							//}
 						}
+						*/
 					}
 				}
 			}
+			IsTransfering = false;
 			return true;
 		}
 
@@ -1905,10 +1919,16 @@ namespace WpfApp1_cmd.ViewModel
 					return false;
 				}
 				// LCU からFTPでファイルを取得 
-				ret = await lcu.LcuCtrl.DownloadFiles(lcuRoot, backupPath, mcFiles, token);
+				bool bRet = await lcu.LcuCtrl.DownloadFiles(lcuRoot, backupPath, mcFiles, token);
 
 				//LCU 上に作成したファイルを削除
 				ret = lcu.LcuCtrl.ClearFtpFolders(lcuRoot);
+
+				if (bRet == false)
+				{
+					AddLog($"[DownLoad] {lcu.Name};{machine.Name};{module.Name}=DownloadFiles Error");
+					return false;
+				}
 
 				//UpdateCommon.inf の先頭にバックアップ情報を追記する
 				DateTime dt = DateTime.Now;
@@ -1934,10 +1954,12 @@ namespace WpfApp1_cmd.ViewModel
 		{
 			if (CanTransferStartFlag.Value == false)
 			{
+				Debug.WriteLine("WaitTransferState");
 				while (true)
 				{
 					if (CanTransferStartFlag.Value == true)
 					{
+						Debug.WriteLine("WaitTransferState=End");
 						break;
 					}
 					if (token != null)
@@ -1948,6 +1970,7 @@ namespace WpfApp1_cmd.ViewModel
 						}
 					}
 					await Task.Delay(500);
+					Debug.WriteLine(".");
 				}
 			}
 			return true;
@@ -2032,7 +2055,7 @@ namespace WpfApp1_cmd.ViewModel
 					Progress?.SetMessage($"Transfering {lcu.Name}:{Path.GetFileName(folder)}");
 
 					// 進捗%の計算
-					//  PC->LCU で 25% とする(LCU->MC で 25%)　※プログレスバーのレンジを0-1000としているため 25% は 250
+					//  PC->LCU で 25% とする(LCU->MC で 75%)　※プログレスバーのレンジを0-1000としているため 25% は 250
 					long rate = (long)(((double)transferedSize / (double)ftpSize) * 250.0);
 					Debug.WriteLine($"TransferedFtpSize={transferedSize}, FtpDataSize={ftpSize}, rate={rate}");
 
@@ -2102,6 +2125,15 @@ namespace WpfApp1_cmd.ViewModel
 			//LCUに転送したファイルを装置に送信する
 			string mcUser = GetMcUser();
 			string mcPass = GetMcPass();
+
+			if( mcUser == "" || mcPass == "" )
+			{
+				// モジュールにアクセスするためのFTP情報が取得できない(mcAccount.Dll が無い、など)
+				ErrorInfo.ErrCode = ErrorCode.FTP_ACCOUNT_ERROR;
+				AddLog($"[Transfer] {lcu.Name};{machine.Name};{module.Name}={ErrorInfo.GetErrMessage()}");
+				return false;
+			}
+
 			foreach (var (unit, folder) in unitFolders)
 			{
 				try
@@ -2144,6 +2176,7 @@ namespace WpfApp1_cmd.ViewModel
 				//FTPでアクセスできない場合などのエラー
 				if (retMsg == "" || retMsg == "Internal Server Error")
 				{
+					ErrorInfo.ErrCode = ErrorCode.FTP_SERVER_ERROR;
 					AddLog($"[Transfer] {lcu.Name};{machine.Name};{module.Name}=WebAPI(PostMcFile) Error");
 					AddLog($"[Transfer] {module.Name};{unit}=NG");
 					TransferErrorCount++;
@@ -2154,6 +2187,7 @@ namespace WpfApp1_cmd.ViewModel
 				var data = JsonSerializer.Deserialize<LcuErrMsg>(retMsg);
 				if (data != null && data.errorMsg != "")
 				{
+					ErrorInfo.ErrCode = ErrorCode.FTP_TRANSFER_ERROR;
 					AddLog($"[Transfer] {lcu.Name};{machine.Name};{module.Name}=WebAPI(PostMcFile) Error");
 					AddLog($"[ERROR] Status:{data.errorMsg} Msg:{data.errorStatus}");
 					AddLog($"[Transfer] {lcu.Name};{machine.Name};{module.Name};{unit}=NG");
@@ -2162,7 +2196,6 @@ namespace WpfApp1_cmd.ViewModel
 					break;
 				}
 
-				AddLog($"[Transfer] {lcu.Name};{machine.Name};{module.Name};{unit}=OK");
 				TransferSuccessCount++;
 				TransferedCount += mc.Count;
 
@@ -2182,6 +2215,8 @@ namespace WpfApp1_cmd.ViewModel
 
 				//対象となるユニットのバージョン情報(string)を更新
 				ModifyUpdateInfo(lines, unitVersion.Name, unitVersion.NewVersion);
+
+				AddLog($"[Transfer] {lcu.Name};{machine.Name};{module.Name};{unit}=OK:{unitVersion.CurVersion}->{unitVersion.NewVersion}");
 			}
 
 			if (TransferSuccessCount != 0)
@@ -2412,6 +2447,7 @@ namespace WpfApp1_cmd.ViewModel
 								break;
 							case MachineType.Machine:
 								var modules = TreeViewItems.SelectMany(lcu => lcu.Children).Where(x => x.Name == item.Name).First().Children;
+
 								viewModeTable.Add(viewName, new MachineViewModel(item.Name, modules));
 								break;
 							case MachineType.Module:
@@ -2570,7 +2606,7 @@ namespace WpfApp1_cmd.ViewModel
 			}
 			else
 			{
-				sel = true;
+				sel = (module.IsSelected.Value == true);
 			}
 
 			UnitVersion version = new(sel)
@@ -2636,7 +2672,7 @@ namespace WpfApp1_cmd.ViewModel
 				return null;
 			}
 
-			Progress?.SetMessage($"{lcu.LcuCtrl.Name};{machine.Name};{module.Name} Get Update Info");
+			//Progress?.SetMessage($"{lcu.LcuCtrl.Name};{machine.Name};{module.Name} Get Update Info");
 
 			// UpdateCommon.inf をLCUを経由して取得する
 			ret = await GetModuleUpdateInfo(lcu, machine, module);

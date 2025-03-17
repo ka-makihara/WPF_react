@@ -201,6 +201,9 @@
                             </DataTemplate> 
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
+
+                    <DataGridTextColumn Header="Detail" Binding="{Binding Detail}" />
+
                 </DataGrid.Columns>
             </DataGrid>
         </mah:MetroHeader>
