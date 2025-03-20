@@ -132,7 +132,7 @@ namespace WpfApp1_cmd.ViewModel
 			LogMessage.Add(item);
 			*/
 			//OnPropertyChanged(nameof(LogMessage));
-			//Debug.WriteLine(str);
+			Debug.WriteLine(str);
 			if (LogWriter != null)
 			{
 				LogWriter.WriteLine(str);
@@ -140,8 +140,8 @@ namespace WpfApp1_cmd.ViewModel
 		}
 
 		// ユニット連携情報
-		private UnitLink _unitLink;
-		public UnitLink UnitLink { get => _unitLink; set => _unitLink = value; }
+		private Config _config;
+		public Config Config { get => _config; set => _config = value; }
 
 		// ツリービューのアイテム
 		public ReactiveCollection<LcuInfo> TreeViewItems { get; set; }
@@ -286,9 +286,9 @@ namespace WpfApp1_cmd.ViewModel
 		/// <returns></returns>
 		public static string GetNeximDBName()
 		{
-			if (Options.GetOption("--dbName", "") != "")
+			if (ArgOptions.GetOption("--dbName", "") != "")
 			{
-				return Options.GetOption("--dbName", "");
+				return ArgOptions.GetOption("--dbName", "");
 			}
 			else
 			{
@@ -311,9 +311,9 @@ namespace WpfApp1_cmd.ViewModel
 		/// <returns>DB Name:DB port</returns>
 		public static string GetNeximDBHost()
 		{
-			if (Options.GetOption("--dbHost", "") != "")
+			if (ArgOptions.GetOption("--dbHost", "") != "")
 			{
-				return Options.GetOption("--dbHost", "");
+				return ArgOptions.GetOption("--dbHost", "");
 			}
 			else
 			{
@@ -328,9 +328,9 @@ namespace WpfApp1_cmd.ViewModel
 		/// <returns></returns>
 		public static string GetNeximDBUser()
 		{
-			if (Options.GetOption("--dbUser", "") != "")
+			if (ArgOptions.GetOption("--dbUser", "") != "")
 			{
-				return Options.GetOption("--dbUser", "");
+				return ArgOptions.GetOption("--dbUser", "");
 			}
 			else
 			{
@@ -353,9 +353,9 @@ namespace WpfApp1_cmd.ViewModel
 		/// <returns></returns>
 		public static string GetNeximDBPass()
 		{
-			if (Options.GetOption("--dbPass", "") != "")
+			if (ArgOptions.GetOption("--dbPass", "") != "")
 			{
-				return Options.GetOption("--dbPass", "");
+				return ArgOptions.GetOption("--dbPass", "");
 			}
 			else
 			{
@@ -563,11 +563,11 @@ namespace WpfApp1_cmd.ViewModel
 		/// <summary>
 		///  ユニットの連携情報を読み込む(デフォルトはexeのリソースから)
 		/// </summary>
-		private void ReadUnitLink()
+		private void ReadConfig()
 		{
 			var assembly = System.Reflection.Assembly.GetExecutingAssembly();
-			var srcName = $"{assembly.GetName().Name}.Resources.unitLink.json";
-			string[] resources = assembly.GetManifestResourceNames();
+			var srcName = $"{assembly.GetName().Name}.Resources.config.json";
+			//string[] resources = assembly.GetManifestResourceNames();
 			string str = "";
 
 			using (var stream = assembly.GetManifestResourceStream(srcName))
@@ -577,23 +577,23 @@ namespace WpfApp1_cmd.ViewModel
 					str = reader.ReadToEnd();
 				}
 			}
-			UnitLink = JsonSerializer.Deserialize<UnitLink>(str);
+			Config = JsonSerializer.Deserialize<Config>(str);
 
 			// オプションでユニットリンクファイルが指定されている場合は、読み込んで更新する
-			if (Options.GetOption("--unitLink", "") != "")
+			if (ArgOptions.GetOption("--unitLink", "") != "")
 			{
 				//オプションで指定されたファイルを読み込む
-				string path = Options.GetOption("--unitLink", "");
+				string path = ArgOptions.GetOption("--unitLink", "");
 				if (Path.Exists(path) == true)
 				{
 					string json = System.IO.File.ReadAllText(path);
-					UnitLink? list = JsonSerializer.Deserialize<UnitLink>(json);
+					Config? list = JsonSerializer.Deserialize<Config>(json);
 
-					if (list != null && UnitLink != null)
+					if (list != null && Config != null)
 					{
 						foreach (var unit in list.units)
 						{
-							var v = UnitLink.units.FirstOrDefault(x => x.name == unit.name);
+							var v = Config.units.FirstOrDefault(x => x.name == unit.name);
 
 							if (v != null)
 							{
@@ -603,7 +603,7 @@ namespace WpfApp1_cmd.ViewModel
 							else
 							{
 								//存在しない場合は、追加
-								UnitLink.units.Add(unit);
+								Config.units.Add(unit);
 							}
 						}
 					}
@@ -623,11 +623,11 @@ namespace WpfApp1_cmd.ViewModel
 
 			Debug.WriteLine($"{ErrorInfo.GetErrMessage(ErrorCode.LCU_CONNECT_ERROR)}");
 
-			// unitLink.json の読み込み(ユニットのリンク情報、デフォルト)
-			ReadUnitLink();
+			// Config.json の読み込み(ユニットのリンク情報、デフォルト)
+			ReadConfig();
 
 			//オプション処理
-			string dataFolder = Options.GetOption("--dataFolder", "");
+			string dataFolder = ArgOptions.GetOption("--dataFolder", "");
 			if (dataFolder != "")
 			{
 				DataFolder = dataFolder;
@@ -670,7 +670,7 @@ namespace WpfApp1_cmd.ViewModel
 				DataFolder = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
 				UpdateInfos = [];
 				IsFileMenuEnabled = true;
-				string opt = Options.GetOption("--mode", "user");
+				string opt = ArgOptions.GetOption("--mode", "user");
 				IsLcuMenuEnabled = (opt == "administrator");
 			}
 
@@ -882,6 +882,25 @@ namespace WpfApp1_cmd.ViewModel
 			{
 				return;
 			}
+			bool? chk = item.IsSelected.Value;
+
+			switch (item)
+			{
+				case LcuInfo lcu:
+					UpdateChildren(lcu.Children, chk);
+					break;
+				case MachineInfo machine:
+					UpdateChildren(machine.Children, chk);
+					break;
+				case ModuleInfo module:
+					UpdateChildren(module.UnitVersions, chk);
+					if(ActiveView is ModuleViewModel mvm)
+					{
+						mvm.UpdateGroupCheck(null);
+					}
+					break;
+			}
+			/*
 
 			if (item is LcuInfo lcu)
 			{
@@ -909,11 +928,29 @@ namespace WpfApp1_cmd.ViewModel
 				bool? chk = item.IsSelected.Value;
 				module.UpdateChildren(chk);
 			}
+			*/
+		}
+
+		private void UpdateChildren<T>(IEnumerable<T> children, bool? chk) where T : CheckableItem
+		{
+			foreach (var child in children)
+			{
+				child.IsSelected.Value = chk;
+				if (child is MachineInfo machine)
+				{
+					UpdateChildren(machine.Children, chk);
+				}
+				else if (child is ModuleInfo module)
+				{
+					UpdateChildren(module.UnitVersions, chk);
+				}
+			}
 		}
 
 		/// <summary>
 		/// ツリービューの選択項目を全てクリアする
 		/// </summary>
+		/*
 		private void ClearSelectedItems()
 		{
 			foreach (var lcu in TreeViewItems)
@@ -931,6 +968,41 @@ namespace WpfApp1_cmd.ViewModel
 						}
 					}
 				}
+			}
+		}
+		*/
+		private void ClearSelectedItems()
+		{
+			foreach (var lcu in TreeViewItems)
+			{
+				ClearSelection(lcu);
+			}
+		}
+
+		private void ClearSelection(CheckableItem item)
+		{
+			item.IsSelected.Value = false;
+
+			switch (item)
+			{
+				case LcuInfo lcu:
+				foreach (var machine in lcu.Children)
+				{
+					ClearSelection(machine);
+				}
+				break;
+			case MachineInfo machine:
+				foreach (var module in machine.Children)
+				{
+					ClearSelection(module);
+				}
+				break;
+			case ModuleInfo module:
+				foreach (var unit in module.UnitVersions)
+				{
+					ClearSelection(unit);
+				}
+				break;
 			}
 		}
 
@@ -989,7 +1061,7 @@ namespace WpfApp1_cmd.ViewModel
 		/// </summary>
 		public async void FileOpenCmd()
 		{
-			string? backupPath = Options.GetOption("--backup");
+			string? backupPath = ArgOptions.GetOption("--backup");
 
 			if (backupPath == null)
 			{
@@ -1098,6 +1170,7 @@ namespace WpfApp1_cmd.ViewModel
 
 							// モジュールからバージョン情報を取得して、モジュールビューを生成する
 							IsBackupedData = false; // 一時的に false にしておく -> CheckBox のチェック状態をOnにするため
+							moduleInfo.IsSelected.Value = true;
 
 							var retVersion = await CreateVersionInfo(lcuInfo, machineInfo, moduleInfo, cts.Token);
 							if (retVersion != null)
@@ -1127,7 +1200,7 @@ namespace WpfApp1_cmd.ViewModel
 					else
 					{
 						//バックアップデータでない場合(インストールディス等)
-
+						//  ツリーのアイテムをクリックした時にビューを生成するので、ここでは何もしない
 					}
 					cts.Dispose();
 
@@ -1171,7 +1244,7 @@ namespace WpfApp1_cmd.ViewModel
 					}
 					string? ver = versionInfo.First(x => x.itemName == "Fuji LCU Communication Server Service").itemVersion;
 
-					await MsgBox.Show("LCU Access Check", $"{lcu.LcuCtrl.Name}", "Access OK", $"Version:{ver}", (int)(MsgDlgType.OK), "DataGridView");
+					await MsgBox.Show(Resource.Info, $"{lcu.LcuCtrl.Name}", "Access OK", $"Version:{ver}", (int)(MsgDlgType.OK), "DataGridView");
 				}
 			}
 		}
@@ -1197,9 +1270,6 @@ namespace WpfApp1_cmd.ViewModel
 
 			long diskSpace = long.Parse(info.Find(x => x.driveLetter == "D").free);
 
-
-			//var data = await lcu.LcuCtrl.LCU_Command(GetDir.Command("C:\\users\\ka.makihara"), token);
-
 			return diskSpace;
 		}
 
@@ -1219,6 +1289,13 @@ namespace WpfApp1_cmd.ViewModel
 
 				foreach (var unit in sec)
 				{
+					string? ext = Path.GetExtension(parser.GetValue(unit, "Path"));
+					if (Config.Options.ContainsExt(ext) == false)
+					{
+						// 登録されていない拡張子はスキップ
+						continue;
+					}
+
 					UpdateInfo update = new()
 					{
 						Name = unit,
@@ -1228,7 +1305,7 @@ namespace WpfApp1_cmd.ViewModel
 						FuserPath = parser.GetValue(unit, "FuserPath"),
 						IsVisibled = true,//チェックボックスの表示/非表示
 										  //リンク情報を取得
-						UnitGroup = UnitLink.units.Where(x => x.components.Find(y => y == unit) != null).FirstOrDefault()?.name
+						UnitGroup = Config.units.Where(x => x.components.Find(y => y == unit) != null).FirstOrDefault()?.name
 					};
 					updates.Add(update);
 				}
@@ -1375,7 +1452,7 @@ namespace WpfApp1_cmd.ViewModel
 			CanTransferStartFlag.Value = true;
 			CanAppQuitFlag.Value = false;
 
-			string? backupPath = Options.GetOption("--backup");
+			string? backupPath = ArgOptions.GetOption("--backup");
 
 			// バックアップを実行
 			if (backupPath != null)
@@ -1504,7 +1581,7 @@ namespace WpfApp1_cmd.ViewModel
 			AddLog("[Transfer] Command=Stop");
 
 			DialogTitle = Resource.Confirm;// "確認";
-			DialogText = "転送を中止しますか？";
+			DialogText = Resource.QuitTransferMsg;// "転送を中止しますか？";
 
 			var r = await DialogHost.Show(new MyMessageBox(), "DataGridView");
 			DialogHost.CloseDialogCommand.Execute(null, null);
@@ -1862,7 +1939,7 @@ namespace WpfApp1_cmd.ViewModel
 			//    ※パスはファイル名を含むので、ファイル名を削除してフォルダのみを取り出す
 			//      WebAPIに装置からフォルダを含む一覧を取得するコマンドがないため、UpdateCommon.inf のパスを利用する
 			//List<string> folders = module.UnitVersions.Select(x => Path.GetDirectoryName(x.Path)).ToList().Distinct().ToList();
-			List<string> folders = module.UpdateFiles().Select(x => x).ToList().Distinct().ToList();
+			List<string> folders = module.UpdateFiles(Config.Options).Select(x => x).ToList().Distinct().ToList();
 
 			//UpdateCommon.inf のパスを追加(UpdateCommon.inf は必ず存在する)
 			folders.Add( $"/{Define.MC_PERIPHERAL_PATH}{Define.UPDATE_INFO_FILE}");
@@ -1904,6 +1981,17 @@ namespace WpfApp1_cmd.ViewModel
 								{
 									mcFiles.Add(file.name);
 									lcuFiles.Add("/MCFiles" + file.name);
+
+									/*
+									if (Path.GetExtension(file.name) == ".inf" && Path.GetFileName(file.name) != "UpdateCommon.inf")
+									{
+										string lcuFile = $"/MCFiles/{Path.GetFileName(file.name)}";
+										string tmpDir = Path.GetTempPath();
+										bool rr = await lcu.LcuCtrl.GetMachineFile(machine.Name, module.Pos, file.name, lcuFile, tmpDir);
+
+										System.IO.File.Delete(tmpDir + Path.GetFileName(file.name));
+									}
+									*/
 								}
 							}
 						}
@@ -2248,6 +2336,7 @@ namespace WpfApp1_cmd.ViewModel
 		private static async Task<bool> GetMcPeripheralFile(LcuInfo lcu, MachineInfo machine, ModuleInfo module, string peripheralFile, string targetPath)
 		{
 			string mcFile = Define.MC_PERIPHERAL_PATH + peripheralFile;
+			//string mcFile = peripheralFile;
 			string lcuFile = $"/MCFiles/" + peripheralFile;
 
 			string retMsg = await lcu.LcuCtrl.LCU_Command(SetLcu.Command(lcu.LcuId));
@@ -2456,7 +2545,8 @@ namespace WpfApp1_cmd.ViewModel
 								LcuInfo lcu = machineInfo.Parent;
 
 								//時間がかかるので、プログレスダイアログを表示
-								var dlg = DialogHost.Show(new WaitProgress("Reading Update Info..."),"DataGridView");
+								var dlg = DialogHost.Show(new WaitProgress(Resource.ReadingUnitInfo),"DataGridView");
+								await Task.Delay(500); // ダイアログ表示のための遅延
 
 								var version = await CreateVersionInfo(lcu, machineInfo, moduleInfo, null);
 								if (version != null)
@@ -2466,9 +2556,30 @@ namespace WpfApp1_cmd.ViewModel
 								DialogHost.CloseDialogCommand.Execute(null, null);
 
 								viewModeTable.Add(viewName, new ModuleViewModel(item.Name, moduleInfo.UnitVersions, UpdateInfos));
+								moduleInfo.IsSelected.Value = Utility.CheckState<UnitVersion>(moduleInfo.UnitVersions);
 								break;
 						}
 						ActiveView = viewModeTable[viewName];
+					}
+				}
+
+				// ユニットがない場合はメッセージを表示
+				if ( ActiveView is ModuleViewModel moduleView)
+				{
+					if (moduleView.UnitVersions.Count == 0)
+					{
+						ModuleInfo moduleInfo = (ModuleInfo)item;
+						await MsgBox.Show(Resource.Info, $"{moduleInfo.Name}",
+										  Resource.NoUnitToUpdate,
+										  "", (int)(MsgDlgType.OK | MsgDlgType.ICON_INFO), "DataGridView");
+						/*
+						var controller = await this._dialogCoordinator.ShowProgressAsync(this,
+														Resource.NoUnitToUpdate,
+														"");
+						controller.SetIndeterminate();
+						await Task.Delay(2000);
+						await controller.CloseAsync();
+						*/
 					}
 				}
 			}
@@ -2480,6 +2591,17 @@ namespace WpfApp1_cmd.ViewModel
 		/// <param name="e"></param>
 		public async void TreeViewSelectedItemChanged(RoutedPropertyChangedEventArgs<object> e)
 		{
+			// TreeViewMouseLeftButtonDown() の処理が先に行われるので、
+			// ここで何かする必要はない、かも。
+
+			/*
+			 *	SelectedItemChanged() は選択状態が「変化」した場合しか呼び出されないので
+			 *  プログラムでビューを切り替えた場合(ActiveViewを変更)に
+			 *  ツリーの選択をプログラムから変更できない(IsSelected は readOnly)のため
+			 *  ツリーの選択状態と表示しているビューの不一致が発生する。
+			 *
+			 *  よって、LeftButtonDown でクリックしたビューに切り替える事にした
+			 */
 			Debug.WriteLine("TreeViewSelectedItemChanged");
 
 			/*
@@ -2577,18 +2699,26 @@ namespace WpfApp1_cmd.ViewModel
 			string path = parser.GetValue(unit, "Path");
 			string binPath = DataFolder + path;
 
+			if( Config.Options.ContainsExt( Path.GetExtension(path)) == false)
+			{
+				//対象外の拡張子
+				return;
+			}
+
 			if (System.IO.File.Exists(binPath) == true)
 			{
 				if (System.IO.File.GetAttributes(binPath) == FileAttributes.Directory)
 				{
 					fileSz = GetDirectorySize( new DirectoryInfo(binPath));
 				}
+				/* 登録されている拡張子以外は対象外とするので、現在は不要
 				else if (Path.GetExtension(binPath) == ".inf")
 				{
 					// .inf の場合はディレクトリとして扱う(ただし、ディレクトリ名は .inf ファイルを除いたもの)
 					path = Path.GetDirectoryName(path) ?? "";
 					fileSz = GetDirectorySize( new DirectoryInfo( Path.GetDirectoryName(binPath) ));
 				}
+				*/
 				else
 				{
 					FileInfo fi = new(binPath);
@@ -2606,6 +2736,7 @@ namespace WpfApp1_cmd.ViewModel
 			}
 			else
 			{
+				//親の選択状態を反映
 				sel = (module.IsSelected.Value == true);
 			}
 
@@ -2619,7 +2750,7 @@ namespace WpfApp1_cmd.ViewModel
 				NewVersion = newVer,
 				Parent = module,
 				Size = fileSz,
-				UnitGroup = UnitLink.units.Where(x => x.components.Find(y => y == unit) != null).FirstOrDefault()?.name
+				UnitGroup = Config.units.Where(x => x.components.Find(y => y == unit) != null).FirstOrDefault()?.name
 			};
 			versions.Add(version);
 			Debug.WriteLine($"[UnitVersion] {module.Name}:{unit}={version.CurVersion}=>{version.NewVersion}");
@@ -2692,11 +2823,18 @@ namespace WpfApp1_cmd.ViewModel
 			// ユニット一覧作成時のオプション
 			//   --matchUnit が指定されている場合は、UpdateCommon.inf に記載されているユニットのみを対象とする
 			//   --diffVersionOnly が指定されている場合は、バージョンが同一のユニットは対象外とする
-			bool match = Options.GetOptionBool("--matchUnit");
-			bool diffOnly = Options.GetOptionBool("--diffVerOnly");
+			bool match = ArgOptions.GetOptionBool("--matchUnit");
+			bool diffOnly = ArgOptions.GetOptionBool("--diffVerOnly");
 
 			foreach (var unit in sec)
 			{
+				if( Config.Options.ContainsExt(Path.GetExtension(parser.GetValue(unit,"Path"))) == false)
+				{
+					//対象外の拡張子
+					AddLog($"[UnitVersion] {lcu.LcuCtrl.Name};{machine.Name};{module.Name}:{unit}=Skip(ext Not Applicable)");
+					continue;
+				}
+
 				//バージョンアップの中に該当するユニットのインデックスを取得(ない場合は -1)
 				int idx = -1;
 				if (UpdateInfos != null)
@@ -2728,6 +2866,35 @@ namespace WpfApp1_cmd.ViewModel
 						AddLog($"[UnitVersion] {lcu.LcuCtrl.Name};{machine.Name};{module.Name}:{unit}=Skip(not found)");
 					}
 				}
+			}
+
+			string mode = ArgOptions.GetOption("--mode", "user");
+			if (mode == "user")
+			{
+				// ユニットグループ内のチェックを統一する
+				//   ユーザーモードではユニット単位の選択ができないので、ユニットグループ単位で選択状態を統一する
+				//      (false がある場合は全て false にする)
+
+				// 一旦グループ単位でまとめる
+				OrderedDictionary<string, UnitGroup> od = [];
+				foreach (var item in versions)
+				{
+					if (od.ContainsKey(item.UnitGroup) == false)
+					{
+						od.Add(item.UnitGroup, new UnitGroup(item));
+					}
+					else
+					{
+						od[item.UnitGroup].Units.Add(item);
+					}
+				}
+				// グループ内の選択状態を統一する
+				foreach (var item in od)
+				{
+					item.Value.UnificationUnitState();
+				}
+				// チェック状態を更新したのでグループ分けの情報は不要
+				od.Clear();
 			}
 
 			return versions;

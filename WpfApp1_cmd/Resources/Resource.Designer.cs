@@ -223,6 +223,15 @@ namespace WpfApp1_cmd.Resources {
         }
         
         /// <summary>
+        ///   There are no units to update. に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string NoUnitToUpdate {
+            get {
+                return ResourceManager.GetString("NoUnitToUpdate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Start ? に類似しているローカライズされた文字列を検索します。
         /// </summary>
         public static string QuestionTransferStart {
@@ -246,6 +255,15 @@ namespace WpfApp1_cmd.Resources {
         public static string QuitTransferMsg {
             get {
                 return ResourceManager.GetString("QuitTransferMsg", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Reading Update Info... に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string ReadingUnitInfo {
+            get {
+                return ResourceManager.GetString("ReadingUnitInfo", resourceCulture);
             }
         }
         

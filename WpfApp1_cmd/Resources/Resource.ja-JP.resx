@@ -189,4 +189,10 @@
   <data name="ContinueTransfer" xml:space="preserve">
     <value>転送を続けますか?</value>
   </data>
+  <data name="NoUnitToUpdate" xml:space="preserve">
+    <value>アップデート対象のユニットはありません</value>
+  </data>
+  <data name="ReadingUnitInfo" xml:space="preserve">
+    <value>ユニット情報を読み込んでいます</value>
+  </data>
 </root>

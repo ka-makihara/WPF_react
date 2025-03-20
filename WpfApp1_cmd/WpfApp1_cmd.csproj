@@ -17,7 +17,6 @@
     <None Remove="Resources\caution_32.png" />
     <None Remove="Resources\error_32.png" />
     <None Remove="Resources\info_32.png" />
-    <None Remove="Resources\unitLink.json" />
     <None Remove="Resources\warning_32.png" />
     <None Remove="View\1180_32.png" />
   </ItemGroup>
@@ -48,7 +47,7 @@
     <Resource Include="Resources\caution_32.png" />
     <Resource Include="Resources\error_32.png" />
     <Resource Include="Resources\info_32.png" />
-    <EmbeddedResource Include="Resources\unitLink.json" />
+    <EmbeddedResource Include="Resources\config.json" />
     <Resource Include="Resources\warning_32.png" />
   </ItemGroup>
 

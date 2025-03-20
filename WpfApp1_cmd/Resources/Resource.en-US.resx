@@ -189,4 +189,10 @@
   <data name="ContinueTransfer" xml:space="preserve">
     <value>Continue Transfer ?</value>
   </data>
+  <data name="NoUnitToUpdate" xml:space="preserve">
+    <value>There are no units to update.</value>
+  </data>
+  <data name="ReadingUnitInfo" xml:space="preserve">
+    <value>Reading Unit Info...</value>
+  </data>
 </root>

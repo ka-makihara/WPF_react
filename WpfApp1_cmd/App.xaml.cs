@@ -53,7 +53,7 @@ namespace WpfApp1_cmd
 	/// <summary>
 	/// 起動時オプションを解析するクラス
 	/// </summary>
-	public static class Options
+	public static class ArgOptions
 	{
 		public static List<string> mainArgs = [];
 		public static Dictionary<string, string> OptionsDic = [];
@@ -199,6 +199,11 @@ namespace WpfApp1_cmd
 		public static bool? CheckState<Type>(ReactiveCollection<Type> list)
 			where Type : CheckableItem
 		{
+			if(list.Count == 0)
+			{
+				return false;
+			}
+
 			int tc = list.Where(x => x.IsSelected.Value == true).Count();
 			int fc = list.Where(x => x.IsSelected.Value == false).Count();
 
@@ -305,7 +310,7 @@ namespace WpfApp1_cmd
 
 			if (e.Args.Length > 0)
 			{
-				Options.ParseArgs(e.Args);
+				ArgOptions.ParseArgs(e.Args);
 			}
 			MainWindow mainWindow = new MainWindow();
 			mainWindow.Show();

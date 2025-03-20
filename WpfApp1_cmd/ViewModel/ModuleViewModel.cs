@@ -17,6 +17,7 @@ using WpfLcuCtrlLib;
 
 namespace WpfApp1_cmd.ViewModel
 {
+	/*
 	partial class UnitGroup  :ViewModelBase
 	{
 		private bool? _status;
@@ -40,13 +41,14 @@ namespace WpfApp1_cmd.ViewModel
 			Status = Utility.CheckState(Units);
 		}
 	}
+	*/
 
 	internal class ModuleViewModel : ViewModelBase
     {
         private ObservableCollection<UpdateInfo>? _updates = null;
         private void IsSelectedChk(UnitVersion item, bool? value)
         {
-			if (Options.GetOptionBool("--diffVerOnly") == true)
+			if (ArgOptions.GetOptionBool("--diffVerOnly") == true)
 			{
 				// バージョンが違うものしかチェックが更新できないようにする
 				var uv = _updates.FirstOrDefault(x => x.Name == item.Name);
@@ -111,7 +113,7 @@ namespace WpfApp1_cmd.ViewModel
 		{
 			get
 			{
-				string mode = Options.GetOption("--mode", "user");
+				string mode = ArgOptions.GetOption("--mode", "user");
 				return mode == "administrator";
 			}
 		}
@@ -136,8 +138,9 @@ namespace WpfApp1_cmd.ViewModel
 
 		public ICollectionView UnitVersionGroupView {get; set; }
 
-		private OrderedDictionary<string, UnitGroup> _unitGroup;
+		//private OrderedDictionary<string, UnitGroup> _unitGroup;
 
+		/*
 		private void InitGroupStatus()
 		{
 			_unitGroup = [];
@@ -155,6 +158,7 @@ namespace WpfApp1_cmd.ViewModel
 				_unitGroup.Add((string)group.Name, ug);
 			}
 		}
+		*/
 /*
 		private double _scrollPosition = 0.0;
 		public double ScrollPosition
@@ -232,18 +236,18 @@ namespace WpfApp1_cmd.ViewModel
 					else
 					{
 						IsSelectedChk(item, value);
-					}
+					}Debug.WriteLine("OnProp");
+					OnPropertyChanged();
 				});
             }
 
 			//ユニット選択のトグルボタン、チェックボックスの表示を切り替える(--mode=user/administrator, 未定義は administrator 以外とする)
-			string mode = Options.GetOption("--mode", "user");
+			string mode = ArgOptions.GetOption("--mode", "user");
 
 			IsUnitCheckBoxEnabled = (mode == "administrator");  // ユニット選択のトグルボタンの初期値(administrator のときのみ有効)
 			IsChkVisibled = (mode == "administrator");          // ユニットチェックボックスの表示の初期値(administrator のときのみ表示)
 
-			InitGroupStatus();
-
+			//InitGroupStatus();
 		}
 
 		/// <summary>
@@ -293,7 +297,7 @@ namespace WpfApp1_cmd.ViewModel
 		// グループインデックス(IsGroupCheckedがグループヘッダーのチェックボックスの状態を取得するために使用)
 		//   プロパティの更新で呼び出されるが、グループの数分だけ呼び出されるため、インデックスを保持しておく
 		//   もっと良い方法がありそうな気はするが、ヘッダーに配置されたチェックボックスの状態を設定する方法が分からないので。
-		private int _groupIdx = 0;
+		/*
 		public bool? IsGroupChecked
 		{
 			get
@@ -325,24 +329,26 @@ namespace WpfApp1_cmd.ViewModel
 			ug.UpdateStatus();
 			OnPropertyChanged(nameof(IsGroupChecked));
 		}
+		*/
 
-		private void UpdateGroupCheck(UnitVersion? m)
+		/// <summary>
+		/// 各アイテムのチェックボックスを操作した時のコマンド
+		/// </summary>
+		/// <param name="m"></param>
+		public void UpdateGroupCheck(UnitVersion? m)
 		{
 			if (m != null)
 			{
 				Debug.WriteLine($"UpdateGroupCheck({m.Name})={m.IsSelected}");
-				UpdateGroupStatus(m);
+				//UpdateGroupStatus(m);
 			}
 			else
 			{
 				Debug.WriteLine("UpdateGroupCheck(null)");
 			}
-
-		//	m.IsChecked = (m.IsChecked == false);
-
-			//OnPropertyChanged(nameof(IsGroupChecked));
             OnPropertyChanged(nameof(IsAllSelected));
 
+			Debug.WriteLine("Refresh");
 			UnitVersionGroupView.Refresh();
 		}
 

@@ -258,7 +258,8 @@
     }
   ],
   "Options": {
-    "--dataFolder": "",
-    "--diffOnly": "true"
+    "dataFolder": "",
+    "diffOnly": "true",
+    "extentions": [ ".rom", ".bin", ".jam" ]
   }
 }

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -279,7 +280,7 @@ namespace WpfApp1_cmd.Models
 			UpdateStrings = System.IO.File.ReadAllLines(path, Encoding.GetEncoding(Define.TXT_ENCODING));	
 		}
 
-		public List<string> UpdateFiles()
+		public List<string> UpdateFiles(Options opt)
         {
             List<string> paths = [];
 
@@ -287,8 +288,20 @@ namespace WpfApp1_cmd.Models
             {
                 foreach (var sec in UpdateInfo.SectionCount())
                 {
-                    paths.Add(UpdateInfo.GetValue(sec, "Path"));
-                }
+					string p = UpdateInfo.GetValue(sec, "Path");
+
+					if (opt.ContainsExt(Path.GetExtension(p)) == false)
+					{
+						continue;	
+					}
+
+					paths.Add(UpdateInfo.GetValue(sec, "Path"));
+					var d = UpdateInfo.GetValue(sec, "FuserPath");
+					if( d != "" )
+					{
+						paths.Add(d);
+					}
+				}
             }
             return paths;
         }
