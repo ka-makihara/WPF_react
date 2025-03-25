@@ -195,4 +195,55 @@
   <data name="ReadingUnitInfo" xml:space="preserve">
     <value>Reading Update Info...</value>
   </data>
+  <data name="DiskSpaceError" xml:space="preserve">
+    <value>DiskSpaceError</value>
+  </data>
+  <data name="DiskFreeSize" xml:space="preserve">
+    <value>DiskFreeSize</value>
+  </data>
+  <data name="DiskRequireSize" xml:space="preserve">
+    <value>DiskRequireSize</value>
+  </data>
+  <data name="Error_UPDATE_DISKSPACE_ERROR" xml:space="preserve">
+    <value>Disk Space Error</value>
+  </data>
+  <data name="GetLineInfoError" xml:space="preserve">
+    <value>Unable to get line information.</value>
+  </data>
+  <data name="Error_LCU_UPLOAD_ERROR" xml:space="preserve">
+    <value>LCU FTP Upload Error</value>
+  </data>
+  <data name="Error_LCU_LINEINFO_ERROR" xml:space="preserve">
+    <value>Unable to get line information.</value>
+  </data>
+  <data name="Error_LCU_CREATE_FOLDER_ERROR" xml:space="preserve">
+    <value>LCU Create folder fail.</value>
+  </data>
+  <data name="Error_LCU_WEBAPI_ERROR" xml:space="preserve">
+    <value>LCU WebApi Command Error</value>
+  </data>
+  <data name="Error_LCU_DOWNLOAD_ERROR" xml:space="preserve">
+    <value>LCU File download error.</value>
+  </data>
+  <data name="BTN_Transfer" xml:space="preserve">
+    <value>Transfer</value>
+  </data>
+  <data name="BTN_Exit" xml:space="preserve">
+    <value>Exit</value>
+  </data>
+  <data name="ReadLineInformation" xml:space="preserve">
+    <value>Read Line information ..."</value>
+  </data>
+  <data name="MENU_File" xml:space="preserve">
+    <value>File</value>
+  </data>
+  <data name="MENU_ReadUpdateData" xml:space="preserve">
+    <value>Read UpdateData</value>
+  </data>
+  <data name="MENU_ConnectionCheck" xml:space="preserve">
+    <value>ConnectionCheck</value>
+  </data>
+  <data name="MENU_CheckDiskSpace" xml:space="preserve">
+    <value>Check Disk Space</value>
+  </data>
 </root>

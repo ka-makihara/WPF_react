@@ -160,7 +160,7 @@
     <value>操作が正常に完了しました。</value>
   </data>
   <data name="Error_UPDATE_READ_ERROR" xml:space="preserve">
-    <value>UpdateDataが見つかりません。</value>
+    <value>バージョンアップ用のデータが見つかりません。</value>
   </data>
   <data name="Error_FTP_SERVER_ERROR" xml:space="preserve">
     <value>FTPサーバーエラー</value>
@@ -175,7 +175,7 @@
     <value>バックアップデータの不一致</value>
   </data>
   <data name="Error_LCU_CONNECT_ERROR" xml:space="preserve">
-    <value>LCU接続エラー</value>
+    <value>ライン情報が取得できません</value>
   </data>
   <data name="Error_LCU_DISK_INFO_ERROR" xml:space="preserve">
     <value>LCUディスク情報エラー</value>
@@ -194,5 +194,56 @@
   </data>
   <data name="ReadingUnitInfo" xml:space="preserve">
     <value>ユニット情報を読み込んでいます</value>
+  </data>
+  <data name="DiskSpaceError" xml:space="preserve">
+    <value>ディスク空き容量不足</value>
+  </data>
+  <data name="DiskFreeSize" xml:space="preserve">
+    <value>空き容量は</value>
+  </data>
+  <data name="DiskRequireSize" xml:space="preserve">
+    <value>必要な容量は</value>
+  </data>
+  <data name="Error_UPDATE_DISKSPACE_ERROR" xml:space="preserve">
+    <value>アップデートに必要なディスク空き容量が不足しています</value>
+  </data>
+  <data name="GetLineInfoError" xml:space="preserve">
+    <value>ライン情報が取得できません</value>
+  </data>
+  <data name="Error_LCU_UPLOAD_ERROR" xml:space="preserve">
+    <value>LCUにファイルを転送できません</value>
+  </data>
+  <data name="Error_LCU_LINEINFO_ERROR" xml:space="preserve">
+    <value>ライン情報が取得できません</value>
+  </data>
+  <data name="Error_LCU_CREATE_FOLDER_ERROR" xml:space="preserve">
+    <value>LCUのフォルダ作成に失敗しました</value>
+  </data>
+  <data name="Error_LCU_WEBAPI_ERROR" xml:space="preserve">
+    <value>LCUのコマンド送信に失敗しました</value>
+  </data>
+  <data name="Error_LCU_DOWNLOAD_ERROR" xml:space="preserve">
+    <value>LCUからのファイル取得に失敗しました</value>
+  </data>
+  <data name="BTN_Transfer" xml:space="preserve">
+    <value>  転  送  </value>
+  </data>
+  <data name="BTN_Exit" xml:space="preserve">
+    <value>  終  了  </value>
+  </data>
+  <data name="ReadLineInformation" xml:space="preserve">
+    <value>ライン情報を読み込んでいます・・・</value>
+  </data>
+  <data name="MENU_File" xml:space="preserve">
+    <value>ファイル</value>
+  </data>
+  <data name="MENU_ReadUpdateData" xml:space="preserve">
+    <value>アップデートデータ読み込み</value>
+  </data>
+  <data name="MENU_ConnectionCheck" xml:space="preserve">
+    <value>接続確認</value>
+  </data>
+  <data name="MENU_CheckDiskSpace" xml:space="preserve">
+    <value>ディスク空き容量確認</value>
   </data>
 </root>

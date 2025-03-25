@@ -280,9 +280,16 @@ namespace WpfApp1_cmd
 
 		private void Application_Startup(object sender, StartupEventArgs e)
 		{
-			// Windowsのカルチャを取得して設定
-            CultureInfo currentCulture = CultureInfo.InstalledUICulture;
-            ChangeCulture(currentCulture.Name);
+			if (e.Args.Length > 0)
+			{
+				ArgOptions.ParseArgs(e.Args);
+			}
+
+			// Windowsのカルチャを取得して設定(--langオプションが指定されている場合はその言語を設定)
+			CultureInfo currentCulture = CultureInfo.InstalledUICulture;
+
+			ChangeCulture( ArgOptions.GetOption("--lang", currentCulture.Name) );
+			//ChangeCulture(currentCulture.Name);
             //ChangeCulture("ja-JP");
             //ChangeCulture("en-US");
 
@@ -308,10 +315,6 @@ namespace WpfApp1_cmd
 			// .NET(Core系)は デフォルトで shift-jis(sjis) に対応したエンコーディングプロバイダーが登録されていないので、追加する
 			Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-			if (e.Args.Length > 0)
-			{
-				ArgOptions.ParseArgs(e.Args);
-			}
 			MainWindow mainWindow = new MainWindow();
 			mainWindow.Show();
 		}

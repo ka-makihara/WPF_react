@@ -98,14 +98,14 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <Menu IsMainMenu="True" Grid.ColumnSpan="2" >
-            <MenuItem Header="_File" Visibility="{Binding IsFileMenuEnabled, Converter={StaticResource BoolToVisible}}">
-                <MenuItem Header="Read UpdateData" Icon="{materialDesign:PackIcon Kind=PresentOpen}" Command="{Binding FileOpenCommand}" />
+            <MenuItem Header="{x:Static resources:Resource.MENU_File}" Visibility="{Binding IsFileMenuEnabled, Converter={StaticResource BoolToVisible}}">
+                <MenuItem Header="{x:Static resources:Resource.MENU_ReadUpdateData}" Icon="{materialDesign:PackIcon Kind=PresentOpen}" Command="{Binding FileOpenCommand}" />
                 <Separator />
-                <MenuItem Header="Exit" Icon="{materialDesign:PackIcon Kind=ExitToApp}" InputGestureText="Ctrl+E" Command="{Binding QuitApplicationCommand}" />
+                <MenuItem Header="{x:Static resources:Resource.BTN_Exit}" Icon="{materialDesign:PackIcon Kind=ExitToApp}" Command="{Binding QuitApplicationCommand}" />
             </MenuItem>
             <MenuItem Header="_LCU" Visibility="{Binding IsLcuMenuEnabled, Converter={StaticResource BoolToVisible}}" >
-                <MenuItem Header="ConnectionCheck" Icon="{materialDesign:PackIcon Kind=Network}" Command="{Binding LcuNetworkChkCommand}" />
-                <MenuItem Header="Check Disk Space" Icon="{materialDesign:PackIcon Kind=DiscFull}" Command="{Binding LcuDiskChkCommand}" />
+                <MenuItem Header="{x:Static resources:Resource.MENU_ConnectionCheck}" Icon="{materialDesign:PackIcon Kind=Network}" Command="{Binding LcuNetworkChkCommand}" />
+                <MenuItem Header="{x:Static resources:Resource.MENU_CheckDiskSpace}" Icon="{materialDesign:PackIcon Kind=DiscFull}" Command="{Binding LcuDiskChkCommand}" />
             </MenuItem>
         </Menu>
         <!--
@@ -165,6 +165,7 @@
                         <Setter Property="Tag" Value="{Binding Path=DataContext, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type TreeView}}}" />
                         <Setter Property="ContextMenu" Value="{Binding Source={StaticResource SampleContextMenu}}"/>
                         <Setter Property="IsExpanded" Value="{Binding IsExpanded.Value, Mode=TwoWay}" />
+                        <Setter Property="ToolTip" Value="{Binding ToolTipText, Mode=TwoWay}" />
                         <!-- MultiSelect で　IsSelected を Bind すると、チェックボックスが正しくチェックできない
                         <Setter Property="IsSelected" Value="{Binding IsSelected.Value, Mode=TwoWay}" />
                         -->
@@ -178,7 +179,8 @@
                                 Command="{Binding DataContext.TreeViewChkCommand, RelativeSource={RelativeSource FindAncestor,AncestorType={x:Type TreeView}}}"
                                 CommandParameter="{Binding}"
                                 VerticalAlignment="Center" />
-                            <TextBlock Text="{Binding Name}" Margin="5,0,0,0" FontSize="16" IsEnabled="False" />
+                            <TextBlock Text="{Binding Name}" Margin="5,0,0,0" FontSize="16" IsEnabled="False" ToolTip="{Binding ToolTipText}">
+                            </TextBlock>
                         </StackPanel>
                     </HierarchicalDataTemplate>
                 </TreeView.ItemTemplate>
@@ -272,7 +274,7 @@
                                 FontWeight="Bold"
                                 Background="LightGray"
                                 VerticalAlignment="Bottom">
-                            <TextBlock Text="Transfer" />
+                            <TextBlock Text="{x:Static resources:Resource.BTN_Transfer}" />
                         </Button>
                         <!--
                         <Button Height="40" materialDesign:ButtonAssist.CornerRadius="5"
@@ -294,7 +296,7 @@
                                 FontWeight="Bold"
                                 Background="LightGray"
                                 VerticalAlignment="Bottom">
-                            <TextBlock Text="  Exit  " />
+                            <TextBlock Text="{x:Static resources:Resource.BTN_Exit}" />
                         </Button>
                     </StackPanel>
                 </StackPanel>

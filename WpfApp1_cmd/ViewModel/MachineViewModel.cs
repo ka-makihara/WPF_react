@@ -54,7 +54,7 @@ namespace WpfApp1_cmd.ViewModel
             {
 				int tc = module.UnitVersions.Count(x => x.IsSelected.Value == true);
 				int nc = module.UnitVersions.Count(x => x.IsSelected.Value == false);
-				if (tc == module.UnitVersions.Count)
+				if (tc == module.UnitVersions.Count /*&& module.UnitVersions.Count != 0 */)
 				{
 					allTrue++;
 				}

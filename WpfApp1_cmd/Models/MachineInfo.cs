@@ -28,9 +28,16 @@ namespace WpfApp1_cmd.Models
         public ReactivePropertySlim<bool?> IsSelected { get; set; } = new ReactivePropertySlim<bool?>(true);
         public ReactivePropertySlim<bool?> IsExpanded { get; set; } = new ReactivePropertySlim<bool?>(false);
 
-        public CheckableItem()
+		private string? _toolTipText;
+		public string? ToolTipText
+		{
+			get => _toolTipText;
+			set => SetProperty(ref _toolTipText, value);
+		}
+		public CheckableItem()
         {
-        }
+			ToolTipText = "Default ToolTip";
+		}
 
 		public string GetViewName()
 		{
@@ -66,7 +73,22 @@ namespace WpfApp1_cmd.Models
         private string? _ftpPassword;
         public string? FtpPassword { get => _ftpPassword; set => _ftpPassword = value; }
 
-        private ReactiveCollection<MachineInfo> _machines = [];
+		private ErrorCode _errCode = ErrorCode.OK;
+		public ErrorCode ErrCode
+		{
+			get => _errCode;
+			set
+			{
+				SetProperty(ref _errCode, value);
+				ErrorInfo.ErrCode = value;
+				if( _errCode != ErrorCode.OK)
+				{
+					IsSelected.Value = false;
+				}
+			}
+		}
+
+		private ReactiveCollection<MachineInfo> _machines = [];
         public ReactiveCollection<MachineInfo> Children
         {
             get => _machines;
@@ -117,11 +139,12 @@ namespace WpfApp1_cmd.Models
 
 		public LcuInfo(string name, int id=0)
         {
-            _machines.ObserveAddChanged().Subscribe(x => AddMachine(x));
-			IsSelected.Subscribe(x => Update(x));
-
+			IsSelected.Value = true;
 			LcuId = id;
 			_lcuCtrl = new(name,id);
+
+            _machines.ObserveAddChanged().Subscribe(x => AddMachine(x));
+			IsSelected.Subscribe(x => Update(x));
         }
 
         public string Version { get; set; } = "V1.00";

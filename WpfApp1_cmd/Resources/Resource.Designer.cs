@@ -70,6 +70,24 @@ namespace WpfApp1_cmd.Resources {
         }
         
         /// <summary>
+        ///   Exit に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string BTN_Exit {
+            get {
+                return ResourceManager.GetString("BTN_Exit", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Transfer に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string BTN_Transfer {
+            get {
+                return ResourceManager.GetString("BTN_Transfer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Cancel に類似しているローカライズされた文字列を検索します。
         /// </summary>
         public static string Cancel {
@@ -93,6 +111,33 @@ namespace WpfApp1_cmd.Resources {
         public static string ContinueTransfer {
             get {
                 return ResourceManager.GetString("ContinueTransfer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   DiskFreeSize に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string DiskFreeSize {
+            get {
+                return ResourceManager.GetString("DiskFreeSize", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   DiskRequireSize に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string DiskRequireSize {
+            get {
+                return ResourceManager.GetString("DiskRequireSize", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   DiskSpaceError に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string DiskSpaceError {
+            get {
+                return ResourceManager.GetString("DiskSpaceError", resourceCulture);
             }
         }
         
@@ -151,11 +196,38 @@ namespace WpfApp1_cmd.Resources {
         }
         
         /// <summary>
+        ///   LCU Create folder fail. に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Error_LCU_CREATE_FOLDER_ERROR {
+            get {
+                return ResourceManager.GetString("Error_LCU_CREATE_FOLDER_ERROR", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   LCU disk Info error. に類似しているローカライズされた文字列を検索します。
         /// </summary>
         public static string Error_LCU_DISK_INFO_ERROR {
             get {
                 return ResourceManager.GetString("Error_LCU_DISK_INFO_ERROR", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   LCU File download error. に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Error_LCU_DOWNLOAD_ERROR {
+            get {
+                return ResourceManager.GetString("Error_LCU_DOWNLOAD_ERROR", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Unable to get line information. に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Error_LCU_LINEINFO_ERROR {
+            get {
+                return ResourceManager.GetString("Error_LCU_LINEINFO_ERROR", resourceCulture);
             }
         }
         
@@ -169,11 +241,38 @@ namespace WpfApp1_cmd.Resources {
         }
         
         /// <summary>
+        ///   LCU FTP Upload Error に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Error_LCU_UPLOAD_ERROR {
+            get {
+                return ResourceManager.GetString("Error_LCU_UPLOAD_ERROR", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   LCU WebApi Command Error に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Error_LCU_WEBAPI_ERROR {
+            get {
+                return ResourceManager.GetString("Error_LCU_WEBAPI_ERROR", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Operation completed successfully. に類似しているローカライズされた文字列を検索します。
         /// </summary>
         public static string Error_OK {
             get {
                 return ResourceManager.GetString("Error_OK", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Disk Space Error に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Error_UPDATE_DISKSPACE_ERROR {
+            get {
+                return ResourceManager.GetString("Error_UPDATE_DISKSPACE_ERROR", resourceCulture);
             }
         }
         
@@ -187,11 +286,56 @@ namespace WpfApp1_cmd.Resources {
         }
         
         /// <summary>
+        ///   Unable to get line information. に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string GetLineInfoError {
+            get {
+                return ResourceManager.GetString("GetLineInfoError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Info に類似しているローカライズされた文字列を検索します。
         /// </summary>
         public static string Info {
             get {
                 return ResourceManager.GetString("Info", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Check Disk Space に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string MENU_CheckDiskSpace {
+            get {
+                return ResourceManager.GetString("MENU_CheckDiskSpace", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   ConnectionCheck に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string MENU_ConnectionCheck {
+            get {
+                return ResourceManager.GetString("MENU_ConnectionCheck", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   File に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string MENU_File {
+            get {
+                return ResourceManager.GetString("MENU_File", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Read UpdateData に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string MENU_ReadUpdateData {
+            get {
+                return ResourceManager.GetString("MENU_ReadUpdateData", resourceCulture);
             }
         }
         
@@ -264,6 +408,15 @@ namespace WpfApp1_cmd.Resources {
         public static string ReadingUnitInfo {
             get {
                 return ResourceManager.GetString("ReadingUnitInfo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Read Line information ...&quot; に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string ReadLineInformation {
+            get {
+                return ResourceManager.GetString("ReadLineInformation", resourceCulture);
             }
         }
         

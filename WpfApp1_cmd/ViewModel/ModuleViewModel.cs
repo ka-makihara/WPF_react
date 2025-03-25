@@ -123,7 +123,7 @@ namespace WpfApp1_cmd.ViewModel
 		/// </summary>
 		private void OnAllSelectCommandExecuted()
 		{
-			var newValue = IsAllSelected.Value == true;
+			var newValue = IsAllSelected;// == true;
 			foreach (var unit in UnitVersions)
 			{
 				if (unit.Attribute == Define.NOT_UPDATE)
@@ -131,7 +131,14 @@ namespace WpfApp1_cmd.ViewModel
 					unit.IsSelected.Value = false;
 				}
 				else {
-					unit.IsSelected.Value = newValue;
+					if (newValue == null)
+					{
+						unit.IsSelected.Value = true;
+					}
+					else
+					{
+						unit.IsSelected.Value = newValue;
+					}
 				}
 			}
 		}
