@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:WpfApp1_cmd.View"
+             xmlns:resources="clr-namespace:WpfApp1_cmd.Resources"
              mc:Ignorable="d" 
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
@@ -32,23 +33,23 @@
         <StackPanel x:Name="Buttons" Grid.Row="1" Margin="0,16,0,0" HorizontalAlignment="Center" Orientation="Horizontal">
 
             <Button Margin="10,0,10,0" Command="{x:Static materialDesign:DialogHost.CloseDialogCommand}"
-                CommandParameter="OK" Content="  O   K  " IsDefault="True"
+                CommandParameter="OK" Content="{x:Static resources:Resource.BTN_Ok}" IsDefault="True"
                 materialDesign:ButtonAssist.CornerRadius="10"
                 Style="{StaticResource MaterialDesignPaperDarkButton}" />
 
             <Button Margin="10,0,10,0" Command="{x:Static materialDesign:DialogHost.CloseDialogCommand}"
-                CommandParameter="YES" Content="  Y E S  " IsDefault="True"
+                CommandParameter="YES" Content="{x:Static resources:Resource.BTN_Yes}" IsDefault="True"
                 materialDesign:ButtonAssist.CornerRadius="10"
                 Style="{StaticResource MaterialDesignPaperDarkButton}" />
 
             <Button Margin="10,0,10,0" Command="{x:Static materialDesign:DialogHost.CloseDialogCommand}"
-                CommandParameter="NO" Content=" N O  "
+                CommandParameter="NO" Content="{x:Static resources:Resource.BTN_No}"
                 IsCancel="True"
                 materialDesign:ButtonAssist.CornerRadius="10"
                 Style="{StaticResource MaterialDesignPaperDarkButton}" />
             
             <Button Margin="10,0,10,0" Command="{x:Static materialDesign:DialogHost.CloseDialogCommand}"
-                CommandParameter="CANCEL" Content="CANCEL"
+                CommandParameter="CANCEL" Content="{x:Static resources:Resource.BTN_Cancel}"
                 IsCancel="True"
                 materialDesign:ButtonAssist.CornerRadius="10"
                 Style="{StaticResource MaterialDesignPaperDarkButton}" />

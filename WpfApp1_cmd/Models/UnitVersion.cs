@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using WpfApp1_cmd.ViewModel;
+using WpfApp1_cmd.Resources;
 
 namespace WpfApp1_cmd.Models
 {
@@ -44,19 +45,23 @@ namespace WpfApp1_cmd.Models
 			get {
 				if( Attribute == Define.NOT_UPDATE)
 				{
-					return "Updates are prohibited";	//アップデート禁止
+					return Resource.Update_Prohibited;  //アップデート禁止
+					//return "Updates are prohibited";	//アップデート禁止
 				}
 				else if (CurVersion == NewVersion)
 				{
-					return "Same Version";	//同一バージョン
+					return Resource.Update_sameVersion;  //同一バージョン
+					//return "Same Version";	//同一バージョン
 				}
 				else if( NewVersion == "N/A")
 				{
-					return "Not applicable";	//対象外
+					return Resource.Update_na;  //対象外
+					//return "Not applicable";	//対象外
 				}
 				else
 				{
-					return "Updates are allowed"; //アップデート許可
+					return Resource.Update_allowed;  //アップデート許可
+					//return "Updates are allowed"; //アップデート許可
 				}
 			}
 		}

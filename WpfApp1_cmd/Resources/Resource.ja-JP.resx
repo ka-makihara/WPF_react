@@ -151,7 +151,7 @@
     <value>対象装置・モジュールを選択してください</value>
   </data>
   <data name="TransferInformation" xml:space="preserve">
-    <value>転送結果を表示しますか?</value>
+    <value>転送結果の詳細を表示しますか?</value>
   </data>
   <data name="WindowTitle" xml:space="preserve">
     <value>ユニットソフトトランスファーツール</value>
@@ -160,7 +160,7 @@
     <value>操作が正常に完了しました。</value>
   </data>
   <data name="Error_UPDATE_READ_ERROR" xml:space="preserve">
-    <value>バージョンアップ用のデータが見つかりません。</value>
+    <value>バージョンアップ用のデータが読み込めません</value>
   </data>
   <data name="Error_FTP_SERVER_ERROR" xml:space="preserve">
     <value>FTPサーバーエラー</value>
@@ -245,5 +245,71 @@
   </data>
   <data name="MENU_CheckDiskSpace" xml:space="preserve">
     <value>ディスク空き容量確認</value>
+  </data>
+  <data name="BackupUnitSoft" xml:space="preserve">
+    <value>ユニットソフトをバックアップしています・・・</value>
+  </data>
+  <data name="UnitSoftTransfer" xml:space="preserve">
+    <value>ユニットソフト転送中・・・</value>
+  </data>
+  <data name="Success" xml:space="preserve">
+    <value>成功</value>
+  </data>
+  <data name="Fail" xml:space="preserve">
+    <value>失敗</value>
+  </data>
+  <data name="BTN_Ok" xml:space="preserve">
+    <value>　Ｏ　Ｋ　</value>
+  </data>
+  <data name="BTN_Cancel" xml:space="preserve">
+    <value>キャンセル</value>
+  </data>
+  <data name="BTN_Yes" xml:space="preserve">
+    <value> は　い </value>
+  </data>
+  <data name="BTN_No" xml:space="preserve">
+    <value> いいえ </value>
+  </data>
+  <data name="TransferResult" xml:space="preserve">
+    <value>転送結果詳細</value>
+  </data>
+  <data name="TxtTotalTransfer" xml:space="preserve">
+    <value>総転送数 :</value>
+  </data>
+  <data name="TxtSuccess" xml:space="preserve">
+    <value>成功 :</value>
+  </data>
+  <data name="TxtFail" xml:space="preserve">
+    <value>失敗 :</value>
+  </data>
+  <data name="Error_UPDATE_UNDEFINED_ERROR" xml:space="preserve">
+    <value>アップデートデータが見つかりません</value>
+  </data>
+  <data name="BTN_Transfer_Tooltip" xml:space="preserve">
+    <value>転送開始</value>
+  </data>
+  <data name="BTN_Exit_Tooltip" xml:space="preserve">
+    <value>アプリケーション終了</value>
+  </data>
+  <data name="BTN_ShowVersion" xml:space="preserve">
+    <value>アップデートバージョン表示</value>
+  </data>
+  <data name="Update_Prohibited" xml:space="preserve">
+    <value>アップデート禁止</value>
+  </data>
+  <data name="Update_sameVersion" xml:space="preserve">
+    <value>同一バージョン</value>
+  </data>
+  <data name="Update_na" xml:space="preserve">
+    <value>対象外</value>
+  </data>
+  <data name="Update_allowed" xml:space="preserve">
+    <value>アップデート許可</value>
+  </data>
+  <data name="TransferSelection" xml:space="preserve">
+    <value>転送ユニット数</value>
+  </data>
+  <data name="Units" xml:space="preserve">
+    <value>ユニット</value>
   </data>
 </root>

@@ -12,8 +12,8 @@ namespace WpfApp1_cmd.ViewModel
 {
     internal class UpdateVersionViewModel : ViewModelBase
     {
-        private ReactiveCollection<UpdateInfo> _updates;
-        public ReactiveCollection<UpdateInfo> Updates
+        private ReactiveCollection<UpdateInfo>? _updates;
+        public ReactiveCollection<UpdateInfo>? Updates
         {
             get => _updates;
             set
@@ -23,16 +23,13 @@ namespace WpfApp1_cmd.ViewModel
             }
         }
 		public string VersionName { get; set; } = "VersionList";
-		public UpdateVersionViewModel(ReactiveCollection<UpdateInfo> updates)
+		public UpdateVersionViewModel(ReactiveCollection<UpdateInfo>? updates)
         {
             Updates = updates;
         }
-        public void UpdateItems(ReactiveCollection<UpdateInfo> updates)
+        public void UpdateItems(ReactiveCollection<UpdateInfo>? updates)
         {
-            if( Updates != null)
-            {
-                Updates.Clear();
-            }
+			Updates?.Clear();
             Updates = updates;
         }
     }

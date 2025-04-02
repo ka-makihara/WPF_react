@@ -259,7 +259,10 @@
   ],
   "Options": {
     "dataFolder": "",
-    "diffOnly": "true",
-    "extentions": [ ".rom", ".bin", ".jam" ]
+    "ignore_unit": "true",
+    "ignore_version": "false",
+    "ignore_machineType": "false",
+    "extentions": [ ".rom", ".bin", ".jam" ],
+    "machineType": ["NXTR","AIMXR"]
   }
 }

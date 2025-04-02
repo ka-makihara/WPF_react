@@ -36,6 +36,7 @@ namespace WpfApp1_cmd
 		ICON_WARNING = ICON_ERROR << 1,
 		ICON_INFO =  ICON_ERROR << 2,
 		ICON_CAUTION = ICON_ERROR << 3,
+		ICON_QUESTION = ICON_ERROR << 4,
 	}
 
 	public static class Define
@@ -158,7 +159,7 @@ namespace WpfApp1_cmd
 		/// <param name="opt">オプション名</param>
 		/// <param name="value">デフォルト値</param>
 		/// <returns></returns>
-		public static bool GetOptionBool(string opt)
+		public static bool GetOptionBool(string opt, bool value=true)
 		{
 			if (OptionsDic.ContainsKey(opt))
 			{
@@ -168,8 +169,15 @@ namespace WpfApp1_cmd
 				}
 			}
 			// --opt=true/false 以外に　--opt だけの場合は true とする
-			return HasSwitch(opt);
-			//return value;
+			if (HasSwitch(opt))
+			{
+				return true;
+			}
+			else
+			{
+				//デフォルト値が指定されている場合はその値を返す
+				return value;
+			}
 		}
 	}
 

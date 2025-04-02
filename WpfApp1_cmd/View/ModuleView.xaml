@@ -13,6 +13,7 @@
              xmlns:behaviors="clr-namespace:WpfApp1_cmd.Behavior"
              xmlns:core="clr-namespace:WpfApp1_cmd.Core"
              xmlns:models="clr-namespace:WpfApp1_cmd.Models"
+             xmlns:resources="clr-namespace:WpfApp1_cmd.Resources"
              d:DataContext="{d:DesignInstance Type=viewmodel:ModuleViewModel}"
              mc:Ignorable="d" 
              d:DesignHeight="350" d:DesignWidth="800">
@@ -32,7 +33,7 @@
                     <StackPanel Orientation="Vertical" UseLayoutRounding="True">
                         <Grid>
                             <TextBlock Margin="0,4" HorizontalAlignment="Left" VerticalAlignment="Bottom"
-                                       Text="{Binding RelativeSource={RelativeSource AncestorType=mah:MetroHeader}, Path=DataContext.ModuleName}" />
+                                       Text="{Binding RelativeSource={RelativeSource AncestorType=mah:MetroHeader}, Path=DataContext.SelectedModule}" />
                             <mah:ToggleSwitch Margin="0"
                                               HorizontalAlignment="Right"
                                               VerticalAlignment="Center"

@@ -246,4 +246,70 @@
   <data name="MENU_CheckDiskSpace" xml:space="preserve">
     <value>Check Disk Space</value>
   </data>
+  <data name="BackupUnitSoft" xml:space="preserve">
+    <value>Backup Unit soft</value>
+  </data>
+  <data name="UnitSoftTransfer" xml:space="preserve">
+    <value>Unit Soft Transfer...</value>
+  </data>
+  <data name="Success" xml:space="preserve">
+    <value>Success</value>
+  </data>
+  <data name="Fail" xml:space="preserve">
+    <value>Fail</value>
+  </data>
+  <data name="BTN_Ok" xml:space="preserve">
+    <value>   O   K   </value>
+  </data>
+  <data name="BTN_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="BTN_Yes" xml:space="preserve">
+    <value>  Y E S  </value>
+  </data>
+  <data name="BTN_No" xml:space="preserve">
+    <value>  N  O   </value>
+  </data>
+  <data name="TransferResult" xml:space="preserve">
+    <value>TransferResult</value>
+  </data>
+  <data name="TxtTotalTransfer" xml:space="preserve">
+    <value>TotalTransfer</value>
+  </data>
+  <data name="TxtSuccess" xml:space="preserve">
+    <value>Success :</value>
+  </data>
+  <data name="TxtFail" xml:space="preserve">
+    <value>Fail :</value>
+  </data>
+  <data name="Error_UPDATE_UNDEFINED_ERROR" xml:space="preserve">
+    <value>Undefined UpdateData</value>
+  </data>
+  <data name="BTN_Transfer_Tooltip" xml:space="preserve">
+    <value>Transfer Start</value>
+  </data>
+  <data name="BTN_Exit_Tooltip" xml:space="preserve">
+    <value>Quit Application</value>
+  </data>
+  <data name="BTN_ShowVersion" xml:space="preserve">
+    <value>Show version</value>
+  </data>
+  <data name="Update_Prohibited" xml:space="preserve">
+    <value>Updates are prohibited</value>
+  </data>
+  <data name="Update_sameVersion" xml:space="preserve">
+    <value>Same Version</value>
+  </data>
+  <data name="Update_na" xml:space="preserve">
+    <value>Not applicable</value>
+  </data>
+  <data name="Update_allowed" xml:space="preserve">
+    <value>Updates are allowed</value>
+  </data>
+  <data name="TransferSelection" xml:space="preserve">
+    <value>Transfer Selection</value>
+  </data>
+  <data name="Units" xml:space="preserve">
+    <value>Units</value>
+  </data>
 </root>

@@ -26,8 +26,11 @@ namespace WpfApp1_cmd.Models
 	public class Options
 	{
 		public string dataFolder { get; set; }
-		public string diffOnly { get; set; }
+		public string ignore_unit { get; set; }
+		public string ignore_version { get; set; }
+		public string ignore_machineType { get; set; }
 		public List<string> extentions { get; set; }
+		public List<string> machineType { get; set; }
 
 		public bool ContainsExt(string ext)
 		{
@@ -35,6 +38,23 @@ namespace WpfApp1_cmd.Models
 			if( ext == null || ext == "" ) return false;
 			var rr = extentions.FirstOrDefault(x => string.Compare(x, ext, true) == 0);
 			return (rr != null);
+		}
+
+		public bool GetDefaultOption(string opt, bool value = false)
+		{
+			if (opt == "ignore_unit")
+			{
+				return (ignore_unit == "true");
+			}
+			else if (opt == "ignore_version")
+			{
+				return (ignore_version == "true");
+			}
+			else if (opt == "ignore_machineType")
+			{
+				return (ignore_machineType == "true");
+			}
+			return value;
 		}
 	}
 }

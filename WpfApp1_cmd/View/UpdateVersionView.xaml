@@ -32,27 +32,10 @@
                   CanUserAddRows="False"
                   HeadersVisibility="All"
                   AlternatingRowBackground="#666666"
+                  MinHeight="300"
                   IsReadOnly="False"
                   >
                 <DataGrid.Columns>
-                    <!--
-                <DataGridCheckBoxColumn Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}"
-                                        EditingElementStyle="{StaticResource MaterialDesignDataGridCheckBoxColumnEditingStyle}"
-                                        ElementStyle="{StaticResource MaterialDesignDataGridCheckBoxColumnStyle}"
-                                        >
-                    <DataGridCheckBoxColumn.Header>
-                        <Border Background="Transparent">
-                            <CheckBox Content="All" IsChecked="{Binding DataContext.IsAllSelected, Source={x:Reference DataContextProxy}}" />
-                        </Border> 
-                    </DataGridCheckBoxColumn.Header>
-                    <DataGridCheckBoxColumn.HeaderStyle>
-                       <Style TargetType="{x:Type DataGridColumnHeader}" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}" >
-                            <Setter Property="HorizontalContentAlignment" Value="Center" />
-                        </Style> 
-                    </DataGridCheckBoxColumn.HeaderStyle>
-                </DataGridCheckBoxColumn>
-                -->
-
                     <materialDesign:DataGridTextColumn 
                         EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnPopupEditingStyle}"
                         ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"
@@ -64,15 +47,6 @@
                         ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"
                         Header="Version" FontSize="16" FontFamily="Arial" Width="150" MinWidth="150" Binding="{Binding Version}" IsReadOnly="True">
                     </materialDesign:DataGridTextColumn>
-
-                    <!-- 最終的には消去する
-                <materialDesign:DataGridTextColumn
-                        EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnPopupEditingStyle}"
-                        ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"
-                        Header="Path" FontSize="10" FontFamily="Arial" Width="150" MinWidth="150" Binding="{Binding Path}" IsReadOnly="True">
-                </materialDesign:DataGridTextColumn>
-                -->
-
                 </DataGrid.Columns>
             </DataGrid>
         </mah:MetroHeader>

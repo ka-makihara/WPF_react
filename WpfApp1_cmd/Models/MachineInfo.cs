@@ -9,6 +9,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Media.Imaging;
 using WpfApp1_cmd.ViewModel;
 using WpfLcuCtrlLib;
 
@@ -34,9 +35,26 @@ namespace WpfApp1_cmd.Models
 			get => _toolTipText;
 			set => SetProperty(ref _toolTipText, value);
 		}
+
+		private ErrorCode _errCode = ErrorCode.OK;
+		public ErrorCode ErrCode
+		{
+			get => _errCode;
+			set
+			{
+				SetProperty(ref _errCode, value);
+				if( _errCode != ErrorCode.OK)
+				{
+					IsSelected.Value = false;
+				}
+			}
+		}
+		public BitmapImage ImagePath { get; set; }
+
 		public CheckableItem()
         {
-			ToolTipText = "Default ToolTip";
+			ToolTipText = "No information.";
+			//ImagePath = new BitmapImage(new Uri("pack://application:,,,/Resources/warning.png"));
 		}
 
 		public string GetViewName()
@@ -73,6 +91,7 @@ namespace WpfApp1_cmd.Models
         private string? _ftpPassword;
         public string? FtpPassword { get => _ftpPassword; set => _ftpPassword = value; }
 
+		/*
 		private ErrorCode _errCode = ErrorCode.OK;
 		public ErrorCode ErrCode
 		{
@@ -80,13 +99,13 @@ namespace WpfApp1_cmd.Models
 			set
 			{
 				SetProperty(ref _errCode, value);
-				ErrorInfo.ErrCode = value;
 				if( _errCode != ErrorCode.OK)
 				{
 					IsSelected.Value = false;
 				}
 			}
 		}
+		*/
 
 		private ReactiveCollection<MachineInfo> _machines = [];
         public ReactiveCollection<MachineInfo> Children
@@ -143,7 +162,7 @@ namespace WpfApp1_cmd.Models
 			LcuId = id;
 			_lcuCtrl = new(name,id);
 
-            _machines.ObserveAddChanged().Subscribe(x => AddMachine(x));
+			_machines.ObserveAddChanged().Subscribe(x => AddMachine(x));
 			IsSelected.Subscribe(x => Update(x));
         }
 

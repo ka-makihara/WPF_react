@@ -70,6 +70,24 @@ namespace WpfApp1_cmd.Resources {
         }
         
         /// <summary>
+        ///   Backup Unit soft に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string BackupUnitSoft {
+            get {
+                return ResourceManager.GetString("BackupUnitSoft", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cancel に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string BTN_Cancel {
+            get {
+                return ResourceManager.GetString("BTN_Cancel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Exit に類似しているローカライズされた文字列を検索します。
         /// </summary>
         public static string BTN_Exit {
@@ -79,11 +97,65 @@ namespace WpfApp1_cmd.Resources {
         }
         
         /// <summary>
+        ///   Quit Application に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string BTN_Exit_Tooltip {
+            get {
+                return ResourceManager.GetString("BTN_Exit_Tooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///     N  O    に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string BTN_No {
+            get {
+                return ResourceManager.GetString("BTN_No", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///      O   K    に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string BTN_Ok {
+            get {
+                return ResourceManager.GetString("BTN_Ok", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Show version に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string BTN_ShowVersion {
+            get {
+                return ResourceManager.GetString("BTN_ShowVersion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Transfer に類似しているローカライズされた文字列を検索します。
         /// </summary>
         public static string BTN_Transfer {
             get {
                 return ResourceManager.GetString("BTN_Transfer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Transfer Start に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string BTN_Transfer_Tooltip {
+            get {
+                return ResourceManager.GetString("BTN_Transfer_Tooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///     Y E S   に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string BTN_Yes {
+            get {
+                return ResourceManager.GetString("BTN_Yes", resourceCulture);
             }
         }
         
@@ -286,6 +358,24 @@ namespace WpfApp1_cmd.Resources {
         }
         
         /// <summary>
+        ///   Undefined UpdateData に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Error_UPDATE_UNDEFINED_ERROR {
+            get {
+                return ResourceManager.GetString("Error_UPDATE_UNDEFINED_ERROR", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Fail に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Fail {
+            get {
+                return ResourceManager.GetString("Fail", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Unable to get line information. に類似しているローカライズされた文字列を検索します。
         /// </summary>
         public static string GetLineInfoError {
@@ -421,6 +511,15 @@ namespace WpfApp1_cmd.Resources {
         }
         
         /// <summary>
+        ///   Success に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Success {
+            get {
+                return ResourceManager.GetString("Success", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Please select Update machine. に類似しているローカライズされた文字列を検索します。
         /// </summary>
         public static string TargetSelect {
@@ -435,6 +534,105 @@ namespace WpfApp1_cmd.Resources {
         public static string TransferInformation {
             get {
                 return ResourceManager.GetString("TransferInformation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   TransferResult に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string TransferResult {
+            get {
+                return ResourceManager.GetString("TransferResult", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Transfer Selection に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string TransferSelection {
+            get {
+                return ResourceManager.GetString("TransferSelection", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Fail : に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string TxtFail {
+            get {
+                return ResourceManager.GetString("TxtFail", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Success : に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string TxtSuccess {
+            get {
+                return ResourceManager.GetString("TxtSuccess", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   TotalTransfer に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string TxtTotalTransfer {
+            get {
+                return ResourceManager.GetString("TxtTotalTransfer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Units に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Units {
+            get {
+                return ResourceManager.GetString("Units", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Unit Soft Transfer... に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string UnitSoftTransfer {
+            get {
+                return ResourceManager.GetString("UnitSoftTransfer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Updates are allowed に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Update_allowed {
+            get {
+                return ResourceManager.GetString("Update_allowed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Not applicable に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Update_na {
+            get {
+                return ResourceManager.GetString("Update_na", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Updates are prohibited に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Update_Prohibited {
+            get {
+                return ResourceManager.GetString("Update_Prohibited", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Same Version に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Update_sameVersion {
+            get {
+                return ResourceManager.GetString("Update_sameVersion", resourceCulture);
             }
         }
         

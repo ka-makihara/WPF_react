@@ -33,7 +33,7 @@ namespace WpfApp1_cmd.View
             var dialog = new MsgBox();
             BitmapImage icon;
 
-            MsgDlgType iconType = (MsgDlgType)(ty & 0xF0);
+            MsgDlgType iconType = (MsgDlgType)(ty & 0xFF0);
 
             switch ( iconType )
             {
@@ -41,7 +41,8 @@ namespace WpfApp1_cmd.View
                 case MsgDlgType.ICON_WARNING: icon = new BitmapImage(new Uri("pack://application:,,,/Resources/warning_32.png")); break;
                 case MsgDlgType.ICON_INFO:    icon = new BitmapImage(new Uri("pack://application:,,,/Resources/info_32.png")); break;
                 case MsgDlgType.ICON_CAUTION: icon = new BitmapImage(new Uri("pack://application:,,,/Resources/caution_32.png")); break;
-                default:
+				case MsgDlgType.ICON_QUESTION:icon = new BitmapImage(new Uri("pack://application:,,,/Resources/question_32.png")); break;
+				default:
                     icon = new BitmapImage(new Uri("pack://application:,,,/Resources/info_32.png")); break;
             }
 

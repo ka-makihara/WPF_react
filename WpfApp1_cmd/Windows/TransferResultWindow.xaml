@@ -9,6 +9,7 @@
         xmlns:vm="clr-namespace:WpfApp1_cmd.ViewModel"
         xmlns:local="clr-namespace:WpfApp1_cmd.Windows"
         xmlns:converters="clr-namespace:WpfApp1_cmd.ValueConverter"
+        xmlns:resources="clr-namespace:WpfApp1_cmd.Resources"
         mc:Ignorable="d"
         MinWidth="800"
         MinHeight="600"
@@ -18,7 +19,7 @@
         SaveWindowPosition="True"
         TitleCharacterCasing="Normal"
         WindowStartupLocation="CenterScreen"
-        Title="TransferResult" Height="450" Width="800">
+        Title="{x:Static resources:Resource.TransferResult}" Height="450" Width="800">
 
     <Window.Resources>
         <ResourceDictionary>
@@ -103,7 +104,7 @@
                 <DataTemplate>
                     <StackPanel Orientation="Vertical" UseLayoutRounding="True">
                         <Grid>
-                            <TextBlock Margin="0,4" HorizontalAlignment="Left" VerticalAlignment="Bottom" Text="TransferResult" />
+                            <TextBlock Margin="0,4" HorizontalAlignment="Left" VerticalAlignment="Bottom" Text="{x:Static resources:Resource.TransferResult}" />
                         </Grid>
                         <Separator />
                     </StackPanel>
@@ -216,15 +217,15 @@
 
             <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Grid.Column="0">
                 <StackPanel Orientation="Horizontal" >
-                    <TextBlock Text="TotalTransfer:" FontSize="16" FontWeight="Bold" Margin="10,5,0,0" HorizontalAlignment="Left"/>
+                    <TextBlock Text="{x:Static resources:Resource.TxtTotalTransfer}" FontSize="16" FontWeight="Bold" Margin="10,5,0,0" HorizontalAlignment="Left"/>
                     <TextBlock Text="{Binding TransferTotalCount,Converter={StaticResource NumberToStringConverter}}" FontSize="16" FontWeight="Bold" Margin="10,5,0,0" HorizontalAlignment="Left"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" >
-                    <TextBlock Text="O  K:" FontSize="16" FontWeight="Bold" Margin="10,5,0,0" HorizontalAlignment="Left"/>
+                    <TextBlock Text="{x:Static resources:Resource.TxtSuccess}" FontSize="16" FontWeight="Bold" Margin="10,5,0,0" HorizontalAlignment="Left"/>
                     <TextBlock Text="{Binding TransferOkCount,Converter={StaticResource NumberToStringConverter}}" FontSize="16" FontWeight="Bold" Margin="10,5,0,0" HorizontalAlignment="Left"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" >
-                    <TextBlock Text="FAIL:" FontSize="16" FontWeight="Bold" Margin="10,5,0,0" HorizontalAlignment="Left"/>
+                    <TextBlock Text="{x:Static resources:Resource.TxtFail}" FontSize="16" FontWeight="Bold" Margin="10,5,0,0" HorizontalAlignment="Left"/>
                     <TextBlock Text="{Binding TransferFailCount,Converter={StaticResource NumberToStringConverter}}" FontSize="16" FontWeight="Bold" Margin="10,5,0,0" HorizontalAlignment="Left"/>
                 </StackPanel>
             </StackPanel>

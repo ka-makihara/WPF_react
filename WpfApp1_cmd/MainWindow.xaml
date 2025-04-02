@@ -8,6 +8,7 @@
         xmlns:view="clr-namespace:WpfApp1_cmd.View"
         xmlns:resources="clr-namespace:WpfApp1_cmd.Resources"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:converter="clr-namespace:WpfApp1_cmd.ValueConverter"
         xmlns:rp="clr-namespace:Reactive.Bindings.Interactivity;assembly=ReactiveProperty.WPF"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance vm:MainWindowViewModel}"
@@ -31,6 +32,9 @@
     <Window.Resources>
         <local:RichTextItemsToDocumentConverter x:Key="RichTextItemsToDocumentConverter" />
         <BooleanToVisibilityConverter x:Key="BoolToVisible"/>
+        <converter:ErrCodeToColorConverter x:Key="ErrCodeToColorConverter" />
+        <converter:StatusToForgroundConverter x:Key="StatusToForgroundConverter" />
+        <converter:ErrorCodeToFontStyleConverter x:Key="ErrorCodeToFontStyleConverter" />
 
         <!-- TreeView の右クリックメニューのリソース(Tagプロパティに代入しておいた、DataContextから値を取り出してCommandに設定) -->
         <ContextMenu x:Key="SampleContextMenu">
@@ -83,7 +87,7 @@
         <mah:WindowCommands>
             <Button Content="{iconPacks:FontAwesome Kind=HouseChimneySolid, Width=24,Height=24}"
                     Command="{Binding HomeCommand}"
-                    ToolTip="Show Version" />
+                    ToolTip="{x:Static resources:Resource.BTN_ShowVersion}" />
         </mah:WindowCommands>
     </mah:MetroWindow.RightWindowCommands>
   
@@ -165,7 +169,19 @@
                         <Setter Property="Tag" Value="{Binding Path=DataContext, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type TreeView}}}" />
                         <Setter Property="ContextMenu" Value="{Binding Source={StaticResource SampleContextMenu}}"/>
                         <Setter Property="IsExpanded" Value="{Binding IsExpanded.Value, Mode=TwoWay}" />
-                        <Setter Property="ToolTip" Value="{Binding ToolTipText, Mode=TwoWay}" />
+                        <Setter Property="ToolTip">
+                            <Setter.Value>
+                                <ToolTip Placement="Relative"
+                                         PlacementRectangle="50,0,0,0"
+                                         HorizontalOffset="10"
+                                         VerticalOffset="30">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding ToolTipText, Mode=TwoWay}"
+                                                   Foreground="{Binding Path=ErrCode, Converter={StaticResource ErrCodeToColorConverter}}" />
+                                    </StackPanel>
+                                </ToolTip>
+                            </Setter.Value> 
+                        </Setter>
                         <!-- MultiSelect で　IsSelected を Bind すると、チェックボックスが正しくチェックできない
                         <Setter Property="IsSelected" Value="{Binding IsSelected.Value, Mode=TwoWay}" />
                         -->
@@ -179,7 +195,9 @@
                                 Command="{Binding DataContext.TreeViewChkCommand, RelativeSource={RelativeSource FindAncestor,AncestorType={x:Type TreeView}}}"
                                 CommandParameter="{Binding}"
                                 VerticalAlignment="Center" />
-                            <TextBlock Text="{Binding Name}" Margin="5,0,0,0" FontSize="16" IsEnabled="False" ToolTip="{Binding ToolTipText}">
+                            <TextBlock Text="{Binding Name}" Margin="5,0,0,0" FontSize="16" IsEnabled="False"
+                                       FontStyle="{Binding Path=ErrCode, Converter={StaticResource ErrorCodeToFontStyleConverter}}"
+                                       Foreground="{Binding Path=ErrCode, Converter={StaticResource StatusToForgroundConverter}}">
                             </TextBlock>
                         </StackPanel>
                     </HierarchicalDataTemplate>
@@ -216,15 +234,12 @@
                     <DataTemplate DataType="{x:Type vm:LcuViewModel}">
                         <view:LcuView />
                     </DataTemplate>
-                    <DataTemplate DataType="{x:Type vm:UnitVersionViewModel}">
-                        <view:UnitVersionView />
-                    </DataTemplate>
                     <DataTemplate DataType="{x:Type vm:ModuleViewModel}">
                         <view:ModuleView />
                     </DataTemplate>
                 </Grid.Resources>
 
-                <materialDesign:DialogHost DialogTheme="Inherit" CloseOnClickAway="true" Identifier="DataGridView">
+                <materialDesign:DialogHost DialogTheme="Inherit" CloseOnClickAway="false" Identifier="DataGridView">
                     <mahApps:TransitioningContentControl Content="{Binding ActiveView}" Transition="RightReplace"  />
                 </materialDesign:DialogHost>
 
@@ -269,7 +284,7 @@
                         <Button Height="40" materialDesign:ButtonAssist.CornerRadius="5"
                                 Command="{Binding StartTransferCommand}"
                                 Style="{StaticResource MaterialDesignRaisedLightButton}"
-                                ToolTip="Transfer start"
+                                ToolTip="{x:Static resources:Resource.BTN_Transfer_Tooltip}"
                                 Margin="10,0,10,0"
                                 FontWeight="Bold"
                                 Background="LightGray"
@@ -291,7 +306,7 @@
                         <Button Height="40" materialDesign:ButtonAssist.CornerRadius="5"
                                 Command="{Binding QuitApplicationCommand}"
                                 Style="{StaticResource MaterialDesignRaisedLightButton}"
-                                ToolTip="Application End"
+                                ToolTip="{x:Static resources:Resource.BTN_Exit_Tooltip}"
                                 Margin="10,0,10,0"
                                 FontWeight="Bold"
                                 Background="LightGray"
