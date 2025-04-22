@@ -11,6 +11,9 @@
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <!-- 圧縮 -->
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <AssemblyName>WpfApp1_cmd</AssemblyName>
+    <Company>Fuji</Company>
+    <Copyright>Fuji</Copyright>
   </PropertyGroup>
 
   <ItemGroup>

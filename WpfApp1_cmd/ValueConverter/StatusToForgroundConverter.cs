@@ -27,6 +27,17 @@ namespace WpfApp1_cmd.ValueConverter
 					return Brushes.White;
 				}
 			}
+			else if( value is ItemStatus status)
+			{
+				switch(status)
+				{
+					case ItemStatus.OK:            return Brushes.White;
+					case ItemStatus.NG:            return Brushes.Red;
+					case ItemStatus.UNKNOWN:       return Brushes.Yellow;
+					case ItemStatus.NOT_SUPPORTED: return Brushes.Red;
+					default:                       return Brushes.White;
+				}
+			}
 			else
 			{
 				return Brushes.White;

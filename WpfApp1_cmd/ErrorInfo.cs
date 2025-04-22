@@ -29,6 +29,14 @@ namespace WpfApp1_cmd
 		LCU_UPDATE_DISK_FULL    = 0xE000038,
 	}
 
+	public enum  ItemStatus
+	{
+		OK = 0,
+		NG = 1,
+		UNKNOWN = 2,
+		NOT_SUPPORTED = 3,
+	}
+
 	public static class ErrorMessages
 	{
 		private static readonly ResourceManager ResourceManager = new ResourceManager("WpfApp1_cmd.Resources.Resource", typeof(ErrorMessages).Assembly);

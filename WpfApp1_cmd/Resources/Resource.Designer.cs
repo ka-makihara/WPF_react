@@ -619,6 +619,15 @@ namespace WpfApp1_cmd.Resources {
         }
         
         /// <summary>
+        ///   NotSelected に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Update_notSelected {
+            get {
+                return ResourceManager.GetString("Update_notSelected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Updates are prohibited に類似しているローカライズされた文字列を検索します。
         /// </summary>
         public static string Update_Prohibited {
@@ -633,6 +642,15 @@ namespace WpfApp1_cmd.Resources {
         public static string Update_sameVersion {
             get {
                 return ResourceManager.GetString("Update_sameVersion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Selected に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Update_selected {
+            get {
+                return ResourceManager.GetString("Update_selected", resourceCulture);
             }
         }
         

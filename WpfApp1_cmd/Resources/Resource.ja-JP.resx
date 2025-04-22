@@ -312,4 +312,10 @@
   <data name="Units" xml:space="preserve">
     <value>ユニット</value>
   </data>
+  <data name="Update_selected" xml:space="preserve">
+    <value>選択済み</value>
+  </data>
+  <data name="Update_notSelected" xml:space="preserve">
+    <value>未選択</value>
+  </data>
 </root>

@@ -49,6 +49,8 @@ namespace WpfApp1_cmd.Models
 				}
 			}
 		}
+		public ItemStatus Status { get; set; } = ItemStatus.OK;
+
 		public BitmapImage ImagePath { get; set; }
 
 		public CheckableItem()
@@ -91,22 +93,6 @@ namespace WpfApp1_cmd.Models
         private string? _ftpPassword;
         public string? FtpPassword { get => _ftpPassword; set => _ftpPassword = value; }
 
-		/*
-		private ErrorCode _errCode = ErrorCode.OK;
-		public ErrorCode ErrCode
-		{
-			get => _errCode;
-			set
-			{
-				SetProperty(ref _errCode, value);
-				if( _errCode != ErrorCode.OK)
-				{
-					IsSelected.Value = false;
-				}
-			}
-		}
-		*/
-
 		private ReactiveCollection<MachineInfo> _machines = [];
         public ReactiveCollection<MachineInfo> Children
         {
@@ -136,7 +122,8 @@ namespace WpfApp1_cmd.Models
 			{
 				return;
 			}
-
+			IsSelected.Value = Utility.CheckState(Children);
+/*
 			int trueCount = Children.Count(x => x.IsSelected.Value == true);
 			int nullCount = Children.Count(x => x.IsSelected.Value == null);
 
@@ -150,6 +137,7 @@ namespace WpfApp1_cmd.Models
 				//子が一つでも選択されている==null, 全て選択されていない==false
 				IsSelected.Value = (trueCount == 0 && nullCount == 0) ? false : null ;
 			}
+*/
 		}
 		public void Update(bool? value)
 		{

@@ -21,6 +21,58 @@ namespace WpfApp1_cmd
 		Module = 3,
 	}
 
+	/// <summary>
+	///  新ホストデーターベース仕様書・ModuleType一覧より
+	///
+	public enum ModuleType
+	{
+		NXT_M3          = 1,
+		NXT_M6          = 2,
+		NXT_M3_CONVEYOR = 11,
+		NXT_M6_CONVEYOR = 12,
+		NXT_M3S         = 101,
+		NXT_M6S         = 102,
+		NXT_M3_2        = 201,
+		NXT_M6_2        = 202,
+		NXT_M3_2_IHC    = 221,
+		NXT_M6_2_IHC    = 222,
+		NXT_M6_3I       = 232,
+		NXT_M6_2SP      = 302,
+		NXT_M3_2C       = 501,
+		NXT_M6_2C       = 502,
+		NXT_M3_2C_IHC   = 521,
+		NXT_M6_2C_IHC   = 522,
+		NXT_M3_3CI      = 531,
+		NXT_M3_3        = 601,
+		NXT_M6_3        = 602,
+		NXT_M3_3C       = 701,
+		NXT_M6_3C       = 702,
+		NXT_M6_3L       = 902,
+		NXT_M3_3S       = 1201,
+		NXT_M3_3SE      = 1301,
+		AIMEX_TWIN_ROBOT     = 1,
+		AIMEX_SINGLE_ROBOT   = 2,
+		AIMEX_TWIN_ROBOT2    = 101,
+		AIMEX_SINGLE_ROBOT2  = 102,
+		AIMEX_TWIN_ROBOT2S   = 401,
+		AIMEX_SINGLE_ROBOT2S = 402,
+		AIMEX_TWIN_ROBOT3C   = 801,
+		AIMEX_SINGLE_ROBOT3C = 802,
+		AIMEX_TWIN_ROBOT3    = 1101,
+		AIMEX_SINGLE_ROBOT3  = 1102,
+		NXT_H                = 1,
+		NXT_HW               = 2,
+		SFAB                 = 1001,
+		SFAB_D               = 1002,
+		SFAB_SH              = 1003,
+		SFAB_A               = 9000,
+		NXTR_1R              = 1,
+		NXTR_2R              = 2,
+		NXTR_2RV             = 1302,
+		AIMEXR_TWIN_ROBOT    = 1,
+		AIMEXR_SINGLE_ROBOT  = 2
+	}
+
 	[Flags]
 	public enum MsgDlgType
 	{

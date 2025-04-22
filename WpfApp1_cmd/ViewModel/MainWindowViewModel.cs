@@ -42,6 +42,8 @@ using Renci.SshNet;
 using System.Windows.Threading;
 using MahApps.Metro.IconPacks;
 using System.Net.Http;
+using System.Reflection;
+using Microsoft.Xaml.Behaviors.Media;
 
 namespace WpfApp1_cmd.ViewModel
 {
@@ -183,6 +185,16 @@ namespace WpfApp1_cmd.ViewModel
 			{
 				_upDateInfos = value;
 				OnPropertyChanged(nameof(UpdateInfos));
+			}
+		}
+		private ReactiveCollection<UnitPath> _upDatePaths;
+		public ReactiveCollection<UnitPath> UpdatePaths
+		{
+			get => _upDatePaths;
+			set
+			{
+				_upDatePaths = value;
+				OnPropertyChanged(nameof(UpdatePaths));
 			}
 		}
 
@@ -462,7 +474,7 @@ namespace WpfApp1_cmd.ViewModel
 
 			Progress.SetIndeterminate();// 進捗(?)をそれらしく流す・・・
 			Progress.SetCancelable(true); // キャンセルボタンを表示する
-			Progress.SetProgressBarForegroundBrush(Brushes.Yellow);
+			//Progress.SetProgressBarForegroundBrush(Brushes.Yellow);
 
 			// この方法だとタスク(task)の二重起動となる
 			//  Task.Run() で　async LoadLineInfo()(タスク)を起動するタスクとなるので
@@ -495,8 +507,6 @@ namespace WpfApp1_cmd.ViewModel
 			}
 
 			OnPropertyChanged(nameof(TreeViewItems));
-
-			//CancelTokenSrc?.Dispose();
 
 			await Progress.CloseAsync();
 
@@ -728,6 +738,7 @@ namespace WpfApp1_cmd.ViewModel
 				else
 				{
 					AddLog($"Read {infoFile}");
+					UpdatePaths = CreateUpdatePathList(infoFile);
 				}
 			}
 			else
@@ -927,6 +938,10 @@ namespace WpfApp1_cmd.ViewModel
 					break;
 				case MachineInfo machine:
 					UpdateChildren(machine.Children, chk);
+					if(ActiveView is MachineViewModel vm)
+					{
+						vm.IsAllSelected.Value = chk;
+					}
 					break;
 				case ModuleInfo module:
 					UpdateChildren(module.UnitVersions, chk);
@@ -936,35 +951,6 @@ namespace WpfApp1_cmd.ViewModel
 					}
 					break;
 			}
-			/*
-
-			if (item is LcuInfo lcu)
-			{
-				bool? chk = item.IsSelected.Value;  // 値を取得しておく、(UpdateChildren()で子が更新されると IsSelected.Value 値が更新されてしまうので)
-				foreach (MachineInfo machine in lcu.Children)
-				{
-					machine.UpdateChildren(chk);
-					foreach (ModuleInfo module in machine.Children)
-					{
-						module.UpdateChildren(chk);
-					}
-				}
-			}
-			else if (item is MachineInfo machine)
-			{
-				bool? chk = item.IsSelected.Value;
-				foreach (ModuleInfo module in machine.Children)
-				{
-					module.UpdateChildren(chk);
-					module.IsSelected.Value = chk;
-				}
-			}
-			else if (item is ModuleInfo module)
-			{
-				bool? chk = item.IsSelected.Value;
-				module.UpdateChildren(chk);
-			}
-			*/
 		}
 
 		private void UpdateChildren<T>(IEnumerable<T> children, bool? chk) where T : CheckableItem
@@ -986,27 +972,6 @@ namespace WpfApp1_cmd.ViewModel
 		/// <summary>
 		/// ツリービューの選択項目を全てクリアする
 		/// </summary>
-		/*
-		private void ClearSelectedItems()
-		{
-			foreach (var lcu in TreeViewItems)
-			{
-				lcu.IsSelected.Value = false;
-				foreach (var machine in lcu.Children)
-				{
-					machine.IsSelected.Value = false;
-					foreach (var module in machine.Children)
-					{
-						module.IsSelected.Value = false;
-						foreach (var unit in module.UnitVersions)
-						{
-							unit.IsSelected.Value = false;
-						}
-					}
-				}
-			}
-		}
-		*/
 		private void ClearSelectedItems()
 		{
 			foreach (var lcu in TreeViewItems)
@@ -1313,6 +1278,75 @@ namespace WpfApp1_cmd.ViewModel
 		}
 
 		/// <summary>
+		/// アップデートパスのリストを作成する
+		/// </summary>
+		/// <param name="path"></param>
+		/// <returns></returns>
+		public ReactiveCollection<UnitPath> CreateUpdatePathList(string path)
+		{
+			ReactiveCollection<UnitPath> unitPaths = [];
+
+			IniFileParser parser = new(path);
+
+			//UpdateCommon.inf 内の Path=, FuserPath= のリストを取得
+			List<(string name, string path, string fuserPath)> updateList = parser.GetPathList();
+
+			foreach (var unit in updateList)
+			{
+				if (unit.path != "")
+				{
+					string fullPath = DataFolder + unit.path;
+					if (Path.Exists(fullPath) == true)
+					{
+						if( Directory.Exists(fullPath) == true)
+						{
+							//Path がフォルダの場合は無視
+							continue;
+						}
+
+						// ユニット・グループを取得
+						UnitLink? unitLink = Config.units.Where(x => x.components.Where(y => y == unit.name).ToList().Count != 0).FirstOrDefault();
+
+						if ( unitLink != null)
+						{
+							var unitPath = unitPaths.Where(x => x.GroupName == unitLink.name).FirstOrDefault();
+							if (unitPath == null)
+							{
+								unitPath = new UnitPath { GroupName = unitLink.name, units = [] };
+								unitPaths.Add(unitPath);
+							}
+
+							if (unitLink.mode == "File")
+							{
+								unitPath.AddUnitFile("",unit);
+							}
+							else if( unitLink.mode == "Folder")
+							{
+								//フォルダ内のファイルを取得
+								string[] fi = Directory.GetFiles((DataFolder + Path.GetDirectoryName(unit.path)), "*", SearchOption.AllDirectories);
+								foreach (var f in fi)
+								{
+									string up = f.Split(DataFolder)[1].Replace('\\', '/');
+
+									string? section = parser.GetSectionByValue("Path", up);
+									if( section != null)
+									{
+										unitPath.AddUnitFile("",(section, up, ""));
+									}
+									else
+									{
+										unitPath.AddUnitFile("", (unitLink.name,up,"") );
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			return unitPaths;
+		}
+
+		/// <summary>
 		///  UpdateCommon.inf を読み込み、UpdateInfo のリストを返す
 		/// </summary>
 		/// <param name="path">UpdateCommon.inf ファイルのパス</param>
@@ -1324,29 +1358,42 @@ namespace WpfApp1_cmd.ViewModel
 			try
 			{
 				IniFileParser parser = new(path);
+
 				IList<string> sec = parser.SectionCount();
 
 				foreach (var unit in sec)
 				{
-					string? ext = Path.GetExtension(parser.GetValue(unit, "Path"));
-					if (Config.Options.ContainsExt(ext) == false)
+					string tmpPath = DataFolder + parser.GetValue(unit, "Path");
+
+					if ( Directory.Exists(tmpPath))
 					{
-						// 登録されていない拡張子はスキップ
+						//Path がフォルダの場合(存在しない場合はfalse)
 						continue;
 					}
-
-					UpdateInfo update = new()
+					else if ( System.IO.File.Exists(tmpPath) )
 					{
-						Name = unit,
-						Attribute = parser.GetValue(unit, "Attribute"),
-						Path = parser.GetValue(unit, "Path"),
-						Version = parser.GetValue(unit, "Version"),
-						FuserPath = parser.GetValue(unit, "FuserPath"),
-						IsVisibled = true,//チェックボックスの表示/非表示
-										  //リンク情報を取得
-						UnitGroup = Config.units.Where(x => x.components.Find(y => y == unit) != null).FirstOrDefault()?.name
-					};
-					updates.Add(update);
+						/*
+						//Path がファイルの場合は、拡張子をチェック(存在しない場合はfalse)
+						string? ext = Path.GetExtension(parser.GetValue(unit, "Path"));
+						if (Config.Options.ContainsExt(ext) == false)
+						{
+							// 登録されていない拡張子はスキップ
+							continue;
+						}
+						*/
+						UpdateInfo update = new()
+						{
+							Name = unit,
+							Attribute = parser.GetValue(unit, "Attribute"),
+							Path = parser.GetValue(unit, "Path"),
+							Version = parser.GetValue(unit, "Version"),
+							FuserPath = parser.GetValue(unit, "FuserPath"),
+							IsVisibled = true,//チェックボックスの表示/非表示
+											  //リンク情報を取得
+							UnitGroup = Config.units.Where(x => x.components.Find(y => y == unit) != null).FirstOrDefault()?.name
+						};
+						updates.Add(update);
+					}
 				}
 				UpdateDataSize = GetPeripheradSize(DataFolder);
 				return updates;
@@ -1577,6 +1624,8 @@ namespace WpfApp1_cmd.ViewModel
 				Progress.Minimum = 0;
 				Progress.Maximum = 1000;
 
+				await Task.Delay(500);
+
 				//別スレッドで転送処理を実行
 				IsTransfering = true;
 				//Task task = Task.Run(() => { Task<bool> task1 = TransferExecute(token); });
@@ -1763,56 +1812,32 @@ namespace WpfApp1_cmd.ViewModel
 						{
 							continue;
 						}
+						AddLog($"[BACKUP] {lcu.Name};{machine.Name};{module.Name}=Backup Start");
 
-						/*
-						try
+						//バックアップ先フォルダ名
+						string bkupPath = path + $"\\{hd}{lcu.Name.Split(":")[0]}_{machine.Name.Split(":")[0]}_{module.Name}";
+
+						if (Directory.Exists(bkupPath) == false)
 						{
-						*/
-							AddLog($"[BACKUP] {lcu.Name};{machine.Name};{module.Name}=Backup Start");
-
-							//バックアップ先フォルダ名
-							string bkupPath = path + $"\\{hd}{lcu.Name.Split(":")[0]}_{machine.Name.Split(":")[0]}_{module.Name}";
-
-							if (Directory.Exists(bkupPath) == false)
-							{
-								Directory.CreateDirectory(bkupPath);
-							}
-
-							bool ret = await DownloadModuleFiles(lcu, machine, module, bkupPath, token);
-							if( ret == false )
-							{
-								IsTransfering = false;
-								return false;
-							}
-							AddLog($"[BACKUP] {lcu.Name};{machine.Name};{module.Name}=Backup End");
-
-							//転送が完了したので、転送中止ボタンが押されていないか確認
-							bool bt = await WaitTransferState(token);
-							if (bt == false)
-							{
-								AddLog($"[Backup] {lcu.Name};{machine.Name};{module.Name}=Transfer Stop");
-								IsTransfering = false;
-								return false;
-							}
-						/*
+							Directory.CreateDirectory(bkupPath);
 						}
-						catch (Exception ex)
+
+						bool ret = await DownloadModuleFiles(lcu, machine, module, bkupPath, token);
+						if( ret == false )
 						{
-							DialogTitle = Resource.Confirm;// "確認";
-							DialogText = Resource.QuitTransferMsg;// "転送を中止しますか？";
-							var r = await DialogHost.Show(new MyMessageBox(), "DataGridView");
-							DialogHost.CloseDialogCommand.Execute(null, null);
-
-							CancelTokenSrc.Dispose();
-							if (r != null && r.ToString() == "OK")
-							{
-								IsTransfering = false;
-								return false;
-							}
-							CancelTokenSrc = new CancellationTokenSource();
-							token = CancelTokenSrc.Token;
+							IsTransfering = false;
+							return false;
 						}
-						*/
+						AddLog($"[BACKUP] {lcu.Name};{machine.Name};{module.Name}=Backup End");
+
+						//転送が完了したので、転送中止ボタンが押されていないか確認
+						bool bt = await WaitTransferState(token);
+						if (bt == false)
+						{
+							AddLog($"[Backup] {lcu.Name};{machine.Name};{module.Name}=Transfer Stop");
+							IsTransfering = false;
+							return false;
+						}
 					}
 				}
 			}
@@ -1910,7 +1935,12 @@ namespace WpfApp1_cmd.ViewModel
 						{
 							if (unit.IsSelected.Value == true)
 							{
-								files += GetDirectoryFiles( DataFolder + unit.Path );
+								//files += GetDirectoryFiles( DataFolder + unit.Path );
+								files++;
+								if( unit.FuserPath != null && unit.FuserPath != "")
+								{
+									files++;
+								}
 								units++;
 							}
 						}
@@ -1933,8 +1963,9 @@ namespace WpfApp1_cmd.ViewModel
 			string lcuRoot = $"/MCFiles";
 
 			// folder に含まれるファイルをリスト化
-			List<(string unit, string path)> unitFolders = CreateUpdateFolderList();
-			List<string> folders = unitFolders.Select(x => x.path).ToList();
+			//List<(string unit, string path)> unitFolders = CreateUpdateFolderList();
+			List<string> folders = CreateUpdateFolderList();
+			//List<string> folders = unitFolders.Select(x => x.path).ToList();
 
 			//対象ファイルをすべて LCU にアップロード
 			AddLog($"[Transfer] {lcu.Name}=UploadFiles Start");
@@ -2115,8 +2146,8 @@ namespace WpfApp1_cmd.ViewModel
 							return false;
 						}
 					}
-					await Task.Delay(500);
-					Debug.WriteLine(".");
+					//await Task.Delay(500);
+					//Debug.WriteLine(".");
 				}
 			}
 			return true;
@@ -2126,9 +2157,11 @@ namespace WpfApp1_cmd.ViewModel
 		/// アップデート対象のフォルダを取得する
 		/// </summary>
 		/// <returns></returns>
-		private List<(string, string)> CreateUpdateFolderList()
+		//private List<(string, string)> CreateUpdateFolderList()
+		private List<string> CreateUpdateFolderList()
 		{
-			List<(string unit, string path)> folders = [];
+			//List<(string unit, string path)> folders = [];
+			List<string> folders = [];
 
 			if (UpdateInfos == null)
 			{
@@ -2146,14 +2179,16 @@ namespace WpfApp1_cmd.ViewModel
 				}
 				if ( (System.IO.File.GetAttributes(localPath) & FileAttributes.Directory) == FileAttributes.Directory )
 				{
-					folders.Add((item.Name, localPath));
+					//folders.Add((item.Name, localPath));
+					folders.Add(localPath);
 				}
 				else
 				{
 					string? path = Path.GetDirectoryName(localPath);
 					if (path != null)
 					{
-						folders.Add((item.Name, path));
+						//folders.Add((item.Name, path));
+						folders.Add(path);
 					}
 				}
 			}
@@ -2161,6 +2196,117 @@ namespace WpfApp1_cmd.ViewModel
 			folders = folders.Distinct().ToList();
 
 			return folders;
+		}
+
+		/// <summary>
+		/// ファイルが存在するかどうかを確認する
+		/// </summary>
+		/// <param name="path"></param>
+		/// <returns></returns>
+		private static bool IsFileExists(string path)
+		{
+			if (System.IO.File.Exists(path) == false || ((System.IO.File.GetAttributes(path) & FileAttributes.Directory)) == FileAttributes.Directory)
+			{
+				return false;
+			}
+			return true;
+		}
+
+		/// <summary>
+		/// アップデート対象のファイルを取得する
+		/// </summary>
+		/// <returns></returns>
+		private List<UnitPath> CreateUpdateFileList(ReactiveCollection<UnitVersion> unitVersions)
+		{
+			List<UnitPath> unitFiles = [];
+
+			if (UpdateInfos == null)
+			{
+				//例外除け
+				return unitFiles;
+			}
+
+			foreach(var item in unitVersions)
+			{
+				var group = Config.units.Where(x => x.components.Contains(item.Name)).FirstOrDefault();
+				if(group == null)
+				{
+					continue;
+				}
+				var un = unitFiles.Where(x => x.GroupName == group.name).FirstOrDefault();
+
+				if (group.mode == "File")
+				{
+					if (item.IsSelected.Value == false)
+					{
+						continue;
+					}
+					if( un == null)
+					{
+						var l = new List<(string?, string)> { (item.Name, DataFolder + item.Path) };
+						unitFiles.Add( new UnitPath { GroupName = group.name, units = l });
+					}
+					else
+					{
+						un.AddUnitFile(DataFolder, (item.Name, item.Path, item.FuserPath));
+					}
+				}
+				else
+				{
+					var path = UpdatePaths.Where(x => x.GroupName == group.name).FirstOrDefault();
+					if( path.units == null || path.units.Count == 0)
+					{
+						//アップデート対象のファイルが存在しない
+						continue;
+					}
+
+					foreach (var unit in path.units)
+					{
+						var im = unitVersions.Where(x => x.Path == unit.path).FirstOrDefault();
+						if (im != null)
+						{
+							//対象ファイルがアップデート情報に存在する
+							if (im.IsSelected.Value == false)
+							{
+								//アップデート対象として選択されていない
+								continue;
+							}
+							if( un == null)
+							{
+								var l = new List<(string?, string)> { (unit.name, DataFolder + unit.path) };
+								un = new UnitPath { GroupName = group.name, units = l };
+								unitFiles.Add(un);
+							}
+							else
+							{
+								un.AddUnitFile(DataFolder,(unit.name, unit.path, ""));
+							}
+						}
+						else
+						{
+							//対象ファイルがアップデート情報に存在しない
+
+							//含まれるグループの中で選択されているものをカウント
+							var aa = unitVersions.Where(x => x.UnitGroup == path.GroupName).ToList().Count(y => y.IsSelected.Value == true);
+							if( aa != 0 )
+							{
+								// 一つでも選択されているので、(UpdateCommon.inf に含まれていないものは)転送対象とする
+								if( un == null)
+								{
+									var l = new List<(string?, string)> { (unit.name, DataFolder + unit.path) };
+									un = new UnitPath { GroupName = group.name, units = l };
+									unitFiles.Add(un);
+								}
+								else
+								{
+									un.AddUnitFile(DataFolder,(unit.name, unit.path, ""));
+								}
+							}
+						}
+					}
+				}
+			}
+			return unitFiles;
 		}
 
 		/// <summary>
@@ -2206,6 +2352,7 @@ namespace WpfApp1_cmd.ViewModel
 					Debug.WriteLine($"TransferedFtpSize={transferedSize}, FtpDataSize={ftpSize}, rate={rate}");
 
 					Progress?.SetProgress( ((double)transferedSize / (double)ftpSize) * 250.0);
+					await Task.Delay(100);  // プログレスバーの更新のためのDelay
 
 					Debug.WriteLine($"[FTP Upload] {folder} => {lcu.Name}/{lcuPath}");
 
@@ -2258,7 +2405,7 @@ namespace WpfApp1_cmd.ViewModel
 				module.UnitVersions = version;
 
 				// バージョン情報からファイル数を取得
-				int files = version.Select(x => GetDirectoryFiles(DataFolder + x.Path)).Sum();
+				int files = version.Select(x => x.GetFileCount()).Sum();
 				TransferCount += files;
 			}
 
@@ -2272,7 +2419,26 @@ namespace WpfApp1_cmd.ViewModel
 			List<string> mcFiles = module.UnitVersions.Select(x => x.Path).ToList();
 
 			//(転送データの)バージョン情報からパスのみを取り出してリスト化
-			List<(string unit, string path)> unitFolders = CreateUpdateFolderList();
+			//List<(string unit, string path)> unitFiles = CreateUpdateFileList(module.UnitVersions);
+			List<UnitPath> unitFiles = CreateUpdateFileList(module.UnitVersions);
+
+			/* Debug */
+			foreach (var item in unitFiles)
+			{
+				Debug.WriteLine($"{item.GroupName}");
+				foreach (var unit in item.units)
+				{
+					if (Path.Exists(unit.path) == false)
+					{
+						//存在しなければ次へ
+						Debug.WriteLine($"  {unit.name}={unit.path}  Not Exists");
+					}
+					else {
+						Debug.WriteLine($"  {unit.name}={unit.path}");
+					}
+				}
+			}
+			/* */
 
 			//LCUに転送したファイルを装置に送信する
 			string mcUser = GetMcUser();
@@ -2286,28 +2452,10 @@ namespace WpfApp1_cmd.ViewModel
 				return false;
 			}
 
-			foreach (var (unit, folder) in unitFolders)
+			foreach(var fileGroup in unitFiles)
 			{
-				try
-				{
-					if (module.UnitVersions.First(x => x.Name == unit).IsSelected.Value == false)
-					{
-						//選択されていないユニットは転送しない
-						AddLog($"[Transfer] {lcu.Name};{machine.Name};{module.Name}:{unit}=Skip");
-						continue;
-					}
-				}
-				catch (Exception e)
-				{
-					//オプションによっては選択されていない、同一バージョンで除外されている、ユニットがある場合がある
-					AddLog($"[Transfer] {lcu.Name};{machine.Name};{module.Name}:{unit}=Skip");
-					continue;
-				}
-
-				string[] fs = Directory.GetFiles(folder, "*", SearchOption.AllDirectories);
-
 				// //Fuji 以降を取り出してリスト化(装置に送るファイル名)
-				List<string> mc = fs.Select(x => x[DataFolder.Length..]).ToList();
+				List<string> mc = fileGroup.units.Select(x => x.path[DataFolder.Length..]).ToList();
 
 				// LCU にアップロードされたファイル名をリスト化
 				List<string> lc = mc.Select(x => $"{lcuRoot}" + x).ToList();
@@ -2321,7 +2469,7 @@ namespace WpfApp1_cmd.ViewModel
 					break;
 				}
 
-				Progress?.SetMessage($"Transfering {unit}");
+				Progress?.SetMessage($"Transfering {fileGroup.GroupName}");
 
 				string retMsg = await lcu.LcuCtrl.LCU_Command(PostMcFile.Command(machine.Name, module.Pos, mcUser, mcPass, mc, lc), token);
 
@@ -2330,7 +2478,7 @@ namespace WpfApp1_cmd.ViewModel
 				{
 					ErrorInfo.ErrCode = ErrorCode.LCU_CONNECT_ERROR;
 					AddLog($"[Transfer] {lcu.Name};{machine.Name};{module.Name}=WebAPI(PostMcFile) Error");
-					AddLog($"[Transfer] {module.Name};{unit}=NG");
+					AddLog($"[Transfer] {module.Name};{fileGroup.GroupName}=NG");
 					TransferErrorCount++;
 					ret = false;
 					break;
@@ -2342,13 +2490,13 @@ namespace WpfApp1_cmd.ViewModel
 					ErrorInfo.ErrCode = ErrorCode.FTP_TRANSFER_ERROR;
 					AddLog($"[Transfer] {lcu.Name};{machine.Name};{module.Name}=WebAPI(PostMcFile) Error");
 					AddLog($"[ERROR] Status:{data.errorMsg} Msg:{data.errorStatus}");
-					AddLog($"[Transfer] {lcu.Name};{machine.Name};{module.Name};{unit}=NG");
+					AddLog($"[Transfer] {lcu.Name};{machine.Name};{module.Name};{fileGroup.GroupName}=NG");
 					ret = false;
 					TransferErrorCount++;
 					break;
 				}
 
-				TransferSuccessCount++;
+				TransferSuccessCount += mc.Count;
 				TransferedCount += mc.Count;
 
 				Debug.WriteLine($"Transfered={TransferedCount} cnt={mc.Count}");
@@ -2362,13 +2510,16 @@ namespace WpfApp1_cmd.ViewModel
 				Progress?.SetProgress(r);
 
 				//転送が完了したのでUpdateを「済」にする
-				UnitVersion unitVersion = module.UnitVersions.First(x => x.Name == unit);
-				unitVersion.IsUpdated.Value = true;
+				foreach(var (name, path) in fileGroup.units)
+				{
+					//選択されているユニットのバージョン情報を取得
+					UnitVersion unitVersion = module.UnitVersions.First(x => x.Name == name);
+					unitVersion.IsUpdated.Value = true;
+					//対象となるユニットのバージョン情報(string)を更新
+					ModifyUpdateInfo(lines, unitVersion.Name, unitVersion.NewVersion);
 
-				//対象となるユニットのバージョン情報(string)を更新
-				ModifyUpdateInfo(lines, unitVersion.Name, unitVersion.NewVersion);
-
-				AddLog($"[Transfer] {lcu.Name};{machine.Name};{module.Name};{unit}=OK:{unitVersion.CurVersion}->{unitVersion.NewVersion}");
+					AddLog($"[Transfer] {lcu.Name};{machine.Name};{module.Name};{unitVersion.Name}=OK:{unitVersion.CurVersion}->{unitVersion.NewVersion}");
+				}
 			}
 
 			if (TransferSuccessCount != 0)
@@ -2469,103 +2620,6 @@ namespace WpfApp1_cmd.ViewModel
 			outFile.Close();
 		}
 
-		/*
-		/// <summary>
-		/// UpdateCommon.inf をマージして更新する
-		/// </summary>
-		/// <param name="lcu"></param>
-		/// <param name="machine"></param>
-		/// <param name="module"></param>
-		/// <returns></returns>
-		private async Task<bool> MergeUpdateCommon(LcuInfo lcu, MachineInfo machine, ModuleInfo module)
-		{
-			bool ret;
-			//string tmpDir = Path.GetTempPath();
-			string tmpDir = @"C:\Users\ka.makihara\temp\";
-
-			//装置・モジュールから UpdateCommon.inf を取得する
-			string mcFile = Define.MC_PERIPHERAL_PATH + Define.UPDATE_INFO_FILE;
-			string lcuFile = $"LCU_{module.Pos}/MCFiles" + Define.UPDATE_INFO_FILE;
-			ret = await lcu.LcuCtrl.GetMachineFile(machine.Name, module.Pos, mcFile, lcuFile, tmpDir);
-
-			//ret = await GetMcPeripheralFile(lcu, machine, module, Define.UPDATE_INFO_FILE, tmpDir);
-
-			if (ret == false)
-			{
-				AddLog($"{lcu.Name}::{machine.Name}::{module.Name}={mcFile} Get error");
-				return ret;
-			}
-
-			// UpdateCommon.inf を読み込む
-			string[] lines;
-			string path = tmpDir + Define.UPDATE_INFO_FILE;
-			try
-			{
-				lines = System.IO.File.ReadAllLines(path, Encoding.GetEncoding(Define.TXT_ENCODING));
-			}
-			catch (Exception e)
-			{
-				AddLog($"{lcu.Name};{machine.Name};{module.Name}={path} Read error");
-				return false;
-			}
-			StreamWriter outFile = new StreamWriter(path + ".new", false, Encoding.GetEncoding(Define.TXT_ENCODING));
-
-			string sectionName = "";
-			string regxSection = @"^\[[0-9a-zA-Z|_]+\]$";
-			string regxSectionName = @"[0-9a-zA-Z|_]+";
-			foreach (var line in lines)
-			{
-				if (line.StartsWith("Version=") == true)
-				{
-					//バージョン行
-					string ver = line.Split('=')[1];
-					try
-					{
-						var item = module.UnitVersions.Where(x => x.Name == sectionName).First();
-						if (item != null)
-						{
-							//バージョンアップ対象のユニット(オプションによっては、同バージョンでも含まれる)
-							if (item.IsSelected.Value == true)
-							{
-								//バージョンアップが選択されたユニット
-								var up = UpdateInfos.Where(x => x.Name == sectionName).First();
-								if (up != null && up.Version != null)
-								{
-									ver = up.Version;
-								}
-							}
-						}
-						outFile.WriteLine($"Version={ver}");
-					}
-					catch (InvalidOperationException ex)
-					{
-						// UnitVersions に該当するユニットがない(バージョンが同一で除外(オプション))
-						outFile.WriteLine(line);
-					}
-				}
-				else if (Regex.IsMatch(line, regxSection) == true)
-				{
-					//セクション行はそのまま出力
-					outFile.WriteLine(line);
-					sectionName = Regex.Match(line, regxSectionName).Value;  //[]の中身を取り出す
-					continue;
-				}
-				else
-				{
-					//その他の行はそのまま出力
-					outFile.WriteLine(line);
-					continue;
-				}
-			}
-			outFile.Close();
-
-			// UpdateCommon.inf を削除
-			System.IO.File.Delete(path);
-
-			return ret;
-		}
-*/
-
 		/// <summary>
 		/// ツリーのマウス左ボタンダウン処理(Expand/Collapseでも呼ばれる)
 		/// 　※SelectedItemChanged より先に呼び出される。
@@ -2599,6 +2653,10 @@ namespace WpfApp1_cmd.ViewModel
 								break;
 							case MachineType.Machine:
 								IsLcuMenuEnabled = false;
+								if(ActiveView is MachineViewModel machineView)
+								{
+									machineView.UpdateCheck();
+								}
 								break;
 							case MachineType.Module:
 								IsLcuMenuEnabled = false;
@@ -2693,79 +2751,6 @@ namespace WpfApp1_cmd.ViewModel
 			 *  よって、LeftButtonDown でクリックしたビューに切り替える事にした
 			 */
 			Debug.WriteLine("TreeViewSelectedItemChanged");
-
-			/*
-			CheckableItem? item = e.NewValue as CheckableItem;
-
-			if (item == null)
-			{
-				return;
-			}
-			SelectedItem = item;
-			//AddLog($"TreeViewSelectedItemChanged={item.Name}:{item.ItemType}");
-			string viewName = item.GetViewName();
-
-			switch (item.ItemType)
-			{
-				case MachineType.LCU:
-					CanExecuteLcuCommand.Value = true;
-					if (viewModeTable.ContainsKey(viewName) == false)
-					{
-						var machines = TreeViewItems.Where(x => x.Name == item.Name).First().Children;
-						viewModeTable.Add(viewName, new LcuViewModel(item.Name,machines) );
-					}
-					ActiveView = viewModeTable[viewName];
-					break;
-				case MachineType.Machine:
-					CanExecuteLcuCommand.Value = false; // LCU コマンドを実行不可にする
-					if (viewModeTable.ContainsKey(viewName) == false)
-					{
-						var modules = TreeViewItems.SelectMany(lcu => lcu.Children).Where(x => x.Name == item.Name).First().Children;
-						viewModeTable.Add(viewName, new MachineViewModel(item.Name,modules) );
-					}
-					ActiveView = viewModeTable[viewName];
-					break;
-				case MachineType.Module:
-					CanExecuteLcuCommand.Value = false; //LCU コマンドを実行不可にする
-					string machineName = ((ModuleInfo)item).Parent.Name;
-
-					if (viewModeTable.ContainsKey(viewName) == false)
-					{
-						if (item is ModuleInfo module)
-						{
-							if( module.UnitVersions.Count == 0)
-							{
-								MachineInfo machine = module.Parent;
-								LcuInfo lcu = machine.Parent;
-
-								//時間がかかるので、プログレスダイアログを表示
-								var dlg = DialogHost.Show(new WaitProgress("Reading Update Info..."),"DataGridView");
-
-								var version = await CreateVersionInfo(lcu, machine, module, null);
-								if(version != null)
-								{
-									module.UnitVersions = version;
-								}
-								DialogHost.CloseDialogCommand.Execute(null, null);
-							}
-							module.IsSelected.Value = CheckState<UnitVersion>(module.UnitVersions);
-
-							viewModeTable.Add(viewName, new ModuleViewModel(item.Name, module.UnitVersions, UpdateInfos));
-						}
-					}
-					ActiveView = viewModeTable[viewName];
-					if( item is ModuleInfo moduleInfo)
-					{
-						if( moduleInfo.UnitVersions.Count == 0 )
-						{
-							await MsgBox.Show("Info", $"Module:{moduleInfo.Name}",
-												      "There are no units to update.",
-													  "", (int)(MsgDlgType.OK | MsgDlgType.ICON_INFO), "DataGridView");
-						}
-					}
-					break;
-			}
-			*/
 		}
 
 		/// <summary>
@@ -2789,17 +2774,20 @@ namespace WpfApp1_cmd.ViewModel
 			string path = parser.GetValue(unit, "Path");
 			string binPath = DataFolder + path;
 
+			/*
 			if( Config.Options.ContainsExt( Path.GetExtension(path)) == false)
 			{
 				//対象外の拡張子
 				return;
 			}
+			*/
 
 			if (System.IO.File.Exists(binPath) == true)
 			{
 				if (System.IO.File.GetAttributes(binPath) == FileAttributes.Directory)
 				{
-					fileSz = GetDirectorySize( new DirectoryInfo(binPath));
+					//fileSz = GetDirectorySize( new DirectoryInfo(binPath));
+					return;
 				}
 				/* 登録されている拡張子以外は対象外とするので、現在は不要
 				else if (Path.GetExtension(binPath) == ".inf")
@@ -2833,14 +2821,14 @@ namespace WpfApp1_cmd.ViewModel
 			UnitVersion version = new(sel)
 			{
 				Name = unit,
-				Attribute = int.Parse(parser.GetValue(unit, "Attribute")),
-				Path = path ?? "",
-				FuserPath = parser.GetValue(unit, "FuserPath"),
-				CurVersion = parser.GetValue(unit, "Version"),
-				NewVersion = newVer,
+				Attribute = int.TryParse(parser.GetValue(unit, "Attribute"), out int attr) ? attr : 0,
+				Path = path ?? string.Empty,
+				FuserPath = parser.GetValue(unit, "FuserPath") ?? string.Empty,
+				CurVersion = parser.GetValue(unit, "Version") ?? "Unknown",
+				NewVersion = newVer ?? "N/A",
 				Parent = module,
-				Size = fileSz,
-				UnitGroup = Config.units.Where(x => x.components.Find(y => y == unit) != null).FirstOrDefault()?.name
+				Size = fileSz >= 0 ? fileSz : 0,
+				UnitGroup = Config.units.FirstOrDefault(x => x.components.Contains(unit))?.name
 			};
 			versions.Add(version);
 			Debug.WriteLine($"[UnitVersion] {module.Name}:{unit}={version.CurVersion}=>{version.NewVersion}");
@@ -2875,6 +2863,7 @@ namespace WpfApp1_cmd.ViewModel
 			}
 			return true;
 		}
+
 		/// <summary>
 		/// LCUからユニットバージョン情報を取得する
 		/// </summary>
@@ -2918,12 +2907,14 @@ namespace WpfApp1_cmd.ViewModel
 
 			foreach (var unit in sec)
 			{
+				/*
 				if( Config.Options.ContainsExt(Path.GetExtension(parser.GetValue(unit,"Path"))) == false)
 				{
 					//対象外の拡張子
 					AddLog($"[UnitVersion] {lcu.LcuCtrl.Name};{machine.Name};{module.Name}:{unit}=Skip(ext Not Applicable)");
 					continue;
 				}
+				*/
 
 				//バージョンアップの中に該当するユニットのインデックスを取得(ない場合は -1)
 				int idx = -1;
@@ -2934,7 +2925,7 @@ namespace WpfApp1_cmd.ViewModel
 
 				if (idx != -1 && UpdateInfos != null)
 				{
-					if ( ignoreVersion == true && parser.GetValue(unit, "Version") == UpdateInfos[idx].Version)
+					if ( ignoreVersion == false && parser.GetValue(unit, "Version") == UpdateInfos[idx].Version)
 					{
 						//同じバージョンは対象外とするオプション指定の場合
 						AddLog($"[UnitVersion] {lcu.LcuCtrl.Name};{machine.Name};{module.Name}:{unit}=Skip(same version)");
@@ -3130,7 +3121,7 @@ namespace WpfApp1_cmd.ViewModel
 			//ライン下の装置、モジュールをTreeViewに追加
 			foreach (var mc in lineInfo.Line.Machines)
 			{
-				if( false == ArgOptions.GetOptionBool("--ignore_machineType",Config.Options.GetDefaultOption("--ignore_machineType",false)) )
+				if( false == ArgOptions.GetOptionBool("--ignore_machineType",Config.Options.GetDefaultOption("ignore_machineType",false)) )
 				{
 					//マシンタイプ指定が有効の場合
 					if ( Config.Options.machineType.Contains(mc.MachineType) == false )
@@ -3146,7 +3137,8 @@ namespace WpfApp1_cmd.ViewModel
 					ItemType = MachineType.Machine,
 					Machine = mc,
 					Parent = lcu,
-					ToolTipText = mc.MachineName
+					Status = Config.Options.machineType.Contains(mc.MachineType) ? ItemStatus.OK : ItemStatus.NOT_SUPPORTED,
+					ToolTipText = mc.MachineType
 				};
 				Progress?.SetMessage($"Machine={mc.MachineName}");
 				foreach (var base_ in mc.Bases)

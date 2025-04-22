@@ -21,6 +21,8 @@ namespace WpfApp1_cmd.Models
 	{
 		public string name { get; set; }
 		public List<string> components { get; set; }
+		public string mode { get; set; }
+		public List<string> files { get; set; }
 	}
 
 	public class Options

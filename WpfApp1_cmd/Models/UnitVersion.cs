@@ -46,22 +46,27 @@ namespace WpfApp1_cmd.Models
 				if( Attribute == Define.NOT_UPDATE)
 				{
 					return Resource.Update_Prohibited;  //アップデート禁止
-					//return "Updates are prohibited";	//アップデート禁止
 				}
 				else if (CurVersion == NewVersion)
 				{
 					return Resource.Update_sameVersion;  //同一バージョン
-					//return "Same Version";	//同一バージョン
 				}
 				else if( NewVersion == "N/A")
 				{
 					return Resource.Update_na;  //対象外
-					//return "Not applicable";	//対象外
 				}
 				else
 				{
-					return Resource.Update_allowed;  //アップデート許可
-					//return "Updates are allowed"; //アップデート許可
+					if( IsSelected.Value == true)
+					{
+						return Resource.Update_selected;  //選択中
+					}
+					else
+					{
+						//return Resource.Update_allowed;  //アップデート許可
+						return Resource.Update_notSelected;  //未選択
+					}
+					//return Resource.Update_allowed;  //アップデート許可
 				}
 			}
 		}
@@ -77,6 +82,16 @@ namespace WpfApp1_cmd.Models
 		public void Update(bool? value)
 		{
 			Parent?.UpdateSelf(value);
+		}
+
+		public int GetFileCount()
+		{
+			int cnt = 0;
+			
+			cnt += (Path != "") ? 1 : 0;
+			cnt += (FuserPath != "") ? 1 : 0;
+
+			return cnt;
 		}
 
         public UnitVersion(bool sel)

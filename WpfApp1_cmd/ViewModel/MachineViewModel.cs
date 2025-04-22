@@ -111,7 +111,15 @@ namespace WpfApp1_cmd.ViewModel
             // チェックボックスの状態変更時の処理をここに記述
             Debug.WriteLine($"Module {module.Name} is checked: {module.IsSelected.Value}");
 
-            // 全選択用のチェックボックスの状態を更新
+			// 全選択用のチェックボックスの状態を更新
+			UpdateCheck();
+
+			SelectModules(module, module.IsSelected.Value);
+        }
+
+		public void UpdateCheck()
+		{
+			// 全選択用のチェックボックスの状態を更新
             var selectedStates = Modules.Select(m => m.IsSelected.Value).Distinct().ToList();
             if (selectedStates.Count == 1)
             {
@@ -120,8 +128,7 @@ namespace WpfApp1_cmd.ViewModel
             else
             {
                 IsAllSelected.Value = null;
-            }
-			SelectModules(module, module.IsSelected.Value);
-        }
+            }	
+		}
     }
 }
