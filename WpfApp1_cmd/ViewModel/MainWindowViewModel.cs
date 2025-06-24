@@ -31,19 +31,12 @@ using MahApps.Metro.Controls.Dialogs;
 using System.Windows.Input;
 using System.IO.Packaging;
 using System.Net.NetworkInformation;
-using System.Windows.Media.Animation;
-using System.Text.RegularExpressions;
-using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using WpfApp1_cmd.Models;
 using WpfApp1_cmd.Resources;
 using FluentFTP;
-using Renci.SshNet;
-using System.Windows.Threading;
-using MahApps.Metro.IconPacks;
 using System.Net.Http;
-using System.Reflection;
-using Microsoft.Xaml.Behaviors.Media;
+using YamlDotNet.Serialization;
 
 namespace WpfApp1_cmd.ViewModel
 {
@@ -251,6 +244,8 @@ namespace WpfApp1_cmd.ViewModel
 		public long TransferCount { get; set; } = 0;          // 転送数(ユニット数)
 		public long TransferedCount { get; set; } = 0;        // 転送済み数(ユニット数)
 		private bool IsBackupedData { get; set; } = false;    // バックアップデータを読み込んだかどうか
+		private long FtpTransferSize { get; set; } = 0;    // FTP 転送サイズ
+		private long FtpTransferedSize { get; set; } = 0; // FTP 転送済みサイズ
 
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -277,8 +272,8 @@ namespace WpfApp1_cmd.ViewModel
 				// DLL内の関数呼び出し。 DLLが無い場合は例外が発生する
 				StringBuilder sb = new StringBuilder(1024);
 				Int32 len = getMcUser(sb, sb.Capacity);
-				return "Administrator";
-				//return sb.ToString();
+				//return "Administrator";
+				return sb.ToString();
 			}
 			catch (Exception ex)
 			{
@@ -297,8 +292,7 @@ namespace WpfApp1_cmd.ViewModel
 				// DLL内の関数呼び出し。 DLLが無い場合は例外が発生する
 				StringBuilder sb = new StringBuilder(1024);
 				Int32 len = getMcPass(sb, sb.Capacity);
-				return "password";
-				//return sb.ToString();
+				return sb.ToString();
 			}
 			catch (Exception ex)
 			{
@@ -646,8 +640,7 @@ namespace WpfApp1_cmd.ViewModel
 		private void ReadConfig()
 		{
 			var assembly = System.Reflection.Assembly.GetExecutingAssembly();
-			var srcName = $"{assembly.GetName().Name}.Resources.config.json";
-			//string[] resources = assembly.GetManifestResourceNames();
+			var srcName = $"{assembly.GetName().Name}.Resources.config.yaml";
 			string str = "";
 
 			using (var stream = assembly.GetManifestResourceStream(srcName))
@@ -657,7 +650,9 @@ namespace WpfApp1_cmd.ViewModel
 					str = reader.ReadToEnd();
 				}
 			}
-			Config = JsonSerializer.Deserialize<Config>(str);
+			var deserializer = new DeserializerBuilder().Build();
+			Config = deserializer.Deserialize<Config>(str);
+			//Config = JsonSerializer.Deserialize<Config>(str);
 
 			// オプションでユニットリンクファイルが指定されている場合は、読み込んで更新する
 			if (ArgOptions.GetOption("--config", "") != "")
@@ -721,7 +716,7 @@ namespace WpfApp1_cmd.ViewModel
 			else
 			{
 				//Peripheral.bin ではない場合は、UpdateCommon.inf のパスを設定
-				infoFile = (DataFolder + "\\" + Define.MC_PERIPHERAL_PATH + Define.UPDATE_INFO_FILE).Replace("/", "\\");
+				infoFile = (DataFolder + "\\Fuji\\" + Define.MC_PERIPHERAL_PATH + Define.UPDATE_INFO_FILE).Replace("/", "\\");
 			}
 
 			IsFileMenuEnabled = true;
@@ -867,20 +862,12 @@ namespace WpfApp1_cmd.ViewModel
 					OracleDataReader reader = cmd.ExecuteReader();
 					while (reader.Read())
 					{
-						int lineId = reader.GetInt32(0);
-						int jobId = reader.GetInt32(1);
-						string name = reader.GetString(2);
-						int lcuId = reader.GetInt32(3);
-						int activeFlag = reader.GetInt32(4);
-
-						/*
-						NeximPC DBの場合
 						int jobId = reader.GetInt32(0);
 						int lineId = reader.GetInt32(1);
 						string name = reader.GetString(2);
 						int activeFlag = reader.GetInt32(6);
 						int lcuId = reader.GetInt32(18);
-						*/
+						
 						AddLog($"{name}::LineID={lineId} JobID={jobId} ActiveFlag={activeFlag} LcuID={lcuId}");
 
 						OracleCommand cm = new($"select * from COMPUTER WHERE COMPUTERID={lcuId}", conn);
@@ -1309,10 +1296,12 @@ namespace WpfApp1_cmd.ViewModel
 
 						if ( unitLink != null)
 						{
-							var unitPath = unitPaths.Where(x => x.GroupName == unitLink.name).FirstOrDefault();
+							//var unitPath = unitPaths.Where(x => x.GroupName == unitLink.name).FirstOrDefault();
+							var unitPath = unitPaths.Where(x => unitLink.ContainsName(x.GroupName)).FirstOrDefault();
 							if (unitPath == null)
 							{
-								unitPath = new UnitPath { GroupName = unitLink.name, units = [] };
+								//unitPath = new UnitPath { GroupName = unitLink.name, units = [] };
+								unitPath = new UnitPath { GroupName = unitLink.GetName(), units = [] };
 								unitPaths.Add(unitPath);
 							}
 
@@ -1335,7 +1324,8 @@ namespace WpfApp1_cmd.ViewModel
 									}
 									else
 									{
-										unitPath.AddUnitFile("", (unitLink.name,up,"") );
+										//unitPath.AddUnitFile("", (unitLink.name,up,"") );
+										unitPath.AddUnitFile("", (unitLink.GetName(),up,"") );
 									}
 								}
 							}
@@ -1360,7 +1350,6 @@ namespace WpfApp1_cmd.ViewModel
 				IniFileParser parser = new(path);
 
 				IList<string> sec = parser.SectionCount();
-
 				foreach (var unit in sec)
 				{
 					string tmpPath = DataFolder + parser.GetValue(unit, "Path");
@@ -1390,7 +1379,7 @@ namespace WpfApp1_cmd.ViewModel
 							FuserPath = parser.GetValue(unit, "FuserPath"),
 							IsVisibled = true,//チェックボックスの表示/非表示
 											  //リンク情報を取得
-							UnitGroup = Config.units.Where(x => x.components.Find(y => y == unit) != null).FirstOrDefault()?.name
+							UnitGroup = Config.units.Where(x => x.components.Find(y => y == unit) != null).FirstOrDefault()?.GetName()
 						};
 						updates.Add(update);
 					}
@@ -1628,7 +1617,6 @@ namespace WpfApp1_cmd.ViewModel
 
 				//別スレッドで転送処理を実行
 				IsTransfering = true;
-				//Task task = Task.Run(() => { Task<bool> task1 = TransferExecute(token); });
 				Task task = TransferExecute(token);
 
 				bool isCancel = false;
@@ -1690,18 +1678,68 @@ namespace WpfApp1_cmd.ViewModel
 			}
 		}
 
+		private async Task<long> LoadModulesUpdateCommon()
+		{
+			long count = 0;
+
+			foreach (var lcu in TreeViewItems)
+			{
+				if (lcu.Children == null || lcu.LcuCtrl == null || lcu.IsSelected.Value == false)
+				{
+					continue;
+				}
+				foreach (var machine in lcu.Children)
+				{
+					if (machine.Children == null || machine.Name == null || machine.IsSelected.Value == false)
+					{
+						continue;
+					}
+					foreach (var module in machine.Children)
+					{
+						if (module.IsSelected.Value == false || module.UnitVersions == null)
+						{
+							continue;
+						}
+						if (module.UnitVersions.Count == 0)
+						{
+							var version = await CreateVersionInfo(lcu, machine, module, null);
+							if (version == null)
+							{
+								ErrorInfo.ErrCode = ErrorCode.UPDATE_UNDEFINED_ERROR;
+								return 0;
+							}
+							module.UnitVersions = version;
+							long nn = module.UnitVersions.Count(x => x.IsSelected.Value == true);
+							Debug.WriteLine($"[LoadModulesUpdateCommon] {lcu.Name};{machine.Name};{module.Name}={nn}");
+
+						}
+						List<UnitPath> unitFiles = CreateUpdateFileList(module.UnitVersions);
+						count += unitFiles.Select(x => x.units.Count).Sum();
+					}
+				}
+			}
+			return count;
+		}
 		/// <summary>
 		/// データ転送
 		/// </summary>
 		/// <returns></returns>
 		public async Task<bool> TransferExecute(CancellationToken token)
 		{
-			//対象のLCUに対して転送を実行
-			//   「選択」されている LCU のリストを取得
+			// 「選択」されている LCU のリストを取得
 			var lcuList = TreeViewItems.Where(x => x.IsSelected.Value != false).ToList();
+
+			//FTP転送のサイズを取得
+			// UpdateData の全データ× LCU の数
+			//   (選択されているもの以外のデータも転送する。-> ユニット毎に選択/非選択を考慮すると手間なので)
+			//      A というユニットでは未選択でも Bでは選択されている場合がある、など)
+			//    ※実際のFTPサイズは　UpDateCommon.inf ファイルを除いたサイズとなるが、総サイズに対して微量なので、無視する
+			FtpTransferSize = GetDirectorySize(new DirectoryInfo(DataFolder + "\\Fuji")) * lcuList.Count;
+			FtpTransferedSize = 0;
 
 			foreach (var x in lcuList)
 			{
+				//対象のLCUに対して転送を実行
 				bool ret = await UploadUnitFilesToLcu(x, token);
 				if( ret == false)
 				{
@@ -1710,6 +1748,18 @@ namespace WpfApp1_cmd.ViewModel
 					return false;
 				}
 			}
+			// 選択されたユニットのUpdateCommon.inf を読み込む
+			//   (Treeで選択された場合はその時に読み込んでいるが、そうでない場合はここで纏めて読み込む)
+			long bLoad = await LoadModulesUpdateCommon();
+			if( bLoad == 0)
+			{
+				//UpdateCommon.inf の読み込みに失敗した
+				IsTransfering = false;
+				return false;
+			}
+
+			TransferCount = bLoad;//GetTransferUnitCount();
+			TransferedCount = 0;
 
 			//LCUから装置に転送
 			foreach (var lcu in TreeViewItems)
@@ -1963,18 +2013,17 @@ namespace WpfApp1_cmd.ViewModel
 			string lcuRoot = $"/MCFiles";
 
 			// folder に含まれるファイルをリスト化
-			//List<(string unit, string path)> unitFolders = CreateUpdateFolderList();
 			List<string> folders = CreateUpdateFolderList();
-			//List<string> folders = unitFolders.Select(x => x.path).ToList();
 
 			//対象ファイルをすべて LCU にアップロード
+			//対象のみとすると、ユニット毎に要/不要を計算する手間があるので、アップデートデータは全てアップロードする
 			AddLog($"[Transfer] {lcu.Name}=UploadFiles Start");
 
 			// デバッグ環境でない場合
-			//ret = await UploadFilesWithFolder(lcu, folders, lcuRoot, DataFolder,token);
+			ret = await UploadFilesWithFolder(lcu, folders, lcuRoot, DataFolder,token);
 
 			//デバッグ環境の場合、FTPが一つだけなので、LCU_n のフォルダで対応する
-			ret = await UploadFilesWithFolder(lcu, folders, $"{App.GetLcuRootPath(lcu.LcuId)}" + lcuRoot, DataFolder, token);
+			//ret = await UploadFilesWithFolder(lcu, folders, $"{App.GetLcuRootPath(lcu.LcuId)}" + lcuRoot, DataFolder, token);
 			if (ret == false)
 			{
 				AddLog($"[Transfer] {lcu.Name}=UploadFilesWithFolder Error");
@@ -2157,10 +2206,8 @@ namespace WpfApp1_cmd.ViewModel
 		/// アップデート対象のフォルダを取得する
 		/// </summary>
 		/// <returns></returns>
-		//private List<(string, string)> CreateUpdateFolderList()
 		private List<string> CreateUpdateFolderList()
 		{
-			//List<(string unit, string path)> folders = [];
 			List<string> folders = [];
 
 			if (UpdateInfos == null)
@@ -2233,7 +2280,7 @@ namespace WpfApp1_cmd.ViewModel
 				{
 					continue;
 				}
-				var un = unitFiles.Where(x => x.GroupName == group.name).FirstOrDefault();
+				var un = unitFiles.Where(x => group.ContainsName(x.GroupName)).FirstOrDefault();
 
 				if (group.mode == "File")
 				{
@@ -2244,7 +2291,7 @@ namespace WpfApp1_cmd.ViewModel
 					if( un == null)
 					{
 						var l = new List<(string?, string)> { (item.Name, DataFolder + item.Path) };
-						unitFiles.Add( new UnitPath { GroupName = group.name, units = l });
+						unitFiles.Add( new UnitPath { GroupName = group.GetName(), units = l });
 					}
 					else
 					{
@@ -2253,7 +2300,7 @@ namespace WpfApp1_cmd.ViewModel
 				}
 				else
 				{
-					var path = UpdatePaths.Where(x => x.GroupName == group.name).FirstOrDefault();
+					var path = UpdatePaths.Where(x => group.ContainsName(x.GroupName)).FirstOrDefault();
 					if( path.units == null || path.units.Count == 0)
 					{
 						//アップデート対象のファイルが存在しない
@@ -2274,7 +2321,7 @@ namespace WpfApp1_cmd.ViewModel
 							if( un == null)
 							{
 								var l = new List<(string?, string)> { (unit.name, DataFolder + unit.path) };
-								un = new UnitPath { GroupName = group.name, units = l };
+								un = new UnitPath { GroupName = group.GetName(), units = l };
 								unitFiles.Add(un);
 							}
 							else
@@ -2294,7 +2341,7 @@ namespace WpfApp1_cmd.ViewModel
 								if( un == null)
 								{
 									var l = new List<(string?, string)> { (unit.name, DataFolder + unit.path) };
-									un = new UnitPath { GroupName = group.name, units = l };
+									un = new UnitPath { GroupName = group.GetName(), units = l };
 									unitFiles.Add(un);
 								}
 								else
@@ -2322,11 +2369,7 @@ namespace WpfApp1_cmd.ViewModel
 			bool ret = true;
 			string user = lcu.FtpUser;
 			string password = lcu.FtpPassword;
-			long transferedSize = 0;
-
-			// FTP 総バイト数を計算
-			//   送信するアップデートデータ(フォルダ)のサイズ * 選択されているLCUの数
-			long ftpSize = folders.Select(x => GetDirectorySize(new DirectoryInfo(x))).Sum() * TreeViewItems.Count(x => x.IsSelected.Value != false);
+			//long transferedSize = 0;
 
 			var ftpClient = new FtpClient(lcu.LcuCtrl.Name.Split(":")[0], user, password);
 
@@ -2341,17 +2384,18 @@ namespace WpfApp1_cmd.ViewModel
 					ftpClient.UploadDirectory(folder, lcuPath, FtpFolderSyncMode.Update, FtpRemoteExists.Overwrite);
 
 					long bytes = GetDirectorySize(new DirectoryInfo(folder));
+					Debug.WriteLine($"{folder}={bytes} bytes");
 
-					transferedSize += bytes;
+					FtpTransferedSize += bytes;
 
 					Progress?.SetMessage($"Transfering {lcu.Name}:{Path.GetFileName(folder)}");
 
 					// 進捗%の計算
 					//  PC->LCU で 25% とする(LCU->MC で 75%)　※プログレスバーのレンジを0-1000としているため 25% は 250
-					long rate = (long)(((double)transferedSize / (double)ftpSize) * 250.0);
-					Debug.WriteLine($"TransferedFtpSize={transferedSize}, FtpDataSize={ftpSize}, rate={rate}");
+					long rate = (long)(((double)FtpTransferedSize / (double)FtpTransferSize) * 250.0);
+					Debug.WriteLine($"TransferedFtpSize={FtpTransferedSize}, FtpDataSize={FtpTransferSize}, rate={rate}");
 
-					Progress?.SetProgress( ((double)transferedSize / (double)ftpSize) * 250.0);
+					Progress?.SetProgress( ((double)FtpTransferedSize / (double)FtpTransferSize) * 250.0);
 					await Task.Delay(100);  // プログレスバーの更新のためのDelay
 
 					Debug.WriteLine($"[FTP Upload] {folder} => {lcu.Name}/{lcuPath}");
@@ -2419,7 +2463,6 @@ namespace WpfApp1_cmd.ViewModel
 			List<string> mcFiles = module.UnitVersions.Select(x => x.Path).ToList();
 
 			//(転送データの)バージョン情報からパスのみを取り出してリスト化
-			//List<(string unit, string path)> unitFiles = CreateUpdateFileList(module.UnitVersions);
 			List<UnitPath> unitFiles = CreateUpdateFileList(module.UnitVersions);
 
 			/* Debug */
@@ -2496,6 +2539,19 @@ namespace WpfApp1_cmd.ViewModel
 					break;
 				}
 
+				//for debug 転送したファイルを取得し直す(送信したファイルが正しいか確認するため)
+				string tmpDir = "";
+				var dirs = lc.Select(x => Path.GetTempPath() + Path.GetDirectoryName(x).TrimStart('/','\\')).Distinct().ToList();
+
+				foreach (var dir in dirs)
+				{
+					Directory.CreateDirectory(dir);
+					tmpDir = dir;
+				}
+
+				bool bRet = await lcu.LcuCtrl.GetMachineFiles(machine.Name, module.Pos, mc, lc, tmpDir,token);
+
+
 				TransferSuccessCount += mc.Count;
 				TransferedCount += mc.Count;
 
@@ -2513,12 +2569,27 @@ namespace WpfApp1_cmd.ViewModel
 				foreach(var (name, path) in fileGroup.units)
 				{
 					//選択されているユニットのバージョン情報を取得
-					UnitVersion unitVersion = module.UnitVersions.First(x => x.Name == name);
-					unitVersion.IsUpdated.Value = true;
-					//対象となるユニットのバージョン情報(string)を更新
-					ModifyUpdateInfo(lines, unitVersion.Name, unitVersion.NewVersion);
+					UnitVersion? unitVersion = module.UnitVersions.FirstOrDefault(x => x.Name == name);
+					if (unitVersion != null && path != null)
+					{
+						unitVersion.IsUpdated.Value = true;
 
-					AddLog($"[Transfer] {lcu.Name};{machine.Name};{module.Name};{unitVersion.Name}=OK:{unitVersion.CurVersion}->{unitVersion.NewVersion}");
+						string tmp = path.Split(DataFolder)[1];
+						if (tmp == unitVersion.Path || tmp == unitVersion.FuserPath)
+						{
+							//UpdateCommon.inf の Path, FuserPath に記載されているものを対象とする
+							//  (対象がフォルダなどの場合は除外する TrayPLCなど)
+
+							//対象となるユニットのバージョン情報(string)を更新
+							ModifyUpdateInfo(lines, unitVersion.Name, unitVersion.NewVersion);
+
+							AddLog($"[Transfer] {lcu.Name};{machine.Name};{module.Name};{unitVersion.Name}=OK:{unitVersion.CurVersion}->{unitVersion.NewVersion}");
+						}
+					}
+					else
+					{
+						//AddLog($"[Transfer] {lcu.Name};{machine.Name};{module.Name};{name}=OK:no version");
+					}
 				}
 			}
 
@@ -2539,6 +2610,9 @@ namespace WpfApp1_cmd.ViewModel
 				// ファイル(UpdateCommon.inf)を モジュールに転送
 				ret = await PutMcPeripheralFile(lcu, machine, module, Define.UPDATE_INFO_FILE, tmp);
 			}
+
+			//for Debug
+			//Directory.Delete(tmpDir, recursive: true);
 
 			return ret;
 		}
@@ -2818,6 +2892,13 @@ namespace WpfApp1_cmd.ViewModel
 				sel = (module.IsSelected.Value != false);
 			}
 
+			string group = string.Empty;
+			Dictionary<string, object> gp = Config.units.FirstOrDefault(x => x.components.Contains(unit))?.name;
+			if (gp != null)
+			{
+				group = gp.TryGetValue(module.Parent.MachineType, out object? obj) ? obj.ToString() : gp["*"].ToString();
+			}
+
 			UnitVersion version = new(sel)
 			{
 				Name = unit,
@@ -2828,7 +2909,8 @@ namespace WpfApp1_cmd.ViewModel
 				NewVersion = newVer ?? "N/A",
 				Parent = module,
 				Size = fileSz >= 0 ? fileSz : 0,
-				UnitGroup = Config.units.FirstOrDefault(x => x.components.Contains(unit))?.name
+				UnitGroup = group
+				//UnitGroup = Config.units.FirstOrDefault(x => x.components.Contains(unit))?.name
 			};
 			versions.Add(version);
 			Debug.WriteLine($"[UnitVersion] {module.Name}:{unit}={version.CurVersion}=>{version.NewVersion}");
@@ -3240,13 +3322,22 @@ namespace WpfApp1_cmd.ViewModel
 					lcu.ErrCode = ErrorCode.FTP_ACCOUNT_ERROR;
 					return false;
 				}
+				// password を復号化
 				string password = FtpData.GetPasswd(data.username, data.password);
+
+				if (data.username.Contains('\\'))
+				{
+					// ユーザ名にドメイン名が含まれている場合は、ドメイン名を除去する))
+					data.username = data.username.Split('\\')[1];
+				}
 
 				// FTPアカウント情報を設定
 				lcu.FtpUser = data.username;
 				lcu.FtpPassword = password;
 				lcu.LcuCtrl.FtpUser = lcu.FtpUser;
 				lcu.LcuCtrl.FtpPassword = lcu.FtpPassword;
+				
+
 
 				// LCU バージョン取得
 				str = await lcu.LcuCtrl.LCU_Command(LcuVersion.Command(), token);

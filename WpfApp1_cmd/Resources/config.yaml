@@ -1,396 +1,404 @@
 {
+  # ユニット
+  # name       : {"機種":"グループ名"}   単一の場合は機種名を*で指定  ex.) {"AIMEXR":"RemoteIO"}
+  # components : グルーブに含まれるユニット(UpdateCommon.inf のセクション名)
+  # mode       : File=ファイル単体、Folder=フォルダ内のファイル
+  # files      : 未使用
   "units": [
     {
-      "name": "FM-65",
+      "name": {"*":"FM-65"},
       "components": [ "Palette", "Palette_FPGA", "Palette_FPGA_GOWIN" ],
       "mode": "File",
       "files": [ "CHPalette/*.rom","CHPalette_FPGA/*.jam","CHPalette_FPGA_GOWIN/*.bin" ]
     },
     {
-      "name": "MFU-52",
+      "name": {"*":"MFU-52"},
       "components": [ "NXT_PALETTE", "NXT_PALETTE_FPGA", "NXT_PALETTE_FPGA_GOWIN" ],
       "mode": "File",
       "files": [ "Palette/NXTPalette/*.rom","Palette/NXTPalette_FPGA/*.jam","Palette/NXTPalette_FPGA_GOWIN/*.bin" ]
     },
     {
-      "name": "TU-RM(Pallet)",
+      "name": {"*":"TU-RM(Pallet)"},
       "components": [ "TRAY_PALETTE", "TRAY_PALETTE_FPGA", "TRAY_PALETTE_FPGA_GOWIN" ],
       "mode": "File",
       "files": [ "Palette/TrayPalette/*.rom","Palette/TrayPalette_FPGA/*.jam", "Palette/TrayPalette_FPGA_GOWIN/*.bin" ]
     },
     {
-      "name": "TU-LTR(Pallet)",
+      "name": {"*":"TU-LTR(Pallet)"},
       "components": [ "TRAY_PALETTE_LTR", "TRAY_PALETTE_LTR_FPGA", "TRAY_PALETTE_LTR_FPGA_GOWIN" ],
       "mode": "File",
       "files": [ "Palette/TrayPalette/*.rom", "Palette/TrayPalette_FPGA/*.jam", "Palette/TrayPaletteLTR_FPGA_GOWIN/*.bin" ]
     },
     {
-      "name": "FM29",
+      "name": {"*":"FM29"},
       "components": [ "HalfPalette", "HalfPalette_FPGA", "HalfPalette_FPGA_GOWIN" ],
       "mode": "File",
       "files": [ "Palette/HalfPalette/*.rom", "Palette/HalfPalette_FPGA/*.jam", "Palette/HalfPalette_FPGA_GOWIN/*.bin" ]
     },
     {
-      "name": "MFU63",
+      "name": {"*":"MFU63"},
       "components": [ "Palette_MFU63", "Palette_MFU63_FPGA", "Palette_MFU63_FPGA_GOWIN" ],
       "mode": "File",
       "files": [ "Palette/MFU63/*.bin", "Palette/MFU63_FPGA/*.jam","Palette/MFU63_FPGA_GOWIN/*.bin" ]
     },
     {
-      "name": "MFU65",
+      "name": {"*":"MFU65"},
       "components": [ "Palette_MFU65", "Palette_MFU65_FPGA", "Palette_MFU65_FPGA_GOWIN" ],
       "mode": "File",
       "files": [ "Palette/NXTPalette/*.bin","Palette/NXTPalette_FPGA/*.jam" ]
     },
     {
-      "name": "TrayUnitM",
+      "name": {"*":"TrayUnitM"},
       "components": [ "NXT_TrayUnitM_IF", "NXT_TrayUnitM_PLC", "NXT_TrayUnitM_Conv" ],
       "mode": "File",
       "files": [ "NXTFeeder/TrayM_IF/*.bin", "NXTFeeder/TrayM/*.bin"]
     },
     {
-      "name": "TrayUnitM2",
+      "name": {"*":"TrayUnitM2"},
       "components": [ "NXT_TrayUnitM2_IF", "NXT_TrayUnitM2_PLC", "NXT_TrayUnitM2_Conv" ],
       "mode": "File",
       "files": [ "NXTFeeder/TrayM2/*.bin" ]
     },
     {
-      "name": "BaseIO",
+      "name": {"*":"BaseIO"},
       "components": [ "BRemoteIO", "BRemoteIO_FPGA", "BRemoteIO_FPGA_GOWIN" ],
       "mode": "File",
       "files": [ "BRemiteIO/*.rom", "BRIO_FPGA/*.jam" ]
     },
     {
-      "name": "NXTR-Conveyor|RemoteIO",
+      "name": {"*":"NXTR-Conveyor","AIMEXR":"RemoteIO"},
       "components": [ "MRemoteIO", "MRemoteIO_FPGA", "MRemoteIO_FPGA_GOWIN", "MRemoteIO_Multi_FPGA_GOWIN" ],
       "mode": "File",
       "files": [ "MRemoteIO/*.rom", "MRIO_FPGA/*.jam", "MRIO_FPGA_GOWIN/*.bin" ]
     },
     {
-      "name": "NXTR-Conveyor|AIMEXR-Conveyor",
+      "name": {"*":"NXTR-Conveyor","AIMEXR":"AIMEXR-Conveyor"},
       "components": [ "MRemoteIO_Multi", "MRemoteIO_Multi_FPGA", "MRemoteIO_Multi_FPGA_GOWIN", "MRemoteIO_Multi_DOUBLE_FPGA_GOWIN" ],
       "mode": "File",
       "files": [ "MRemoteIO_Multi/*.rom", "MRIO_Multi_FPGA/*.jam", "MRIO_Multi_FPGA_GOWIN/*.bin","MRIO_Multi_Double_FPGA_GOWIN/*.bin" ]
     },
     {
-      "name": "Head(RH01)",
+      "name": {"*":"Head(RH01)"},
       "components": [ "Head_RH01", "Head_RH01_FPGA" ],
       "mode": "File",
       "files": [ "Head/*.bin", "Head/*.jam" ]
     },
     {
-      "name": "Head(RH02)",
+      "name": {"*":"Head(RH02)"},
       "components": [ "Head_RH02","Head_RH02_FPGA","Head_Hc02", "Head_Hc02_FPGA" ],
       "mode": "File",
       "files": [ "Head/*.bin" ]
     },
     {
-      "name": "Head(RH08)",
+      "name": {"*":"Head(RH08)"},
       "components": [ "Head_RH08","Head_RH08_FPGA","Head_Hc08", "Head_Hc08_FPGA" ],
       "mode": "File",
       "files": [ "Head/*.bin" ]
     },
     {
-      "name": "Head(RH20)",
+      "name": {"*":"Head(RH20)"},
       "components": [ "Head_RH20","Head_RH20_FPGA","Head_Hc20", "Head_Hc20_FPGA" ],
       "mode": "File",
       "files": [ "Head/*.bin" ]
     },
     {
-      "name": "Head(RH28)",
+      "name": {"*":"Head(RH28)"},
       "components": [ "Head_RH28", "Head_RH28_FPGA" ],
       "mode": "File",
       "files": [ "Head/*.bin", "Head/*.jam" ]
     },
     {
-      "name": "Head(RHGL)",
+      "name": {"*":"Head(RHGL)"},
       "components": [ "Head_RHGL", "Head_RHGL_FPGA" ],
       "mode": "File",
       "files": [ "Head/*.bin" ]
     },
     {
-      "name": "Head(RHDX)",
+      "name": {"*":"Head(RHDX)"},
       "components": [ "Head_RHDX", "Head_RHDX_FPGA" ],
       "mode": "File",
       "files": [ "Head/*.bin" ]
     },
     {
-      "name": "MatrixHead",
+      "name": {"*":"MatrixHead"},
       "components": [ "Head_Matrix", "Head_Matrix_FPGA" ],
       "mode": "File",
       "files": [ "Head/*.bin" ]
     },
     {
-      "name": "Head(Michigan)",
+      "name": {"*":"Head(Michigan)"},
       "components": [ "Head_MICHIGAN", "Head_MICHIGAN_FPGA" ],
       "mode": "File",
       "files": [ "*.rom", "*.bin" ]
     },
     {
-      "name": "X Axis Board",
+      "name": {"*":"X Axis Board"},
       "components": [ "XAxis", "XAxis_FPGA" ],
       "mode": "File",
       "files": [ "*.rom", "*.bin" ]
     },
     {
-      "name": "CommunicationRelayBoard",
+      "name": {"*":"CommunicationRelayBoard"},
       "components": [ "Fix", "Fix_FPGA" ],
       "mode": "File",
       "files": [ "*.rom", "*.bin" ]
     },
     {
-      "name": "CPUBOX",
+      "name": {"*":"CPUBOX"},
       "components": [ "JusticeMaster", "JusticeSlave" ],
       "mode": "File",
       "files": [ "*.rom", "*.bin" ]
     },
     {
-      "name": "BaseBuffer",
+      "name": {"*":"BaseBuffer"},
       "components": [ "Buffer_Palette", "Buffer_Palette_FPGA", "Buffer_Palette_FPGA_GOWIN" ],
       "mode": "File",
       "files": [ "*.rom", "*.bin" ]
     },
     {
-      "name": "Copla",
+      "name": {"*":"Copla"},
       "components": [ "Copla_App", "Copla_FW_FPGA", "Copla_FW_FPGA_VER3" ],
       "mode": "Folder",
       "files": [ "Copla/*" ]
     },
     {
-      "name": "TrayPLC",
+      "name": {"*":"TrayPLC"},
       "components": [ "TrayPLC" ],
       "mode": "Folder",
       "files": [ "TrayPLC/PRG/*" ]
     },
     {
-      "name": "Feeder(WA08)",
+      "name": {"*":"Feeder(WA08)"},
       "components": [ "AutoFeeder_W08","Feeder_Servo" ],
       "mode": "File",
       "files": [ "Feeder/*.bin" ]
     },
     {
-      "name": "NXT_Feeder(W08t)",
+      "name": {"*":"NXT_Feeder(W08t)"},
       "components": [ "SE_FeederTypeT", "Feeder_Servo_TypeT" ],
       "mode": "File",
       "files" : ["NXTFeeder/FeederTypeT/*.bin"]
     },
     {
-      "name": "NXT_Feeder(W08t2)",
+      "name": {"*":"NXT_Feeder(W08t2)"},
       "components": [ "SE_FeederTypeT2" ],
       "mode": "File",
       "files": [ "NXTFeeder/FeederTypeT2/*.bin" ]
     },
     {
-      "name": "Feeder(WA12)",
+      "name": {"*":"Feeder(WA12)"},
       "components": [ "Feeder_W12_W104" ],
       "mode": "File",
       "files": [ "Feeder/*.bin" ]
     },
     {
-      "name": "NXT_Feeder",
+      "name": {"*":"NXT_Feeder"},
       "components": [ "NXT_Feeder" ],
       "mode": "File",
       "files": [ "NXTFeeder/*.bin" ]
     },
     {
-      "name": "NXT_NGConv",
+      "name": {"*":"NXT_NGConv"},
       "components": [ "NXT_NGConv" ],
       "mode": "File",
       "files": [ "NXTFeeder/*.bin" ]
     },
     {
-      "name": "NXT_DipFlxUnit",
+      "name": {"*":"NXT_DipFlxUnit"},
       "components": [ "NXT_DipFlxUnit" ],
       "mode": "File",
       "files": [ "NXTFeeder/DipFlxUnit/*.bin" ]
     },
     {
-      "name": "NXT_SqzDip",
+      "name": {"*":"NXT_SqzDip"},
       "components": [ "NXT_SqzDip" ],
       "mode": "File",
       "files": [ "NXTFeeder/SqzDip/*.bin" ]
     },
     {
-      "name": "NXT_WxbFeeder",
+      "name": {"*":"NXT_WxbFeeder"},
       "components": [ "NXT_WxbFeder" ],
       "mode": "File",
       "files": [ "NXTFeeder/W8BFeder/*.bin" ]
     },
     {
-      "name": "NXT_BeltStick",
+      "name": {"*":"NXT_BeltStick"},
       "components": [ "NXT_BeltStick" ],
       "mode": "File",
       "files": [ "NXTFeeder/BeltStick/*.bin" ]
     },
     {
-      "name": "NXT_VibStick",
+      "name": {"*":"NXT_VibStick"},
       "components": [ "NXT_VibStick" ],
       "mode": "File",
       "files": [ "NXTFeeder/VibStick/*.bin" ]
     },
     {
-      "name": "NXT_FeederTypeF",
+      "name": {"*":"NXT_FeederTypeF"},
       "components": [ "NXT_FeederTypeF" ],
       "mode": "File",
       "files": [ "NXTFeeder/FeederTypeF/*.bin" ]
     },
     {
-      "name": "NXT_FeederTypeFW",
+      "name": {"*":"NXT_FeederTypeFW"},
       "components": [ "NXT_FeederTypeFW" ],
       "mode": "File",
       "files": [ "NXTFeeder/FeederTypeFW/*.bin" ]
     },
     {
-      "name": "HSFeeder",
+      "name": {"*":"HSFeeder"},
       "components": [ "NXT_HS_Feeder" ],
       "mode": "File",
       "files": [ "NXTFeeder/HSFeeder/*.bin" ]
     },
     {
-      "name": "NXT_Feeder_W08N",
+      "name": {"*":"NXT_Feeder_W08N"},
       "components": [ "NXT_Feeder_W08N" ],
       "mode": "File",
       "files": [ "NXTFeeder/FeederTypeN/*.bin" ]
     },
     {
-      "name": "NXT_HiDipFlx",
+      "name": {"*":"NXT_HiDipFlx"},
       "components": [ "NXT_HiDipFlx" ],
       "mode": "File",
       "files": [ "NXTFeeder/HiDIP/*.bin" ]
     },
     {
-      "name": "NXT_CTFeederR",
+      "name": {"*":"NXT_CTFeederR"},
       "components": [ "NXT_CTFeederR" ],
       "mode": "File",
       "files": [ "NXTFeeder/CTFeederR/*.bin" ]
     },
     {
-      "name": "NXT_CTFeederG",
+      "name": {"*":"NXT_CTFeederG"},
       "components": [ "NXT_CTFeederG" ],
       "mode": "File",
       "files": [ "NXTFeeder/CTFeederG/*.bin" ]
     },
     {
-      "name": "NXT_SWFeeder",
+      "name": {"*":"NXT_SWFeeder"},
       "components": [ "NXT_SWFeeder" ],
       "mode": "File",
       "files": [ "NXTFeeder/SWFeeder/*.bin" ]
     },
     {
-      "name": "NXT_VA_Feeder",
+      "name": {"*":"NXT_VA_Feeder"},
       "components": [ "NXT_VA_Feeder" ],
       "mode": "File",
       "files": [ "NXTFeeder/VAFeeder/*.bin" ]
     },
     {
-      "name": "PartsCameraLight",
+      "name": {"*":"PartsCameraLight"},
       "components": [ "PartsLight" ],
       "mode": "File",
       "files": [ "PartsLight/*.bin" ]
     },
     {
-      "name": "VacuumPump",
+      "name": {"*":"VacuumPump"},
       "components": [ "Inverter" ],
       "mode": "File",
       "files": [ "VacuumuPump/*.bin" ]
     },
     {
-      "name": "LoaderPowerSupply",
+      "name": {"*":"LoaderPowerSupply"},
       "components": [ "ContactlessBoard" ],
       "mode": "File",
       "files": [ "PowerSupplyBoard/*.bin" ]
     },
     {
-      "name": "Point_MRemoteIO",
+      "name": {"*":"Point_MRemoteIO"},
       "components": [ "Point_MRemoteIO" ],
       "mode": "File",
       "files": [ "Point_MRemoteIO/*.bin" ]
     },
     {
-      "name": "Printer_MRemoteIO",
+      "name": {"*":"Printer_MRemoteIO"},
       "components": [ "Printer_MRemoteIO" ],
       "mode": "File",
       "files": [ "Printer_MRemoteIO/*.bin" ]
     },
     {
-      "name": "TrayRWPLC",
+      "name": {"*":"TrayRWPLC"},
       "components": [ "TrayRWPLC" ],
       "mode": "Folder",
       "files": [ "TrayRW_PLC/PRG/*.bin" ]
     },
     {
-      "name": "LCR2",
+      "name": {"*":"LCR2"},
       "components": [ "LCR2" ],
       "mode": "File",
       "files": [ "LCR2/*.bin" ]
     },
     {
-      "name": "Servo",
+      "name": {"*":"Servo"},
       "components": [ "Servo" ],
       "mode": "File",
       "files": [ "Servo/*.bin" ]
     },
     {
-      "name": "ManualFeeder_W08",
+      "name": {"*":"ManualFeeder_W08"},
       "components": [ "ManualFeeder_W08" ],
       "mode": "File",
       "files": [ "ManualFeederw08/*.bin" ]
     },
     {
-      "name": "Nozzle_Supply_Unit",
+      "name": {"*":"Nozzle_Supply_Unit"},
       "components": [ "Nozzle_Supply_Unit" ],
       "mode": "File",
       "files": [ "NozzleSupply/*.bin" ]
     },
     {
-      "name": "ReelSet",
+      "name": {"*":"ReelSet"},
       "components": [ "ReelSet", "ReelSet_FPGA" ],
       "mode": "File",
       "files": [ "ReelSet/*.bin" ]
     },
     {
-      "name": "NXT_Feeder(GCUR-S)",
+      "name": {"*":"NXT_Feeder(GCUR-S)"},
       "components": [ "NXT_GCUR_S" ],
       "mode": "File",
       "files": [ "NXTFeeder/GCUR-S/*.bin" ]
     },
     {
-      "name": "Feeder(GCUR-A)",
+      "name": {"*":"Feeder(GCUR-A)"},
       "components": [ "Feeder_GCUR_A" ],
       "mode": "File",
       "files": [ "Feeder_GCUR_A/*.bin" ]
     },
     {
-      "name": "Feeder_Jig",
+      "name": {"*":"Feeder_Jig"},
       "components": [ "Feeder_Jig", "Feeder_Jig_FPGA" ],
       "mode": "File",
       "files": [ "FeederJig/*.bin" ]
     },
     {
-      "name": "ModuleFixBoard",
+      "name": {"*":"ModuleFixBoard"},
       "components": [ "Printer_Fix", "Printer_Fix_FPGA" ],
       "mode": "File",
       "files": [ "PrinterFix/*.bin" ]
     },
     {
-      "name": "X Axis(Printer)",
+      "name": {"*":"X Axis(Printer)"},
       "components": [ "Printer_XAxis", "Printer_XAxis_FPGA" ],
       "mode": "File",
       "files": [ "PrinterXAxis/*.bin" ]
     },
     {
-      "name": "NXT_StackTrayFeeder",
+      "name": {"*":"NXT_StackTrayFeeder"},
       "components": [ "NXT_StackTrayFeeder" ],
       "mode": "File",
       "files": [ "NXTFeeder/StackTrayFeeder/*.bin" ]
     },
     {
-      "name": "DipFluxUnit_A",
+      "name": {"*":"DipFluxUnit_A"},
       "components": [ "DipFluxUnit_A" ],
       "mode": "File",
       "files": [ "DipFluxUnit_A/*.bin" ]
     }
   ],
+  # アプリのオプションのデフォルト等
+  # オプション値は起動引数で設定も可能で、起動引数の方が優先される
+  # 
   "Options": {
     "dataFolder": "",
     "ignore_unit": "true",

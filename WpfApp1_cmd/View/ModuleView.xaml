@@ -21,6 +21,7 @@
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolVisibilityConverter" />
         <vc:GroupToIsCheckedConverter x:Key="GroupToIsCheckedConverter" />
+        <vc:UnitNameConverter x:Key="UnitNameConverter" />
     </UserControl.Resources>
     
     <Grid>
@@ -103,7 +104,7 @@
                                     <TextBlock VerticalAlignment="Center">
                                         <TextBlock.Text>
                                             <MultiBinding StringFormat="{}{0} - {1}">
-                                                <Binding Path="Name" />
+                                                <Binding Path="Name" Converter="{vc:UnitNameConverter}" />
                                                 <Binding Path="ItemCount" Converter="{vc:ItemCountConverter}"/>
                                             </MultiBinding>
                                         </TextBlock.Text>
@@ -150,6 +151,13 @@
                         EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnPopupEditingStyle}"
                         ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"
                         Header="Unit" FontSize="16" FontFamily="Arial" Width="200" MinWidth="200" Binding="{Binding Name}" IsReadOnly="True">
+                        <!-- マウスオーバーでツールチップを表示する
+                        <materialDesign:DataGridTextColumn.CellStyle>
+                            <Style TargetType="DataGridCell" BasedOn="{StaticResource MaterialDesignDataGridCell}">
+                                <Setter Property="ToolTip" Value="{Binding Name}" />
+                            </Style>
+                        </materialDesign:DataGridTextColumn.CellStyle>
+                        -->
                     </materialDesign:DataGridTextColumn>
 
                     <materialDesign:DataGridTextColumn

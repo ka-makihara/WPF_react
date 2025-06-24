@@ -51,7 +51,7 @@ namespace WpfApp1_cmd.ViewModel
 
 		private void IsSelectedChk(UnitVersion item, bool? value)
         {
-			if (ArgOptions.GetOptionBool("--ignore_version") == true)
+			if (ArgOptions.GetOptionBool("--ignore_version") == false ) 
 			{
 				// バージョンが違うものしかチェックが更新できないようにする
 				var uv = Updates.FirstOrDefault(x => x.Name == item.Name);

@@ -1,0 +1,10 @@
+﻿{
+  "units": [
+    {
+      "name": { "NXTR":"FM-65", "AIMEXR": "Conveyor","Other": 1 },
+      "components": [ "Palette", "Palette_FPGA", "Palette_FPGA_GOWIN" ],
+      "mode": "File",
+      "files": [ "CHPalette/*.rom","CHPalette_FPGA/*.jam","CHPalette_FPGA_GOWIN/*.bin" ]
+    }
+  ]
+}

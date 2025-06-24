@@ -19,12 +19,48 @@ namespace WpfApp1_cmd.Models
 
 	public class UnitLink
 	{
-		public string name { get; set; }
+		public Dictionary<string, object> name { get; set; }
+		public List<string> components { get; set; }
+		public string mode { get; set; }
+		public List<string> files { get; set; }
+
+		public bool ContainsName(string n)
+		{
+			if (this.name == null) return false;
+			foreach (var item in this.name)
+			{
+				if (string.Compare(item.Value.ToString(), n, true) == 0)
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
+		public string GetName(string? type = null)
+		{
+			string key = type ?? "*";
+			if (this.name == null) return "";
+
+			
+			this.name.TryGetValue(key, out object? value);
+			return value?.ToString() ?? "";
+		}
+	}
+/*
+	public class Config2
+	{
+		public List<UnitLink2> units { get; set; }
+	}
+
+	public class UnitLink2
+	{
+		public Dictionary<string, object> name { get; set; }
 		public List<string> components { get; set; }
 		public string mode { get; set; }
 		public List<string> files { get; set; }
 	}
-
+*/
 	public class Options
 	{
 		public string dataFolder { get; set; }

@@ -83,6 +83,10 @@ namespace WpfApp1_cmd.ViewModel
 					var s2 = s1.Substring(0, idx).Split(";");	//line, machine, module,unitを分割
 					var status = s1[(idx+1)..].Split(":");   // = 後の「結果」を取得(OK, NG, Skip:<CurVersion -> NewVersion>)
 
+					if( status.Length == 1)
+					{
+						Debug.WriteLine("status.Length == 1");
+					}
 					var n = StatusList.FirstOrDefault(x => x.Name == status[0]);
 					if (s2.Length > 3 && n != null)
 					{

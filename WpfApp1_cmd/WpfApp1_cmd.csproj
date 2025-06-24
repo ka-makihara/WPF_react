@@ -21,8 +21,10 @@
     <None Remove="Resources\error_32.png" />
     <None Remove="Resources\info_32.png" />
     <None Remove="Resources\question_32.png" />
+    <None Remove="Resources\TextFile1.json" />
     <None Remove="Resources\warning.png" />
     <None Remove="Resources\warning_32.png" />
+    <None Remove="SymmetricCryptography.dll" />
     <None Remove="View\1180_32.png" />
   </ItemGroup>
 
@@ -38,6 +40,7 @@
     <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="23.6.1" />
     <PackageReference Include="ReactiveProperty.WPF" Version="9.6.0" />
     <PackageReference Include="WindowsAPICodePack-Shell" Version="1.1.1" />
+    <PackageReference Include="YamlDotNet" Version="16.3.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -52,7 +55,11 @@
     <Resource Include="Resources\caution_32.png" />
     <Resource Include="Resources\error_32.png" />
     <Resource Include="Resources\info_32.png" />
-    <EmbeddedResource Include="Resources\config.json" />
+    <EmbeddedResource Include="Resources\config.yaml" />
+    <EmbeddedResource Include="Resources\TextFile1.json" />
+    <Reference Include="SymmetricCryptography">
+      <HintPath>..\SymmetricCryptography.dll</HintPath>
+    </Reference>
     <Resource Include="Resources\question_32.png" />
     <Resource Include="Resources\warning.png" />
     <Resource Include="Resources\warning_32.png" />
