@@ -5,12 +5,6 @@
     {
       "AbsoluteMoniker": "D:0:0:{B1947DC4-DFB5-4EF9-BB2D-3E622D5CE72F}|WpfApp1_cmd\\WpfApp1_cmd.csproj|c:\\users\\ka.makihara\\develop\\wpf_react\\wpfapp1_cmd\\viewmodel\\mainwindowviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{B1947DC4-DFB5-4EF9-BB2D-3E622D5CE72F}|WpfApp1_cmd\\WpfApp1_cmd.csproj|solutionrelative:wpfapp1_cmd\\viewmodel\\mainwindowviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2432A460-E49B-4F5A-AF67-0F6CF52AAED7}|..\\WPF_LcuCtrlLib\\WpfLcuCtrlLib\\WpfLcuCtrlLib.csproj|c:\\users\\ka.makihara\\develop\\wpf_lcuctrllib\\wpflcuctrllib\\lcuctrl.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2432A460-E49B-4F5A-AF67-0F6CF52AAED7}|..\\WPF_LcuCtrlLib\\WpfLcuCtrlLib\\WpfLcuCtrlLib.csproj|c:\\users\\ka.makihara\\develop\\wpf_lcuctrllib\\wpflcuctrllib\\lcucommand.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -20,7 +14,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 4,
+          "SelectedChildIndex": 2,
           "Children": [
             {
               "$type": "Bookmark",
@@ -32,38 +26,13 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "LcuCtrl.cs",
-              "DocumentMoniker": "C:\\Users\\ka.makihara\\develop\\WPF_LcuCtrlLib\\WpfLcuCtrlLib\\LcuCtrl.cs",
-              "RelativeDocumentMoniker": "..\\WPF_LcuCtrlLib\\WpfLcuCtrlLib\\LcuCtrl.cs",
-              "ToolTip": "C:\\Users\\ka.makihara\\develop\\WPF_LcuCtrlLib\\WpfLcuCtrlLib\\LcuCtrl.cs",
-              "RelativeToolTip": "..\\WPF_LcuCtrlLib\\WpfLcuCtrlLib\\LcuCtrl.cs",
-              "ViewState": "AgIAAG4BAAAAAAAAAIAwwIABAAADAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-06-18T02:15:51.868Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "LcuCommand.cs",
-              "DocumentMoniker": "C:\\Users\\ka.makihara\\develop\\WPF_LcuCtrlLib\\WpfLcuCtrlLib\\LcuCommand.cs",
-              "RelativeDocumentMoniker": "..\\WPF_LcuCtrlLib\\WpfLcuCtrlLib\\LcuCommand.cs",
-              "ToolTip": "C:\\Users\\ka.makihara\\develop\\WPF_LcuCtrlLib\\WpfLcuCtrlLib\\LcuCommand.cs",
-              "RelativeToolTip": "..\\WPF_LcuCtrlLib\\WpfLcuCtrlLib\\LcuCommand.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAN8AAAAXAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-06-18T02:15:22.404Z"
-            },
-            {
-              "$type": "Document",
               "DocumentIndex": 0,
               "Title": "MainWindowViewModel.cs",
               "DocumentMoniker": "C:\\Users\\ka.makihara\\develop\\WPF_react\\WpfApp1_cmd\\ViewModel\\MainWindowViewModel.cs",
               "RelativeDocumentMoniker": "WpfApp1_cmd\\ViewModel\\MainWindowViewModel.cs",
               "ToolTip": "C:\\Users\\ka.makihara\\develop\\WPF_react\\WpfApp1_cmd\\ViewModel\\MainWindowViewModel.cs",
               "RelativeToolTip": "WpfApp1_cmd\\ViewModel\\MainWindowViewModel.cs",
-              "ViewState": "AgIAABIAAAAAAAAAAAAAAPcJAAAEAAAAAAAAAA==",
+              "ViewState": "AgIAACYKAAAAAAAAAAAawO4JAABuAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-03-17T05:06:56.046Z",
               "EditorCaption": ""

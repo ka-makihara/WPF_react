@@ -8,6 +8,7 @@ using System.Linq;
 using System.Runtime.Intrinsics.Arm;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using WpfApp1_cmd.Models;
 
@@ -73,6 +74,8 @@ namespace WpfApp1_cmd.ViewModel
 			string[] data = wordList.Where(x => x.Contains("[Transfer]")).ToArray();
 
 			ResultDataList = [];
+			string StatusMsg = "----";
+			string DetailMsg = "----";
 
 			foreach (var st in data)
 			{
@@ -85,7 +88,14 @@ namespace WpfApp1_cmd.ViewModel
 
 					if( status.Length == 1)
 					{
-						Debug.WriteLine("status.Length == 1");
+						//Debug.WriteLine("status.Length == 1");
+						StatusMsg = status[0];
+						DetailMsg = "----"; // 詳細がない場合は "----" とする
+					}
+					else
+					{
+						StatusMsg = status[0];
+						DetailMsg = status[1];
 					}
 					var n = StatusList.FirstOrDefault(x => x.Name == status[0]);
 					if (s2.Length > 3 && n != null)
@@ -95,8 +105,8 @@ namespace WpfApp1_cmd.ViewModel
 												  MachineName = s2[1],
 												  ModuleName = s2[2],
 												  UnitName = s2[3],
-												  Status = status[0],
-												  Detail = status[1] ?? "----"
+												  Status = StatusMsg,
+												  Detail = DetailMsg 
 						});
 					}
 				}

@@ -320,10 +320,12 @@ namespace WpfApp1_cmd.Models
                 {
 					string p = UpdateInfo.GetValue(sec, "Path");
 
+					/*
 					if (opt.ContainsExt(Path.GetExtension(p)) == false)
 					{
 						continue;	
 					}
+					*/
 
 					paths.Add(UpdateInfo.GetValue(sec, "Path"));
 					var d = UpdateInfo.GetValue(sec, "FuserPath");

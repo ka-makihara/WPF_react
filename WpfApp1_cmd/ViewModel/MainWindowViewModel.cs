@@ -716,7 +716,8 @@ namespace WpfApp1_cmd.ViewModel
 			else
 			{
 				//Peripheral.bin ではない場合は、UpdateCommon.inf のパスを設定
-				infoFile = (DataFolder + "\\Fuji\\" + Define.MC_PERIPHERAL_PATH + Define.UPDATE_INFO_FILE).Replace("/", "\\");
+				//infoFile = (DataFolder + "\\Fuji\\" + Define.MC_PERIPHERAL_PATH + Define.UPDATE_INFO_FILE).Replace("/", "\\");
+				infoFile = (DataFolder + "\\" + Define.MC_PERIPHERAL_PATH + Define.UPDATE_INFO_FILE).Replace("/", "\\");
 			}
 
 			IsFileMenuEnabled = true;
@@ -1678,7 +1679,7 @@ namespace WpfApp1_cmd.ViewModel
 			}
 		}
 
-		private async Task<long> LoadModulesUpdateCommon()
+		private async Task<long> LoadModulesUpdateCommon(CancellationToken token)
 		{
 			long count = 0;
 
@@ -1702,7 +1703,7 @@ namespace WpfApp1_cmd.ViewModel
 						}
 						if (module.UnitVersions.Count == 0)
 						{
-							var version = await CreateVersionInfo(lcu, machine, module, null);
+							var version = await CreateVersionInfo(lcu, machine, module, token);
 							if (version == null)
 							{
 								ErrorInfo.ErrCode = ErrorCode.UPDATE_UNDEFINED_ERROR;
@@ -1750,7 +1751,7 @@ namespace WpfApp1_cmd.ViewModel
 			}
 			// 選択されたユニットのUpdateCommon.inf を読み込む
 			//   (Treeで選択された場合はその時に読み込んでいるが、そうでない場合はここで纏めて読み込む)
-			long bLoad = await LoadModulesUpdateCommon();
+			long bLoad = await LoadModulesUpdateCommon(token);
 			if( bLoad == 0)
 			{
 				//UpdateCommon.inf の読み込みに失敗した
@@ -2056,7 +2057,7 @@ namespace WpfApp1_cmd.ViewModel
 			Progress?.SetMessage($"[Backup] {lcu.Name};{machine.Name};{module.Name}");
 
 			// moduleからUpdateCommon.inf を取り出す
-			ret = await GetModuleUpdateInfo(lcu, machine, module);
+			ret = await GetModuleUpdateInfo(lcu, machine, module, token);
 			if(ret == false)
 			{
 				AddLog($"[DownLoad] {lcu.Name};{machine.Name};{module.Name}=GetModuleUpdateInfo Error");
@@ -2067,18 +2068,30 @@ namespace WpfApp1_cmd.ViewModel
 			//装置から取得したUpdateCommon.inf のパスのみを取り出してリスト化(重複を削除)
 			//    ※パスはファイル名を含むので、ファイル名を削除してフォルダのみを取り出す
 			//      WebAPIに装置からフォルダを含む一覧を取得するコマンドがないため、UpdateCommon.inf のパスを利用する
-			//List<string> folders = module.UnitVersions.Select(x => Path.GetDirectoryName(x.Path)).ToList().Distinct().ToList();
 			List<string> folders = module.UpdateFiles(Config.Options).Select(x => x).ToList().Distinct().ToList();
 
 			//UpdateCommon.inf のパスを追加(UpdateCommon.inf は必ず存在する)
 			folders.Add( $"/{Define.MC_PERIPHERAL_PATH}{Define.UPDATE_INFO_FILE}");
 
-			retMsg = await lcu.LcuCtrl.LCU_Command(SetLcu.Command(lcu.LcuId));
+			//UpDateData 下の全ファイルを対象
+			string[] allFiles = Directory.GetFiles(DataFolder + "\\Fuji", "*", SearchOption.AllDirectories);
+
+			var folderList = allFiles.Select(x => Path.GetDirectoryName(x)?.Split(DataFolder)[1].Replace("\\", "/") ?? "")
+				.Distinct()
+				.Where(x => x != null && x != "")
+				.ToList();
+			//バックアップ用のフォルダを作成
+			foreach (var folder in folderList)
+			{
+				Directory.CreateDirectory(backupPath + folder);
+			}
+
+			//retMsg = await lcu.LcuCtrl.LCU_Command(SetLcu.Command(lcu.LcuId));
 
 			//LCU上にフォルダを作成する(装置からファイルを取得するフォルダ,装置と同じフォルダ構造をLCUのFTP下に作る)
-			string lcuRoot = $"LCU_{lcu.LcuId}/MCFiles";
-			//string lcuRoot = "/MCFiles";
-			ret = lcu.LcuCtrl.CreateFtpFolders(folders, lcuRoot);
+			//string lcuRoot = $"LCU_{lcu.LcuId}/MCFiles";
+			string lcuRoot = "/MCFiles";
+			ret = lcu.LcuCtrl.CreateFtpFolders(folderList, lcuRoot);
 			if (ret == false)
 			{
 				AddLog($"[DownLoad] {lcu.Name}=CreateFtpFolders Error");
@@ -2086,6 +2099,28 @@ namespace WpfApp1_cmd.ViewModel
 				return ret;
 			}
 
+			var fileList = allFiles.Select(x => x.Split(DataFolder)[1].Replace("\\", "/") ?? "")
+				.Distinct()
+				.Where(x => x != null && x != "")
+				.ToList();
+
+			var mc = fileList.Select(x => x).ToList();
+			var lc = fileList.Select(x => $"{lcuRoot}{x}").ToList();
+
+			bool bRet = await lcu.LcuCtrl.GetMachineFiles(machine.Name, module.Pos, mc, lc, backupPath+"\\",token);
+
+			//UpdateCommon.inf の先頭にバックアップ情報を追記する
+			DateTime dt = DateTime.Now;
+			string infoFile = backupPath + "\\" + Define.MC_PERIPHERAL_PATH + Define.UPDATE_INFO_FILE;
+			string[] data = System.IO.File.ReadAllLines(infoFile, Encoding.GetEncoding(Define.TXT_ENCODING));
+			string[] newData = new string[data.Length + 1];
+			newData[0] = $"#UpdateInfo={lcu.Name};{machine.Name};{module.Name};{dt.ToString("yyyy/MM/dd HH:mm:ss")}";
+			Array.Copy(data, 0, newData, 1, data.Length);
+			StringsToFile(newData, infoFile);
+
+			return true;
+
+#if false
 			try
 			{
 				AddLog($"[DownLoad] {lcu.Name};{machine.Name};{module.Name}=GetMcFileList");
@@ -2171,6 +2206,7 @@ namespace WpfApp1_cmd.ViewModel
 				throw;
 			}
 			return ret;
+#endif
 		}
 
 		/// <summary>
@@ -2431,6 +2467,7 @@ namespace WpfApp1_cmd.ViewModel
 		{
 			bool ret = true;
 			string lcuRoot = $"/MCFiles";
+			int errIdx = 0;
 
 			if (module.UnitVersions == null)
 			{
@@ -2464,24 +2501,6 @@ namespace WpfApp1_cmd.ViewModel
 
 			//(転送データの)バージョン情報からパスのみを取り出してリスト化
 			List<UnitPath> unitFiles = CreateUpdateFileList(module.UnitVersions);
-
-			/* Debug */
-			foreach (var item in unitFiles)
-			{
-				Debug.WriteLine($"{item.GroupName}");
-				foreach (var unit in item.units)
-				{
-					if (Path.Exists(unit.path) == false)
-					{
-						//存在しなければ次へ
-						Debug.WriteLine($"  {unit.name}={unit.path}  Not Exists");
-					}
-					else {
-						Debug.WriteLine($"  {unit.name}={unit.path}");
-					}
-				}
-			}
-			/* */
 
 			//LCUに転送したファイルを装置に送信する
 			string mcUser = GetMcUser();
@@ -2520,37 +2539,29 @@ namespace WpfApp1_cmd.ViewModel
 				if (retMsg == "" || retMsg == "Internal Server Error")
 				{
 					ErrorInfo.ErrCode = ErrorCode.LCU_CONNECT_ERROR;
-					AddLog($"[Transfer] {lcu.Name};{machine.Name};{module.Name}=WebAPI(PostMcFile) Error");
-					AddLog($"[Transfer] {module.Name};{fileGroup.GroupName}=NG");
+					AddLog($"[ERROR] {lcu.Name};{machine.Name};{module.Name}=WebAPI(PostMcFile) Error");
+					AddLog($"[Transfer] {lcu.Name};{machine.Name};{module.Name};{fileGroup.GroupName}=NG:Internal Server Error");
 					TransferErrorCount++;
 					ret = false;
 					break;
 				}
 				// エラーメッセージがある場合はログに出力(デバッグ用、FTPでファイル転送に失敗した場合など)
-				var data = JsonSerializer.Deserialize<LcuErrMsg>(retMsg);
-				if (data != null && data.errorMsg != "")
+				var data = JsonSerializer.Deserialize<PostMcFile>(retMsg);
+				if( data != null && data.HasError(ref errIdx))
 				{
+					var ec = data.ftp.data[errIdx].errorCode;
 					ErrorInfo.ErrCode = ErrorCode.FTP_TRANSFER_ERROR;
-					AddLog($"[Transfer] {lcu.Name};{machine.Name};{module.Name}=WebAPI(PostMcFile) Error");
-					AddLog($"[ERROR] Status:{data.errorMsg} Msg:{data.errorStatus}");
-					AddLog($"[Transfer] {lcu.Name};{machine.Name};{module.Name};{fileGroup.GroupName}=NG");
+
+					//AddLog($"[Transfer] {lcu.Name};{machine.Name};{module.Name}=WebAPI(PostMcFile) Error");
+					AddLog($"[ERROR] {data.ftp.data[errIdx].errorMessage} errCode={ec}");
+					AddLog($"[Transfer] {lcu.Name};{machine.Name};{module.Name};{fileGroup.GroupName}=NG:{data.ftp.data[errIdx].errorMessage}");
 					ret = false;
 					TransferErrorCount++;
-					break;
+					//break;
 				}
 
 				//for debug 転送したファイルを取得し直す(送信したファイルが正しいか確認するため)
-				string tmpDir = "";
-				var dirs = lc.Select(x => Path.GetTempPath() + Path.GetDirectoryName(x).TrimStart('/','\\')).Distinct().ToList();
-
-				foreach (var dir in dirs)
-				{
-					Directory.CreateDirectory(dir);
-					tmpDir = dir;
-				}
-
-				bool bRet = await lcu.LcuCtrl.GetMachineFiles(machine.Name, module.Pos, mc, lc, tmpDir,token);
-
+				bool bRet = await lcu.LcuCtrl.GetMachineFiles(machine.Name, module.Pos, mc, lc, Path.GetTempPath()+"MCFiles\\",token);
 
 				TransferSuccessCount += mc.Count;
 				TransferedCount += mc.Count;
@@ -2626,16 +2637,19 @@ namespace WpfApp1_cmd.ViewModel
 		/// <param name="peripheralFile">取得するファイル名</param>
 		/// <param name="targetPath">取得したファイルを格納するローカルパス</param>
 		/// <returns></returns>
-		private static async Task<bool> GetMcPeripheralFile(LcuInfo lcu, MachineInfo machine, ModuleInfo module, string peripheralFile, string targetPath)
+		private static async Task<bool> GetMcPeripheralFile(LcuInfo lcu, MachineInfo machine, ModuleInfo module, string peripheralFile, string targetPath, CancellationToken token)
 		{
 			string mcFile = Define.MC_PERIPHERAL_PATH + peripheralFile;
-			//string mcFile = peripheralFile;
-			string lcuFile = $"/MCFiles/" + peripheralFile;
+			//string lcuFile = $"/MCFiles/" + peripheralFile;
+			string lcuFile = $"/MCFiles/" + mcFile;
 
 			string retMsg = await lcu.LcuCtrl.LCU_Command(SetLcu.Command(lcu.LcuId));
 
+			string temp = targetPath + Define.MC_PERIPHERAL_PATH;
+			Directory.CreateDirectory(targetPath + Define.MC_PERIPHERAL_PATH);
+
 			//装置からファイルを取得
-			return await lcu.LcuCtrl.GetMachineFile(machine.Name, module.Pos, mcFile, lcuFile, targetPath);
+			return await lcu.LcuCtrl.GetMachineFile(machine.Name, module.Pos, mcFile, lcuFile, targetPath,token);
 		}
 
 		/// <summary>
@@ -2777,7 +2791,8 @@ namespace WpfApp1_cmd.ViewModel
 								var dlg = DialogHost.Show(new WaitProgress(Resource.ReadingUnitInfo),"DataGridView");
 								await Task.Delay(500); // ダイアログ表示のための遅延(タイマーが無いとダイアログが表示されるより前に CloseDialogCommnad が実行される場合あり)
 
-								var version = await CreateVersionInfo(lcu, machineInfo, moduleInfo, null);
+								var token = new CancellationToken();
+								var version = await CreateVersionInfo(lcu, machineInfo, moduleInfo, token);
 								if (version != null)
 								{
 									moduleInfo.UnitVersions = version;
@@ -2923,25 +2938,30 @@ namespace WpfApp1_cmd.ViewModel
 		/// <param name="machine"></param>
 		/// <param name="module"></param>
 		/// <returns></returns>
-		public async Task<bool> GetModuleUpdateInfo(LcuInfo lcu, MachineInfo machine, ModuleInfo module)
+		public async Task<bool> GetModuleUpdateInfo(LcuInfo lcu, MachineInfo machine, ModuleInfo module, CancellationToken token)
 		{
 			bool bRet;
 
 			if (module.UpdateInfo == null)
 			{
 				// (装置から)UpdateCommon.inf ファイルを取得
-				string tmpDir = Path.GetTempPath();
-				bRet = await GetMcPeripheralFile(lcu, machine, module, Define.UPDATE_INFO_FILE, tmpDir);
+				string tmpDir = Path.GetTempPath() + "MCFiles\\";
+				bRet = await GetMcPeripheralFile(lcu, machine, module, Define.UPDATE_INFO_FILE, tmpDir, token);
 				if( bRet == false)
 				{
 					return false;
 				}
 
 				// UpdateCommon.inf を読み込んで iniFile, string[] にセット
-				module.SetUpdateInfo(tmpDir + Define.UPDATE_INFO_FILE);
+				string inf_file = tmpDir + Define.MC_PERIPHERAL_PATH + Define.UPDATE_INFO_FILE;
+				module.SetUpdateInfo(inf_file);
 
 				//テンポラリに生成したファイルを削除
-				System.IO.File.Delete(tmpDir + Define.UPDATE_INFO_FILE);
+				//System.IO.File.Delete(inf_file);
+				foreach (var dir in Directory.GetDirectories(tmpDir))
+				{
+					Directory.Delete(dir, recursive: true);
+				}
 			}
 			return true;
 		}
@@ -2955,7 +2975,7 @@ namespace WpfApp1_cmd.ViewModel
 		/// <param name="progCtrl">ProgressDialogController</param>
 		/// <param name="token">CancellationToken</param>
 		/// <returns></returns>
-		public async Task<ReactiveCollection<UnitVersion>?> CreateVersionInfo(LcuInfo lcu, MachineInfo machine, ModuleInfo module, CancellationToken? token)
+		public async Task<ReactiveCollection<UnitVersion>?> CreateVersionInfo(LcuInfo lcu, MachineInfo machine, ModuleInfo module, CancellationToken token)
 		{
 			bool ret;
 
@@ -2967,7 +2987,7 @@ namespace WpfApp1_cmd.ViewModel
 			//Progress?.SetMessage($"{lcu.LcuCtrl.Name};{machine.Name};{module.Name} Get Update Info");
 
 			// UpdateCommon.inf をLCUを経由して取得する
-			ret = await GetModuleUpdateInfo(lcu, machine, module);
+			ret = await GetModuleUpdateInfo(lcu, machine, module, token);
 			if( ret == false)
 			{
 				AddLog($"{lcu.LcuCtrl.Name};{machine.Name};{module.Name}={Define.UPDATE_INFO_FILE} Get error");
