@@ -106,6 +106,7 @@
                 <MenuItem Header="{x:Static resources:Resource.MENU_ReadUpdateData}" Icon="{materialDesign:PackIcon Kind=PresentOpen}" Command="{Binding FileOpenCommand}" />
                 <Separator />
                 <MenuItem Header="{x:Static resources:Resource.BTN_Exit}" Icon="{materialDesign:PackIcon Kind=ExitToApp}" Command="{Binding QuitApplicationCommand}" />
+                <MenuItem Header="TestResultWindow" Icon="{materialDesign:PackIcon Kind=PrinterCheck}" Command="{Binding TestResultCommand}" />
             </MenuItem>
             <MenuItem Header="_LCU" Visibility="{Binding IsLcuMenuEnabled, Converter={StaticResource BoolToVisible}}" >
                 <MenuItem Header="{x:Static resources:Resource.MENU_ConnectionCheck}" Icon="{materialDesign:PackIcon Kind=Network}" Command="{Binding LcuNetworkChkCommand}" />

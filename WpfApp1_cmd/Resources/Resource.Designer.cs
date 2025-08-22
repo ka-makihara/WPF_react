@@ -187,6 +187,15 @@ namespace WpfApp1_cmd.Resources {
         }
         
         /// <summary>
+        ///   Not Applicable に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Current_na {
+            get {
+                return ResourceManager.GetString("Current_na", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   DiskFreeSize に類似しているローカライズされた文字列を検索します。
         /// </summary>
         public static string DiskFreeSize {

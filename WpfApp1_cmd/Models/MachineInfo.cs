@@ -3,6 +3,7 @@ using Reactive.Bindings.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -123,22 +124,8 @@ namespace WpfApp1_cmd.Models
 				return;
 			}
 			IsSelected.Value = Utility.CheckState(Children);
-/*
-			int trueCount = Children.Count(x => x.IsSelected.Value == true);
-			int nullCount = Children.Count(x => x.IsSelected.Value == null);
-
-			if (value == true)
-			{
-				//全ての子が選択されている==true, 一つでも選択されていない==null
-				IsSelected.Value = (trueCount == Children.Count) ? true : null ;
-			}
-			else
-			{
-				//子が一つでも選択されている==null, 全て選択されていない==false
-				IsSelected.Value = (trueCount == 0 && nullCount == 0) ? false : null ;
-			}
-*/
 		}
+
 		public void Update(bool? value)
 		{
 			//親がいないので何もしない
@@ -151,7 +138,7 @@ namespace WpfApp1_cmd.Models
 			_lcuCtrl = new(name,id);
 
 			_machines.ObserveAddChanged().Subscribe(x => AddMachine(x));
-			IsSelected.Subscribe(x => Update(x));
+			//IsSelected.Subscribe(x => Update(x));
         }
 
         public string Version { get; set; } = "V1.00";
@@ -197,20 +184,14 @@ namespace WpfApp1_cmd.Models
 
 		public void UpdateSelf(bool? value)
 		{
-			int trueCount = Children.Count(x => x.IsSelected.Value == true);
-			int nullCount = Children.Count(x => x.IsSelected.Value == null);
-
-			if (value == true)
+			/*
+			if( Config.Options.ContainsMachineType(MachineType) == false )
 			{
-				//全ての子が選択されている==true, 一つでも選択されていない==null
-				IsSelected.Value = (trueCount == Children.Count) ? true : null ;
+				IsSelected.Value = false;
+				return; // 親のMachineTypeが対象外機種の場合は、Machineの選択状態を無効化
 			}
-			else
-			{
-				//子が一つでも選択されている==null, 全て選択されていない==false
-				IsSelected.Value = (nullCount == 0 && trueCount == 0) ? false : null ;
-			}
-			Parent?.UpdateSelf(value);
+			*/
+			IsSelected.Value = Utility.CheckState(Children);
 		}
 
 		/// <summary>
@@ -301,9 +282,15 @@ namespace WpfApp1_cmd.Models
         public string IPAddress { get; set; } = ""; // 本来Moduleにはない情報だが、アクセスの利便性のために追加
         public IniFileParser? UpdateInfo { get; set; } = null;
 		public string[] UpdateStrings;
+		public UnitInfoLoadStatus UpdateInfoLoaded { get; set; } = UnitInfoLoadStatus.NotLoaded;
 
 		public void SetUpdateInfo(string path)
 		{
+			if (System.IO.File.Exists(path) == false)
+			{
+				Debug.WriteLine($"UpdateInfo file not found: {path}");
+				return;
+			}
 			UpdateInfo = new IniFileParser(path);
 
 			//UpdateCommon.inf　を読み込んでおく
@@ -345,9 +332,16 @@ namespace WpfApp1_cmd.Models
 
 		public void UpdateSelf(bool? value)
 		{
-			int trueCount = UnitVersions.Count(x => x.IsSelected.Value == true);
-			int nullCount = UnitVersions.Count(x => x.IsSelected.Value == null);
-
+			/*
+			if( Parent != null && Config.Options.ContainsMachineType(Parent.MachineType) == false)
+			{
+				// 親のMachineTypeが対象外機種の場合は、Moduleの選択状態を無効化
+				IsSelected.Value = false;
+				return;
+			}
+			*/
+			IsSelected.Value = Utility.CheckState(UnitVersions);
+/*
 			if (value == true)
 			{
 				//全ての子が選択されている==true, 一つでも選択されていない==null
@@ -358,6 +352,7 @@ namespace WpfApp1_cmd.Models
 				//子が一つでも選択されている==null, 全て選択されていない==false
 				IsSelected.Value = (trueCount == 0 && nullCount == 0) ? false : null ;
 			}
+*/
 		}
 
 		/// <summary>
@@ -382,5 +377,10 @@ namespace WpfApp1_cmd.Models
             UnitVersions.ObserveAddChanged().Subscribe(x => AddUnitVersion(x));
             IsSelected.Subscribe(x => Update(x));
         }
+
+		public MachineInfo? GetMachineInfo()
+		{
+			return Parent;
+		}
     }
 }

@@ -18,32 +18,6 @@ using WpfLcuCtrlLib;
 
 namespace WpfApp1_cmd.ViewModel
 {
-	/*
-	partial class UnitGroup  :ViewModelBase
-	{
-		private bool? _status;
-		public bool? Status
-		{
-			get => _status;
-			set
-			{
-				if( _status != value)
-				{
-					_status = value;
-					OnPropertyChanged( nameof(Status) );
-				}
-			}
-		}
-		public List<UnitVersion>? Units { get; set; }
-
-		public void UpdateStatus()
-		{
-			if( Units == null) { return; }
-			Status = Utility.CheckState(Units);
-		}
-	}
-	*/
-
 	internal class ModuleViewModel : ViewModelBase
     {
         private ObservableCollection<UpdateInfo>? _updates = null;
@@ -108,7 +82,20 @@ namespace WpfApp1_cmd.ViewModel
 		public ReactiveCommand<CollectionViewGroup> GroupCheckCommand { get; }	// グループヘッダーのチェックボックス・コマンド	
 
 		public string ModuleName { get; set; } = "Module";
-		
+		private ModuleInfo _moduleInfo;
+		public ModuleInfo ModuleInfo
+		{
+			get => _moduleInfo;
+			set
+			{
+				if (_moduleInfo != value)
+				{
+					_moduleInfo = value;
+					OnPropertyChanged(nameof(ModuleInfo));
+				}
+			}
+		}
+
 		/// <summary>
 		/// ユニット選択のトグルボタンの表示を切り替える
 		///   ユーザーモードでは表示しない -> ユニット毎のチェックボックスを表示しない
@@ -127,6 +114,13 @@ namespace WpfApp1_cmd.ViewModel
 		/// </summary>
 		private void OnAllSelectCommandExecuted()
 		{
+			if( ModuleInfo.Parent != null && Config.Options.ContainsMachineType(ModuleInfo.Parent.MachineType) == false)
+			{
+				//未サポート機種の場合は、チェックボックスを操作できないようにする
+				IsAllSelected = false;
+				return;
+			}
+
 			var newValue = IsAllSelected;// == true;
 			foreach (var unit in UnitVersions)
 			{
@@ -189,20 +183,16 @@ namespace WpfApp1_cmd.ViewModel
 		/// <param name="name">モジュール名</param>
 		/// <param name="unitVersions">バージョンリスト</param>
 		/// <param name="updates">アップデートデータリスト</param>
-		public ModuleViewModel(string name, ReactiveCollection<UnitVersion> unitVersions, ObservableCollection<UpdateInfo> updates)
+		public ModuleViewModel(ModuleInfo module, /*ReactiveCollection<UnitVersion> unitVersions,*/ ObservableCollection<UpdateInfo> updates)
         {
-            UnitVersions = unitVersions;
+			ModuleInfo = module;
+            UnitVersions = module.UnitVersions;
             Updates = updates;
-			//ModuleName = "Transfer Selection : " + name;    //ビューのタイトルに表示する文字列
-			ModuleName = name;    //ビューのタイトルに表示する文字列
+			ModuleName = ModuleInfo.Name;    //ビューのタイトルに表示する文字列
 			SetSelectedModule();
 
 			UnitVersionGroupView = CollectionViewSource.GetDefaultView(UnitVersions);
             UnitVersionGroupView.GroupDescriptions.Add(new PropertyGroupDescription("UnitGroup"));
-
-			// グループヘッダーのチェックボックスの Click イベント
-			//GroupCheckClick = new ReactiveCommand<RoutedEventArgs>();
-			//GroupCheckClick.Subscribe(e => GroupCheckClickEvent(e));
 
 			//グループヘッダーのチェックボックスの変更イベント
 			GroupCheckCommand = new ReactiveCommand<CollectionViewGroup>();
@@ -350,18 +340,13 @@ namespace WpfApp1_cmd.ViewModel
 		/// <param name="m"></param>
 		public void UpdateGroupCheck(UnitVersion? m)
 		{
-			/*
-			if (m != null)
+			if( ModuleInfo.Parent != null && Config.Options.ContainsMachineType(ModuleInfo.Parent.MachineType) == false)
 			{
-				Debug.WriteLine($"UpdateGroupCheck({m.Name})={m.IsSelected}");
-				//UpdateGroupStatus(m);
+				//未サポート機種の場合は、チェックボックスを操作できないようにする
+				m.IsSelected.Value = false;
+				return;
 			}
-			else
-			{
-				Debug.WriteLine("UpdateGroupCheck(null)");
-			}
-			*/
-            OnPropertyChanged(nameof(IsAllSelected));
+			OnPropertyChanged(nameof(IsAllSelected));
 
 			//Debug.WriteLine("Refresh");
 			UnitVersionGroupView.Refresh();
@@ -381,8 +366,17 @@ namespace WpfApp1_cmd.ViewModel
 
 			if (tc == 0 )
 			{
-				//全チェックされてないのなら、全チェックにする
-				chk = true;
+				if (ModuleInfo.Parent != null && Config.Options.ContainsMachineType(ModuleInfo.Parent.MachineType) == false)
+				{
+					// 未サポート機種の場合は、チェック不可
+					chk = false;
+					IsAllSelected = false;  // グループヘッダーのチェックボックスを未チェックにする
+				}
+				else
+				{
+					//全未チェックされているのなら、全チェックにする
+					chk = true;
+				}
 			}
 			else
 			{
@@ -397,7 +391,6 @@ namespace WpfApp1_cmd.ViewModel
 				item.IsSelected.Value = chk;
 			}
 			OnPropertyChanged(nameof(IsAllSelected));
-			//Debug.WriteLine("GroupCheckCmd");
 		}
 
 		/// <summary>

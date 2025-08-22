@@ -21,6 +21,14 @@ namespace WpfApp1_cmd
 		Module = 3,
 	}
 
+	public enum UnitInfoLoadStatus
+	{
+		NotLoaded = 0,       // 未読込
+		LoadedBase = 1,      // アップデート元のみ読み込み
+		LoadedMachine = 2,   // 装置のアップデート読み込み済み
+		LoadError = 3,       // 読み込みエラー
+	}
+
 	/// <summary>
 	///  新ホストデーターベース仕様書・ModuleType一覧より
 	///
@@ -229,6 +237,17 @@ namespace WpfApp1_cmd
 			{
 				//デフォルト値が指定されている場合はその値を返す
 				return value;
+			}
+		}
+		public static void SetOptionBool(string opt, bool value)
+		{
+			if (OptionsDic.ContainsKey(opt))
+			{
+				OptionsDic[opt] = value.ToString();
+			}
+			else
+			{
+				OptionsDic.Add(opt, value.ToString());
 			}
 		}
 	}

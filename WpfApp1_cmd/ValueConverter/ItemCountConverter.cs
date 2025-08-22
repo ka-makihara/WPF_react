@@ -17,13 +17,13 @@ namespace WpfApp1_cmd.ValueConverter
 		{
 			if (value is int itemCount)
 			{
-				if( itemCount > 1 ) {
-					return $"({itemCount} units)";
-				}
-
-				if( itemCount == 1)
+				if (itemCount != 0)
 				{
-					return $"({itemCount} unit)";
+					return $"({itemCount} software)";
+				}
+				else
+				{
+					return "(No software)";
 				}
 			}
 			return string.Empty ;

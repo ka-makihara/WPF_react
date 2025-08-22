@@ -318,4 +318,7 @@
   <data name="Update_notSelected" xml:space="preserve">
     <value>未選択</value>
   </data>
+  <data name="Current_na" xml:space="preserve">
+    <value>未サポートユニット</value>
+  </data>
 </root>

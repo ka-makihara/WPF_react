@@ -50,6 +50,12 @@ namespace WpfApp1_cmd.ViewModel
 			int allFalse = 0;
 			int allNull = 0;
 
+			if( MachineInfo != null && Config.Options.ContainsMachineType(MachineInfo.MachineType) == false )
+			{
+				//未対照の機種なので、選択状態は null とする
+				return false;
+			}
+
 			foreach (var module in modules)
             {
 				int tc = module.UnitVersions.Count(x => x.IsSelected.Value == true);
@@ -79,10 +85,22 @@ namespace WpfApp1_cmd.ViewModel
 			return null;
 		}
 
-		public MachineViewModel(string name, ReactiveCollection<ModuleInfo> modules)
+		private MachineInfo _machineInfo;
+		public MachineInfo MachineInfo
+		{
+			get => _machineInfo;
+			set
+			{
+				_machineInfo = value;
+				SetProperty(ref _machineInfo, value);
+			}
+		}
+
+		public MachineViewModel(MachineInfo machine, ReactiveCollection<ModuleInfo> modules)
         {
             Modules = modules;
-			MachineName = $"{name}:{modules.Count} modules";
+			MachineName = $"{machine.Name}:{modules.Count} modules";
+			MachineInfo = machine;
 
 			// 全選択用のチェックボックスの状態を管理するプロパティの初期化
 			bool? sel = GetModulesSelection(modules);
@@ -96,7 +114,12 @@ namespace WpfApp1_cmd.ViewModel
 
 		private void OnIsAllSelectedChanged(bool? isChecked)
         {
-            if (isChecked.HasValue)
+			if( MachineInfo != null && Config.Options.ContainsMachineType(MachineInfo.MachineType) == false)
+			{
+				IsAllSelected.Value = false; // 未対照の機種なので、選択状態は false とする
+				return; // 未対照の機種なので、選択状態は false とする
+			}
+			if (isChecked.HasValue)
             {
                 foreach (var module in Modules)
                 {
@@ -106,11 +129,21 @@ namespace WpfApp1_cmd.ViewModel
             }
         }
 
+		/// <summary>
+		/// データグリッドのチェックボックスをクリックした時のコマンド
+		/// </summary>
+		/// <param name="module"></param>
 		private void OnCheckBoxCommandExecuted(ModuleInfo module)
         {
             // チェックボックスの状態変更時の処理をここに記述
             Debug.WriteLine($"Module {module.Name} is checked: {module.IsSelected.Value}");
 
+			if( Config.Options.ContainsMachineType(MachineInfo.MachineType) == false )
+			{
+				//未対照の機種なので、選択状態はfalse とする
+				module.IsSelected.Value = false;
+				return;
+			}
 			// 全選択用のチェックボックスの状態を更新
 			UpdateCheck();
 

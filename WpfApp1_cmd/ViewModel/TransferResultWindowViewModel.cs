@@ -42,9 +42,6 @@ namespace WpfApp1_cmd.ViewModel
 
 		public TransferResultWindowViewModel(string resultData)
 		{
-			//string path = @"C:\Users\ka.makihara\Desktop\UnitTransferResult\result.txt";
-			//resultData = System.IO.File.ReadAllText(path);
-
 			// OK ボタンが押されたときの処理(クローズ)
 			OKCommand.Subscribe(_ =>
 			{
@@ -71,7 +68,13 @@ namespace WpfApp1_cmd.ViewModel
 			SelectedModuleName.Subscribe(_ => ApplyFilter());
 
 			string[] wordList = resultData.Split(["\r\n", "\n", "\r"], StringSplitOptions.None);
-			string[] data = wordList.Where(x => x.Contains("[Transfer]")).ToArray();
+			string[] data = [.. wordList.Where(x => x.Contains("[Transfer]"))];
+			string[] inspect = [.. wordList.Where(x => x.Contains("[INSPECTION]"))];
+
+			if (inspect.Length != 0)
+			{
+				var i1 = inspect[0][inspect[0].IndexOf(' ')..].Split(";"); // line, machine, module, unitを分割
+			}
 
 			ResultDataList = [];
 			string StatusMsg = "----";
@@ -79,8 +82,8 @@ namespace WpfApp1_cmd.ViewModel
 
 			foreach (var st in data)
 			{
-				var s1 = st.Substring(st.IndexOf(" "));
-				int idx = s1.IndexOf("=");
+				var s1 = st[st.IndexOf(' ')..];
+				int idx = s1.IndexOf('=');
 				if (idx != -1)
 				{
 					var s2 = s1.Substring(0, idx).Split(";");	//line, machine, module,unitを分割
@@ -108,6 +111,8 @@ namespace WpfApp1_cmd.ViewModel
 												  Status = StatusMsg,
 												  Detail = DetailMsg 
 						});
+
+						string isp = $"{s2[0]};{s2[1]};{s2[2]}";
 					}
 				}
 			}
@@ -129,6 +134,7 @@ namespace WpfApp1_cmd.ViewModel
 			{
 				MachineNames.Add(new NameData { Name = lineName });
 			}
+
 
 			ModuleNames = new ReactiveCollection<NameData>();
 			names = ResultDataList.Select(x => x.ModuleName).Distinct().ToList();

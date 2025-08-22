@@ -195,13 +195,13 @@
       "name": {"*":"NXT_Feeder"},
       "components": [ "NXT_Feeder" ],
       "mode": "File",
-      "files": [ "NXTFeeder/*.bin" ]
+      "files": [ "NXTFeeder/Feeder/*.bin" ]
     },
     {
       "name": {"*":"NXT_NGConv"},
       "components": [ "NXT_NGConv" ],
       "mode": "File",
-      "files": [ "NXTFeeder/*.bin" ]
+      "files": [ "NXTFeeder/NGConv/*.bin" ]
     },
     {
       "name": {"*":"NXT_DipFlxUnit"},
@@ -405,6 +405,7 @@
     "ignore_version": "false",
     "ignore_machineType": "false",
     "extentions": [ ".rom", ".bin", ".jam" ],
-    "machineType": ["NXTR","AIMEXR", "NXTR PM"]
+    "machineType": ["NXTR","AIMEXR", "NXTR PM"],
+	"inspection" : "false"
   }
 }

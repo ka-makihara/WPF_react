@@ -43,6 +43,7 @@
                   IsReadOnly="False"
                   >
                 <DataGrid.Columns>
+                    <!--
                     <DataGridCheckBoxColumn Binding="{Binding IsSelected.Value, UpdateSourceTrigger=PropertyChanged}"
                                         EditingElementStyle="{StaticResource MaterialDesignDataGridCheckBoxColumnEditingStyle}"
                                         ElementStyle="{StaticResource MaterialDesignDataGridCheckBoxColumnStyle}"
@@ -58,6 +59,24 @@
                             </Style>
                         </DataGridCheckBoxColumn.HeaderStyle>
                     </DataGridCheckBoxColumn>
+                    -->
+                     <DataGridTemplateColumn >
+                        <DataGridTemplateColumn.HeaderStyle>
+                            <Style TargetType="{x:Type DataGridColumnHeader}" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
+                                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                            </Style>
+                        </DataGridTemplateColumn.HeaderStyle>
+                        <DataGridTemplateColumn.Header>
+                            <CheckBox Content="ALL" IsChecked="{Binding DataContext.IsAllSelected.Value, Source={x:Reference DataContextProxy}, Mode=TwoWay}" FontSize="15" VerticalAlignment="Center"/>
+                        </DataGridTemplateColumn.Header>
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <CheckBox IsChecked="{Binding IsSelected.Value, UpdateSourceTrigger=PropertyChanged}"
+                                      Command="{Binding DataContext.CheckBoxCommand, Source={x:Reference DataContextProxy}}"
+                                      CommandParameter="{Binding}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
 
 
                     <materialDesign:DataGridTextColumn 

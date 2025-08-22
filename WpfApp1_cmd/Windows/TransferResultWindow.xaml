@@ -12,7 +12,7 @@
         xmlns:resources="clr-namespace:WpfApp1_cmd.Resources"
         mc:Ignorable="d"
         MinWidth="800"
-        MinHeight="600"
+        MinHeight="500"
         d:DataContext="{d:DesignInstance vm:TransferResultWindowViewModel}"
         IconOverlayBehavior="Never"
         ResizeMode="CanResizeWithGrip"
@@ -182,7 +182,7 @@
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
 
-                    <DataGridTextColumn Header="Unit" Binding="{Binding UnitName}" />
+                    <DataGridTextColumn Header="Unit" Binding="{Binding UnitName}" IsReadOnly="True"/>
 
                     <DataGridTemplateColumn Header="Result" >
                         <DataGridTemplateColumn.HeaderTemplate>
@@ -203,7 +203,7 @@
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
 
-                    <DataGridTextColumn Header="Detail" Binding="{Binding Detail}" />
+                    <DataGridTextColumn Header="Detail" Binding="{Binding Detail}" IsReadOnly="True"/>
 
                 </DataGrid.Columns>
             </DataGrid>

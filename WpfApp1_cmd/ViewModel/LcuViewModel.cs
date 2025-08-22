@@ -11,25 +11,26 @@ namespace WpfApp1_cmd.ViewModel
 {
     internal class LcuViewModel : ViewModelBase
     {
-        /*
-        private ObservableCollection<LcuData> _lcuData;
-        public ObservableCollection<LcuData> LcuData
-        {
-            get => _lcuData;
-            set => SetProperty(ref _lcuData, value);
-        }
-        */
 		public string MachineName { get; set; } = "Machine";
-        private ReactiveCollection<MachineInfo> _machineInfos;
-        public ReactiveCollection<MachineInfo> MachineInfos
+		private LcuInfo? _lcuInfo;
+		public LcuInfo? LcuInfo
+		{ 
+			get => _lcuInfo;
+			set => SetProperty(ref _lcuInfo, value);
+		}
+
+		// MachineInfos プロパティは、ReactiveCollection<MachineInfo> 型で定義
+		private ReactiveCollection<MachineInfo>? _machineInfos;
+        public ReactiveCollection<MachineInfo>? MachineInfos
         {
             get => _machineInfos;
             set => SetProperty(ref _machineInfos, value);
         }
-        public LcuViewModel(string name, ReactiveCollection<MachineInfo> machineInfos)
+        public LcuViewModel(LcuInfo lcuInfo, ReactiveCollection<MachineInfo> machineInfos)
         {
+			LcuInfo = lcuInfo;
             MachineInfos = machineInfos;
-			MachineName = $"{name}:{machineInfos.Count} Machines";
+			MachineName = $"{lcuInfo.Name}:{machineInfos.Count} Machines";
 
 			// IsSelected プロパティが変更されたときに、IsAllSelected プロパティを更新する
 			foreach (var item in MachineInfos)
@@ -39,12 +40,18 @@ namespace WpfApp1_cmd.ViewModel
                     OnPropertyChanged(nameof(IsAllSelected));
                 });
             }
+			// チェックボックスの状態変更時の処理を登録
+			CheckBoxCommand = new ReactiveCommand<MachineInfo>();
+			CheckBoxCommand.Subscribe(OnCheckBoxCommandExecuted);
         }
         public bool? IsAllSelected
         {
             get {
-                //var selected = MachineInfos.Select(item => item.IsSelected).Distinct().ToList();
-                var selected = MachineInfos.Select(item => item.IsSelected.Value == true).Distinct().ToList();
+				if (MachineInfos == null || MachineInfos.Count == 0)
+				{
+					return false;
+				}
+				var selected = MachineInfos.Select(item => item.IsSelected.Value == true).Distinct().ToList();
                 return selected.Count == 1 ? selected.Single() : (bool?)null;
             }
             set {
@@ -54,11 +61,25 @@ namespace WpfApp1_cmd.ViewModel
                 }
             }
         }
-        private static void SelectAll(bool select, IEnumerable<MachineInfo> models)
+		public ReactiveCommand<MachineInfo> CheckBoxCommand { get; }
+        private static void SelectAll(bool select, IEnumerable<MachineInfo>? models)
         {
-            foreach (var model in models) {
-                model.IsSelected.Value = select;
+			if(models == null) return;
+
+			foreach (var model in models)
+			{
+				if (Config.Options.ContainsMachineType(model.MachineType) == false)
+				{
+					model.IsExpanded.Value = false;
+				}
+				else {
+					model.IsSelected.Value = select;
+				}
             }
         }
+		private void OnCheckBoxCommandExecuted(MachineInfo machine)
+		{
+
+		}
     }
 }

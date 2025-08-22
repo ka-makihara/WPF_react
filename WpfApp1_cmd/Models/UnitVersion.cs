@@ -9,23 +9,14 @@ using WpfApp1_cmd.Resources;
 
 namespace WpfApp1_cmd.Models
 {
-    //public class UnitVersion : ViewModelBase
     public class UnitVersion : CheckableItem
     {
-        //private string? _name;
         private string? _curVersion;
         private string? _newVersion;
 
 		//public ReactivePropertySlim<bool?> IsSelected { get; set; } = new ReactivePropertySlim<bool?>(false);
         public ReactivePropertySlim<bool?> IsUpdated { get; set; } = new ReactivePropertySlim<bool?>(false);
 
-		/*
-        public string? Name
-        {
-            get => _name;
-            set => SetProperty(ref _name, value);
-        }
-		*/
         public string? CurVersion
         {
             get => _curVersion;
@@ -50,6 +41,10 @@ namespace WpfApp1_cmd.Models
 				else if (CurVersion == NewVersion)
 				{
 					return Resource.Update_sameVersion;  //同一バージョン
+				}
+				else if( CurVersion == "N/A")
+				{
+					return Resource.Current_na;  //現在のバージョンが不明(装置に存在しない等)
 				}
 				else if( NewVersion == "N/A")
 				{
@@ -81,6 +76,7 @@ namespace WpfApp1_cmd.Models
 
 		public void Update(bool? value)
 		{
+			//ModuleInfoの更新
 			Parent?.UpdateSelf(value);
 		}
 
@@ -104,7 +100,6 @@ namespace WpfApp1_cmd.Models
 			{
 				IsSelected.Value = sel;
 			}
-			//IsSelected.Value = sel;
 			IsSelected.Subscribe(x => Update(x));
 		}
 
