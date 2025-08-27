@@ -178,6 +178,15 @@ namespace WpfApp1_cmd.Resources {
         }
         
         /// <summary>
+        ///   Connection Error に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string ConnectionError {
+            get {
+                return ResourceManager.GetString("ConnectionError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Continue Transfer ? に類似しているローカライズされた文字列を検索します。
         /// </summary>
         public static string ContinueTransfer {
@@ -448,6 +457,15 @@ namespace WpfApp1_cmd.Resources {
         }
         
         /// <summary>
+        ///   Not Applicable に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string NotApplicable {
+            get {
+                return ResourceManager.GetString("NotApplicable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   No target machine selected に類似しているローカライズされた文字列を検索します。
         /// </summary>
         public static string NoTargetMachine {
@@ -471,6 +489,15 @@ namespace WpfApp1_cmd.Resources {
         public static string NoUnitToUpdate {
             get {
                 return ResourceManager.GetString("NoUnitToUpdate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Please select a folder に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string PleaseSelectFolder {
+            get {
+                return ResourceManager.GetString("PleaseSelectFolder", resourceCulture);
             }
         }
         
@@ -592,6 +619,15 @@ namespace WpfApp1_cmd.Resources {
         }
         
         /// <summary>
+        ///   Unit information not acquired に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string UnitInfoNotAcquired {
+            get {
+                return ResourceManager.GetString("UnitInfoNotAcquired", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Units に類似しているローカライズされた文字列を検索します。
         /// </summary>
         public static string Units {
@@ -606,6 +642,15 @@ namespace WpfApp1_cmd.Resources {
         public static string UnitSoftTransfer {
             get {
                 return ResourceManager.GetString("UnitSoftTransfer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Units on unsupported models に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string UnitsOnUnsupportedModels {
+            get {
+                return ResourceManager.GetString("UnitsOnUnsupportedModels", resourceCulture);
             }
         }
         

@@ -37,6 +37,13 @@ namespace WpfApp1_cmd.Models
 			set => SetProperty(ref _toolTipText, value);
 		}
 
+		private string? _iconToolTipText = "";
+		public string? IconToolTipText
+		{
+			get => _iconToolTipText;
+			set => SetProperty(ref _iconToolTipText, value);
+		}
+
 		private ErrorCode _errCode = ErrorCode.OK;
 		public ErrorCode ErrCode
 		{
@@ -52,12 +59,29 @@ namespace WpfApp1_cmd.Models
 		}
 		public ItemStatus Status { get; set; } = ItemStatus.OK;
 
+		// ツリーのアイテムにアイコンを表示するかどうか
+		public bool IsIconVisible => Status != ItemStatus.OK;
+
+		// アイコンの種類を返す
+		public string IconKind
+		{
+			get
+			{
+				return Status switch
+				{
+					ItemStatus.NG => "NetworkOffOutline",
+					ItemStatus.UNKNOWN => "MapMarkerQuestionOutline",
+					ItemStatus.NOT_SUPPORTED => "AlertOutline",
+					_ => "InformationOutline"
+				};
+			}
+		}
+
 		public BitmapImage ImagePath { get; set; }
 
 		public CheckableItem()
         {
 			ToolTipText = "No information.";
-			//ImagePath = new BitmapImage(new Uri("pack://application:,,,/Resources/warning.png"));
 		}
 
 		public string GetViewName()

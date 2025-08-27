@@ -321,4 +321,19 @@
   <data name="Current_na" xml:space="preserve">
     <value>未サポートユニット</value>
   </data>
+  <data name="UnitInfoNotAcquired" xml:space="preserve">
+    <value>ユニット情報未取得</value>
+  </data>
+  <data name="NotApplicable" xml:space="preserve">
+    <value>未サポート</value>
+  </data>
+  <data name="UnitsOnUnsupportedModels" xml:space="preserve">
+    <value>未サポート機種上のユニット</value>
+  </data>
+  <data name="PleaseSelectFolder" xml:space="preserve">
+    <value>フォルダを選択してください</value>
+  </data>
+  <data name="ConnectionError" xml:space="preserve">
+    <value>接続エラー</value>
+  </data>
 </root>

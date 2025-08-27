@@ -67,7 +67,7 @@
                             </Style>
                         </DataGridTemplateColumn.HeaderStyle>
                         <DataGridTemplateColumn.Header>
-                            <CheckBox Content="ALL" IsChecked="{Binding DataContext.IsAllSelected.Value, Source={x:Reference DataContextProxy}, Mode=TwoWay}" FontSize="15" VerticalAlignment="Center"/>
+                            <CheckBox Content="ALL" IsChecked="{Binding DataContext.IsAllSelected, Source={x:Reference DataContextProxy}, Mode=TwoWay}" FontSize="15" VerticalAlignment="Center"/>
                         </DataGridTemplateColumn.Header>
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>

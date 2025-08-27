@@ -33,8 +33,8 @@ namespace WpfApp1_cmd.ValueConverter
 				{
 					case ItemStatus.OK:            return Brushes.White;
 					case ItemStatus.NG:            return Brushes.Red;
-					case ItemStatus.UNKNOWN:       return Brushes.Yellow;
-					case ItemStatus.NOT_SUPPORTED: return Brushes.Red;
+					case ItemStatus.UNKNOWN:       return Brushes.Red;
+					case ItemStatus.NOT_SUPPORTED: return Brushes.Yellow;
 					default:                       return Brushes.White;
 				}
 			}

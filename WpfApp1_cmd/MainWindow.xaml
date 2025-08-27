@@ -29,6 +29,7 @@
         Style="{StaticResource MaterialDesignWindow}"
         Title="{x:Static resources:Resource.WindowTitle}" Height="800" Width="850">
 
+
     <Window.Resources>
         <local:RichTextItemsToDocumentConverter x:Key="RichTextItemsToDocumentConverter" />
         <BooleanToVisibilityConverter x:Key="BoolToVisible"/>
@@ -56,8 +57,6 @@
             </mahApps:Flyout>
         </mah:FlyoutsControl>
     </mahApps:MetroWindow.Flyouts>
-
-    
 
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded">
@@ -91,10 +90,13 @@
         </mah:WindowCommands>
     </mah:MetroWindow.RightWindowCommands>
   
+    <!-- Window 全体を覆うダイアログの表示用 -->
+    <materialDesign:DialogHost DialogTheme="Inherit" CloseOnClickAway="false" Identifier="MainWindow">
+
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="83*"/>
-            <ColumnDefinition Width="317*"/>
+            <ColumnDefinition Width="100*"/>
+            <ColumnDefinition Width="330*"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -124,33 +126,11 @@
 
         <Grid Grid.Row="1" Grid.ColumnSpan="2">
             <Grid.ColumnDefinitions>
-                <!--
-                <ColumnDefinition Width="200"/>
-                <ColumnDefinition Width="Auto"/>
-                -->
-                <ColumnDefinition Width="200"/>
+                <ColumnDefinition Width="215"/>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <!--
-            <GroupBox Margin="10,5,10,10" Grid.Column="0">
-                <GroupBox.Header>
-                    <Label Content="ボタン一覧"/>
-                </GroupBox.Header>
-                <StackPanel>
-                    <Button Content="AView" Command="{Binding ScreenTransitionCommand}" CommandParameter="AView" Margin="5" />
-                    <Button Content="BView" Command="{Binding ScreenTransitionCommand}" CommandParameter="BView" Margin="5" />
-                    <Button Content="CView" Command="{Binding ScreenTransitionCommand}" CommandParameter="CView" Margin="5" />
-                    <Button Content="GridView" Command="{Binding ScreenTransitionCommand}" CommandParameter="GView" Margin="5" />
-                    <Button Content="Machineiew" Command="{Binding ScreenTransitionCommand}" CommandParameter="MachineView" Margin="5" />
-                    <Button Content="VersionView" Command="{Binding ScreenTransitionCommand}" CommandParameter="UpdateVersionView" Margin="5" />
-                    <Button Margin="20,20,20,5" Command="{Binding ButtonCommand}" Content="Click" />
-                    <Button Margin="20,10,20,5" Command="{Binding ButtonCommand2}" Content="ReactiveClick" />
-                </StackPanel>
-            </GroupBox>
-            <GridSplitter Grid.Column="1" Style="{StaticResource VerticalGridSplitter}" />
-            -->
             <TreeView x:Name="lineView" Grid.Column="0" ItemsSource="{Binding TreeViewItems}" IsEnabled="{Binding IsTreeEnabled.Value, Mode=TwoWay}"
                       VirtualizingPanel.IsVirtualizing="True"
                       VirtualizingPanel.VirtualizationMode="Recycling"
@@ -198,8 +178,11 @@
                                 VerticalAlignment="Center" />
                             <TextBlock Text="{Binding Name}" Margin="5,0,0,0" FontSize="16" IsEnabled="False"
                                        FontStyle="{Binding Path=ErrCode, Converter={StaticResource ErrorCodeToFontStyleConverter}}"
-                                       Foreground="{Binding Path=ErrCode, Converter={StaticResource StatusToForgroundConverter}}">
+                                       Foreground="{Binding Path=Status, Converter={StaticResource StatusToForgroundConverter}}">
                             </TextBlock>
+                                <materialDesign:PackIcon Kind="{Binding IconKind}" Width="20" Height="20" Margin="5,0,0,0" 
+                                                     Visibility="{Binding IsIconVisible, Converter={StaticResource BoolToVisible}}"
+                                                     ToolTip="{Binding IconToolTipText}" />
                         </StackPanel>
                     </HierarchicalDataTemplate>
                 </TreeView.ItemTemplate>
@@ -240,6 +223,7 @@
                     </DataTemplate>
                 </Grid.Resources>
 
+                <!-- ViewModel を切り替えて表示する -->
                 <materialDesign:DialogHost DialogTheme="Inherit" CloseOnClickAway="false" Identifier="DataGridView">
                     <mahApps:TransitioningContentControl Content="{Binding ActiveView}" Transition="RightReplace"  />
                 </materialDesign:DialogHost>
@@ -319,4 +303,5 @@
             </Grid>
         </Grid>
     </Grid>
+</materialDesign:DialogHost>
 </mahApps:MetroWindow>

@@ -38,13 +38,6 @@ namespace WpfApp1_cmd.Models
 			{
 				units.Add((unit.name, basePath + unit.path, ""));
 			}
-			/*
-			units.Add((unit.name, basePath + unit.path));
-			if (unit.fusePath != "")
-			{
-				units.Add((unit.name, basePath + unit.fusePath));
-			}
-			*/
 		}
 		public int FileCount()
 		{

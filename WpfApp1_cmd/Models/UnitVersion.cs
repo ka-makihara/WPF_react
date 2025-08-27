@@ -34,7 +34,17 @@ namespace WpfApp1_cmd.Models
 		public string UpdateStatus
 		{
 			get {
-				if( Attribute == Define.NOT_UPDATE)
+				MachineInfo? mcInfo = Parent?.GetMachineInfo();
+				if( mcInfo == null)
+				{
+					return Resource.Update_na;  //対象外
+				}
+				if( mcInfo.Status == ItemStatus.NOT_SUPPORTED || mcInfo.Status == ItemStatus.UNKNOWN)
+				{
+					return Resource.UnitsOnUnsupportedModels;// "未サポート機種上のユニット";
+				}
+
+				if ( Attribute == Define.NOT_UPDATE)
 				{
 					return Resource.Update_Prohibited;  //アップデート禁止
 				}

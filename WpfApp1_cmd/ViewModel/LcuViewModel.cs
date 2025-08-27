@@ -79,7 +79,10 @@ namespace WpfApp1_cmd.ViewModel
         }
 		private void OnCheckBoxCommandExecuted(MachineInfo machine)
 		{
-
+			if( Config.Options.ContainsMachineType(machine.MachineType) == false)
+			{
+				machine.IsSelected.Value = false;
+			}
 		}
     }
 }

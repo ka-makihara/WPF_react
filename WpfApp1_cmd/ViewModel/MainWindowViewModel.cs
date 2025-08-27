@@ -91,7 +91,22 @@ namespace WpfApp1_cmd.ViewModel
 
 		public ReactiveCommand TreeViewCommand { get; } = new ReactiveCommand();
 		public ReactiveCommand TreeViewChkCommand { get; } = new ReactiveCommand();
-
+/*
+		public string IconKind
+		{
+			get
+			{
+				return Status switch
+				{
+					ItemStatus.NG => "AlertCircleOutline",
+					ItemStatus.WARN => "AlertOutline",
+					ItemStatus.UNKNOWN => "HelpCircleOutline",
+					_ => "InformationOutline"
+				};
+			}
+		}
+		public bool IsIconVisible => Status != ItemStatus.OK;
+*/
 		/*
 		private ObservableCollection<RichTextItem> _logMessage = [];// new RichTextItem() { Text = "original", Color = Colors.Wheat };
 		public ObservableCollection<RichTextItem> LogMessage
@@ -261,7 +276,7 @@ namespace WpfApp1_cmd.ViewModel
 			if (ErrorInfo.ErrCode != ErrorCode.OK)
 			{
 				//アップデートデータの読み込みでエラーが発生した場合
-				await MsgBox.Show(title, $"ErrorCode=0x{ErrorInfo.ErrCode:X}", $"{ErrorInfo.GetErrMessage()}", info, (int)type, "DataGridView");
+				await MsgBox.Show(title, $"ErrorCode=0x{ErrorInfo.ErrCode:X}", $"{ErrorInfo.GetErrMessage()}", info, (int)type, "MainWindow");
 			}
 		}
 
@@ -516,17 +531,6 @@ namespace WpfApp1_cmd.ViewModel
 		/// </summary>
 		public int CallDecompExe(string path)
 		{
-			/*
-			ProcessStartInfo psi = new ProcessStartInfo();
-			psi.FileName = $"{ Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)}\\DecompBin.exe";
-			psi.Arguments =$"{DataFolder}\\Peripheral.bin";
-			Process? p = Process.Start(psi);
-
-			if(p != null)
-			{
-				p.WaitForExit();
-			}   
-			*/
 			// mcAccount.dll の関数を呼び出して、Peripheral.bin を展開する
 			var pst = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(T_ERROR_INFO)));
 			var fs = new FileStream(path, FileMode.Open, FileAccess.Read);
@@ -564,7 +568,7 @@ namespace WpfApp1_cmd.ViewModel
 					long diskSpace = await LcuDiskChkCmd(lcu);
 					long diskMB = diskSpace / 1024 / 1024;
 					AddLog($"{lcu.Name}::DiskSpace={diskSpace}");
-					var result = await MsgBox.Show(Resource.Confirm, $"{lcu.Name}", $"DiskSpace={diskMB} MB", "", (int)(MsgDlgType.OK | MsgDlgType.ICON_INFO), "DataGridView");
+					var result = await MsgBox.Show(Resource.Confirm, $"{lcu.Name}", $"DiskSpace={diskMB} MB", "", (int)(MsgDlgType.OK | MsgDlgType.ICON_INFO), "MainWindow");
 				}
 			}
 		}
@@ -641,7 +645,7 @@ namespace WpfApp1_cmd.ViewModel
 		/// <summary>
 		///  ユニットの連携情報を読み込む(デフォルトはexeのリソースから)
 		/// </summary>
-		private void ReadConfig()
+		private static void ReadConfig()
 		{
 			Config.ReadConfig();
 
@@ -683,7 +687,7 @@ namespace WpfApp1_cmd.ViewModel
 		/// <returns></returns>
 		private bool LoadUpdateInfo()
 		{
-			string infoFile = "";
+			string infoFile;
 
 			//データフォルダ指定のオプション処理
 			string dataFolder = ArgOptions.GetOption("--dataFolder", "");
@@ -920,7 +924,8 @@ namespace WpfApp1_cmd.ViewModel
 					UpdateChildren(lcu.Children, chk);
 					break;
 				case MachineInfo machine:
-					if( Config.Options.ContainsMachineType(machine.MachineType) == false )
+					//if( Config.Options.ContainsMachineType(machine.MachineType) == false )
+					if( machine.Status == ItemStatus.NOT_SUPPORTED )
 					{
 						item.IsSelected.Value = false;
 						break;
@@ -932,7 +937,8 @@ namespace WpfApp1_cmd.ViewModel
 					}
 					break;
 				case ModuleInfo module:
-					if( Config.Options.ContainsMachineType(module.Parent.MachineType) == false )
+					//if( Config.Options.ContainsMachineType(module.Parent.MachineType) == false )
+					if( module.Status == ItemStatus.NOT_SUPPORTED )
 					{
 						item.IsSelected.Value = false;
 						break;
@@ -1062,8 +1068,7 @@ namespace WpfApp1_cmd.ViewModel
 
 			using (var cofd = new CommonOpenFileDialog()
 			{
-				Title = "フォルダを選択してください",
-				//InitialDirectory = @"C:\Users\ka.makihara\Backup\20250226_110316_LINE-B_localhost_44-R",
+				Title = Resource.PleaseSelectFolder,// "フォルダを選択してください"
 				InitialDirectory = backupPath,
 				//フォルダ選択モード
 				IsFolderPicker = true,
@@ -1087,9 +1092,9 @@ namespace WpfApp1_cmd.ViewModel
 						else
 						{
 							//UpdateCommon.inf が存在しない
-							AddLog($"[ERROR] Path={infoFilePath} UpdateCommon.inf が見つかりません");
+							AddLog($"[ERROR] Path={infoFilePath} Undefined UpdateCommon.inf");
 							ErrorInfo.ErrCode = ErrorCode.UPDATE_UNDEFINED_ERROR;
-							var result = await MsgBox.Show(Resource.Error, $"ErrorCode=0x {ErrorInfo.ErrCode:X}", $"{ErrorInfo.GetErrMessage()}", "UpdateCommon.inf not exist.", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "DataGridView");
+							var result = await MsgBox.Show(Resource.Error, $"ErrorCode=0x {ErrorInfo.ErrCode:X}", $"{ErrorInfo.GetErrMessage()}", "UpdateCommon.inf not exist.", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "MainWindow");
 							return;
 						}
 					}
@@ -1107,10 +1112,10 @@ namespace WpfApp1_cmd.ViewModel
 							//バックアップデータの情報が不正
 							//現在のNeximDBのライン情報と一致しない(ライン、装置、モジュールが見つからない)
 							ErrorInfo.ErrCode = ErrorCode.BACKUP_DATA_MISSMATCH;
-							await MsgBox.Show(Resource.Error, $"ErrorCode=0x{ErrorInfo.ErrCode:X}", $"{ErrorInfo.GetErrMessage()}",$"{line}-{machine}-{module}", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "DataGridView");
+							await MsgBox.Show(Resource.Error, $"ErrorCode=0x{ErrorInfo.ErrCode:X}", $"{ErrorInfo.GetErrMessage()}",$"{line}-{machine}-{module}", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "MainWindow");
 							return;
 						}
-						var ret = await MsgBox.Show(Resource.Info, $"{line}={machine}={module}", "Backup Data", "Load Backup Data ?", (int)(MsgDlgType.OK_CANCEL | MsgDlgType.ICON_INFO), "DataGridView");
+						var ret = await MsgBox.Show(Resource.Info, $"{line}={machine}={module}", "Backup Data", "Load Backup Data ?", (int)(MsgDlgType.OK_CANCEL | MsgDlgType.ICON_INFO), "MainWindow");
 						if ((string)ret == "CANCEL")
 						{
 							return;
@@ -1171,7 +1176,7 @@ namespace WpfApp1_cmd.ViewModel
 								//アップデート情報の取得に失敗
 								AddLog($"GetModuleUpdateInfo Fail:{lcuInfo.Name}-{machineInfo.Name}-{moduleInfo.Name}");
 								ErrorInfo.ErrCode = ErrorCode.UPDATE_UNDEFINED_ERROR;
-								await MsgBox.Show(Resource.Error, $"ErrorCode=0x{ErrorInfo.ErrCode:X}", $"{ErrorInfo.GetErrMessage()}", $"{line}:{machine}:{module}", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "DataGridView");
+								await MsgBox.Show(Resource.Error, $"ErrorCode=0x{ErrorInfo.ErrCode:X}", $"{ErrorInfo.GetErrMessage()}", $"{line}:{machine}:{module}", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "MainWindow");
 								return;
 							}
 
@@ -1198,7 +1203,7 @@ namespace WpfApp1_cmd.ViewModel
 							//ロードしたバックアップデータのライン、装置、モジュールが見つからない
 							AddLog($"Not Found Module:{line}-{machine}-{module}");
 							ErrorInfo.ErrCode = ErrorCode.BACKUP_DATA_MISSMATCH;
-							await MsgBox.Show(Resource.Error, $"ErrorCode=0x{ErrorInfo.ErrCode:X}", $"{ErrorInfo.GetErrMessage()}", $"{line}:{machine}:{module}", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "DataGridView");
+							await MsgBox.Show(Resource.Error, $"ErrorCode=0x{ErrorInfo.ErrCode:X}", $"{ErrorInfo.GetErrMessage()}", $"{line}:{machine}:{module}", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "MainWindow");
 						}
 					}
 					else
@@ -1227,7 +1232,7 @@ namespace WpfApp1_cmd.ViewModel
 				if (ping == false)
 				{
 					ErrorInfo.ErrCode = ErrorCode.LCU_CONNECT_ERROR;
-					var result = await MsgBox.Show(Resource.Error, $"ErrorCode=0x{ErrorInfo.ErrCode:X}", $"{ErrorInfo.GetErrMessage() }", "", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "DataGridView");
+					var result = await MsgBox.Show(Resource.Error, $"ErrorCode=0x{ErrorInfo.ErrCode:X}", $"{ErrorInfo.GetErrMessage() }", "", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "MainWindow");
 
 					if ((string)result == "OK")
 					{
@@ -1248,7 +1253,7 @@ namespace WpfApp1_cmd.ViewModel
 					}
 					string? ver = versionInfo.First(x => x.itemName == "Fuji LCU Communication Server Service").itemVersion;
 
-					await MsgBox.Show(Resource.Info, $"{lcu.LcuCtrl.Name}", "Access OK", $"Version:{ver}", (int)(MsgDlgType.OK), "DataGridView");
+					await MsgBox.Show(Resource.Info, $"{lcu.LcuCtrl.Name}", "Access OK", $"Version:{ver}", (int)(MsgDlgType.OK), "MainWindow");
 				}
 			}
 		}
@@ -1333,14 +1338,17 @@ namespace WpfApp1_cmd.ViewModel
 								{
 									string up = f.Split(DataFolder)[1].Replace('\\', '/');
 
-									string? section = parser.GetSectionByValue("Path", up);
-									if( section != null)
+									List<string> sections = parser.GetSectionByValue("Path", up);
+									if( sections.Count != 0)
 									{
-										unitPath.AddUnitFile("",(section, up, ""));
+										sections.ForEach(section => 
+										{
+											unitPath.AddUnitFile("", (section, up, ""));
+										});
+										//unitPath.AddUnitFile("",(section, up, ""));
 									}
 									else
 									{
-										//unitPath.AddUnitFile("", (unitLink.name,up,"") );
 										unitPath.AddUnitFile("", (unitLink.GetName(),up,"") );
 									}
 								}
@@ -1377,15 +1385,6 @@ namespace WpfApp1_cmd.ViewModel
 					}
 					else if ( System.IO.File.Exists(tmpPath) )
 					{
-						/*
-						//Path がファイルの場合は、拡張子をチェック(存在しない場合はfalse)
-						string? ext = Path.GetExtension(parser.GetValue(unit, "Path"));
-						if (Config.Options.ContainsExt(ext) == false)
-						{
-							// 登録されていない拡張子はスキップ
-							continue;
-						}
-						*/
 						UpdateInfo update = new()
 						{
 							Name = unit,
@@ -1433,7 +1432,6 @@ namespace WpfApp1_cmd.ViewModel
 				}
 				return false;
 			}
-			//catch (Exception ex)
 			catch (PingException ex)
 			{
 				Debug.WriteLine(ex.Message);
@@ -1443,7 +1441,6 @@ namespace WpfApp1_cmd.ViewModel
 			{
 				Debug.WriteLine($"Exception:{ex.Message}");
 				throw;
-				//return false;
 			}
 		}
 
@@ -1528,23 +1525,14 @@ namespace WpfApp1_cmd.ViewModel
 
 			if (lines == 0 && machines == 0 && modules == 0)
 			{
-				var result = await MsgBox.Show(Resource.Confirm, Resource.NoTargetMachine, Resource.TargetSelect, "", (int)(MsgDlgType.OK | MsgDlgType.ICON_CAUTION), "DataGridView");
+				var result = await MsgBox.Show(Resource.Confirm, Resource.NoTargetMachine, Resource.TargetSelect, "", (int)(MsgDlgType.OK | MsgDlgType.ICON_CAUTION), "MainWindow");
 				return;
 			}
 
 			DialogTitle = Resource.Confirm;// "確認";
 			DialogText = $"{modules} Module\n{Resource.QuestionTransferStart}";
-			/*
-			if (files == 0)
-			{
-				DialogText = $"{modules} Module\n{Resource.QuestionTransferStart}";
-			}
-			else
-			{
-				DialogText = $"{modules} Module {files} Files\n{Resource.QuestionTransferStart}";
-			}
-			*/
-			var r = await DialogHost.Show(new MyMessageBox(), "DataGridView");
+
+			var r = await DialogHost.Show(new MyMessageBox(), "MainWindow");
 			DialogHost.CloseDialogCommand.Execute(null, null);
 
 			if (r == null || r.ToString() == "CANCEL")
@@ -1611,14 +1599,14 @@ namespace WpfApp1_cmd.ViewModel
 					if( ErrorInfo.ErrCode != ErrorCode.OK)
 					{
 						//エラーが発生した
-						var result = await MsgBox.Show(Resource.Error, $"ErrorCode=0x{ErrorInfo.ErrCode:X}", $"{ErrorInfo.GetErrMessage()}", "", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "DataGridView");
+						var result = await MsgBox.Show(Resource.Error, $"ErrorCode=0x{ErrorInfo.ErrCode:X}", $"{ErrorInfo.GetErrMessage()}", "", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "MainWindow");
 						return;
 					}
 				}
 				else
 				{
 					//バックアップが中止されたが、転送を続行するか確認
-					var bRet = await MsgBox.Show(Resource.Confirm, $"{Resource.BackupCanceled}", $"{Resource.ContinueTransfer}", "", (int)(MsgDlgType.OK_CANCEL | MsgDlgType.ICON_INFO), "DataGridView");
+					var bRet = await MsgBox.Show(Resource.Confirm, $"{Resource.BackupCanceled}", $"{Resource.ContinueTransfer}", "", (int)(MsgDlgType.OK_CANCEL | MsgDlgType.ICON_INFO), "MainWindow");
 					if ((string)bRet == "CANCEL")
 					{
 						CanTransferStartFlag.Value = true;
@@ -1684,7 +1672,7 @@ namespace WpfApp1_cmd.ViewModel
 					if( ErrorInfo.ErrCode != ErrorCode.OK )
 					{
 						//エラーが発生した
-						var result = await MsgBox.Show(Resource.Error, $"ErrorCode=0x{ErrorInfo.ErrCode:X}", $"{ErrorInfo.GetErrMessage()}", "", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "DataGridView");
+						var result = await MsgBox.Show(Resource.Error, $"ErrorCode=0x{ErrorInfo.ErrCode:X}", $"{ErrorInfo.GetErrMessage()}", "", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "MainWindow");
 					}
 				}
 			}
@@ -1697,7 +1685,7 @@ namespace WpfApp1_cmd.ViewModel
 									$"{Resource.Success}={TransferSuccessCount}",
 									$"{Resource.Fail}={TransferErrorCount}",
 									Resource.TransferInformation,
-									(int)(MsgDlgType.YES_NO | MsgDlgType.ICON_INFO), "DataGridView");
+									(int)(MsgDlgType.YES_NO | MsgDlgType.ICON_INFO), "MainWindow");
 			if ((string)showResult == "YES")
 			{
 				LaunchResultWindow(LogData);
@@ -1890,7 +1878,6 @@ namespace WpfApp1_cmd.ViewModel
 				}
 			}
 			//UpdateCommon.inf のチェック
-
 		}
 
 		/// <summary>
@@ -1931,14 +1918,13 @@ namespace WpfApp1_cmd.ViewModel
 			DialogTitle = Resource.Confirm;// "確認";
 			DialogText = Resource.QuitTransferMsg;// "転送を中止しますか？";
 
-			var r = await DialogHost.Show(new MyMessageBox(), "DataGridView");
+			var r = await DialogHost.Show(new MyMessageBox(), "MainWindow");
 			DialogHost.CloseDialogCommand.Execute(null, null);
 
 			if (r == null || r.ToString() == "CANCEL")
 			{
 				return false;
 			}
-			//CancellationToken.ThrowIfCancellationRequested();
 
 			CancelTokenSrc?.Cancel();
 			return true;
@@ -2171,7 +2157,7 @@ namespace WpfApp1_cmd.ViewModel
 			{
 				AddLog($"[Transfer] {lcu.Name}=UploadFilesWithFolder Error");
 				ErrorInfo.ErrCode = ErrorCode.LCU_UPLOAD_ERROR;
-				await MsgBox.Show(Resource.Error, $"ErrorCode=0x{ErrorInfo.ErrCode:X}", $"{ErrorInfo.GetErrMessage()}", $"{lcu.Name}", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "DataGridView");
+				await MsgBox.Show(Resource.Error, $"ErrorCode=0x{ErrorInfo.ErrCode:X}", $"{ErrorInfo.GetErrMessage()}", $"{lcu.Name}", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "MainWindow");
 				return false;
 			}
 			AddLog($"[Transfer] {lcu.Name}=UploadFiles End");
@@ -2800,7 +2786,6 @@ namespace WpfApp1_cmd.ViewModel
 		{
 			bool ret = true;
 			string lcuRoot = $"/MCFiles";
-			int errIdx = 0;
 			bool IsAdmin = ArgOptions.GetOption("--mode", "user") == "administrator";
 
 			if (module.UnitVersions == null)
@@ -2924,8 +2909,6 @@ namespace WpfApp1_cmd.ViewModel
 						if (tmp == unitVersion.Path || tmp == unitVersion.FuserPath)
 						{
 							//UpdateCommon.inf の Path, FuserPath に記載されているものを対象とする
-							//  (対象がフォルダなどの場合は除外する TrayPLCなど)
-
 							//対象となるユニットのバージョン情報(string)を更新
 							ModifyUpdateInfo(lines, unitVersion.Name, unitVersion.NewVersion);
 
@@ -3145,7 +3128,7 @@ namespace WpfApp1_cmd.ViewModel
 									{
 										await MsgBox.Show(Resource.Error, $"{lcuInfo.Name}",
 														  $"{ErrorInfo.GetErrMessage(lcuInfo.ErrCode)}",
-														  "", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "DataGridView");
+														  "", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "MainWindow");
 									}
 								}
 								var machines = TreeViewItems.Where(x => x.Name == item.Name).First().Children;
@@ -3166,7 +3149,8 @@ namespace WpfApp1_cmd.ViewModel
 								LcuInfo lcu = machineInfo.Parent;
 
 								//時間がかかるので、プログレスダイアログを表示
-								var dlg = DialogHost.Show(new WaitProgress(Resource.ReadingUnitInfo),"DataGridView");
+								//var dlg = DialogHost.Show(new WaitProgress(Resource.ReadingUnitInfo),"DataGridView");
+								var dlg = DialogHost.Show(new WaitProgress(Resource.ReadingUnitInfo),"MainWindow");
 								await Task.Delay(500); // ダイアログ表示のための遅延(タイマーが無いとダイアログが表示されるより前に CloseDialogCommnad が実行される場合あり)
 
 								var token = new CancellationToken();
@@ -3184,7 +3168,7 @@ namespace WpfApp1_cmd.ViewModel
 										//アップデート情報の取得に失敗した場合は、アップデート情報を取得できない旨を表示
 										await MsgBox.Show(Resource.Error, $"{lcu.Name}:{machineInfo.Name}:{moduleInfo.Name}",
 														  Resource.Error_UPDATE_UNDEFINED_ERROR,
-														  "", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "DataGridView");
+														  "", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "MainWindow");
 										return;
 									}
 								}
@@ -3192,9 +3176,7 @@ namespace WpfApp1_cmd.ViewModel
 								bool bRet = CreateVersionInfo(lcu, machineInfo, moduleInfo, token);
 								if (bRet == true)
 								{
-									//moduleInfo.UnitVersions = version;
-									//moduleInfo.ToolTipText = $"{version.Count} units";
-									//moduleInfo.AddUnitVersion(version);
+									moduleInfo.ToolTipText = $"{moduleInfo.UnitVersions.Count} units";
 								}
 
 								viewModeTable.Add(viewName, new ModuleViewModel((ModuleInfo)item, UpdateDataInfos));
@@ -3213,7 +3195,7 @@ namespace WpfApp1_cmd.ViewModel
 						ModuleInfo moduleInfo = (ModuleInfo)item;
 						await MsgBox.Show(Resource.Info, $"{moduleInfo.Name}",
 										  Resource.NoUnitToUpdate,
-										  "", (int)(MsgDlgType.OK | MsgDlgType.ICON_INFO), "DataGridView");
+										  "", (int)(MsgDlgType.OK | MsgDlgType.ICON_INFO), "MainWindow");
 					}
 				}
 			}
@@ -3408,7 +3390,6 @@ namespace WpfApp1_cmd.ViewModel
 				{
 					// ユーザーモードで UpdateCommon.inf が取得できない場合は、アップデートを中止する
 					AddLog($"[ERROR] {lcu.LcuCtrl.Name};{machine.Name};{module.Name}={Define.UPDATE_INFO_FILE} Get error");
-					//return null;
 					return false;
 				}
 				// Administrator モードで UpdateCommon.inf が取得できていない場合はアップデートデータと同じとする
@@ -3447,7 +3428,6 @@ namespace WpfApp1_cmd.ViewModel
 					//  ※装置内にLCU経由でフォルダを生成できないため、Peripheral フォルダ下に未対応ユニットのフォルダを作れない
 				}
 			}
-			//module.Subscribe();
 
 			if ( IsAdmin == false )
 			{
@@ -3500,9 +3480,6 @@ namespace WpfApp1_cmd.ViewModel
 
 			TreeViewItems = [];
 
-			//TreeView に項目が追加されたときの処理
-			//TreeViewItems.ObserveAddChanged().Subscribe(x => Debug.WriteLine(x.Name));
-
 			foreach (var lcu in lcuList)
 			{
 				string lineName = lcu.Split('=')[0];
@@ -3525,12 +3502,16 @@ namespace WpfApp1_cmd.ViewModel
 					AddLog($"[ERROR] LoadLineInfo={e.Message}");
 					Progress?.SetMessage($"{lcu.LcuCtrl.Name}={e.Message}");
 					lcu.ErrCode = ErrorCode.LCU_LINEINFO_ERROR;
+					lcu.Status = ItemStatus.NG;
+					lcu.IconToolTipText = Resource.ConnectionError;
 				}
 				catch (Exception e)
 				{
 					AddLog("[ERROR] LoadLineInfo=Canceled");
 					Progress?.SetMessage($"{lcu.LcuCtrl.Name}={e.Message}");
 					lcu.IsSelected.Value = false;
+					lcu.Status = ItemStatus.NG;
+					lcu.IconToolTipText = Resource.ConnectionError;
 					return false;
 				}
 
@@ -3603,7 +3584,7 @@ namespace WpfApp1_cmd.ViewModel
 				AddLog($"[ERROR] {lcu.Name};get lines error");
 				AddLog($"[LineInfo] {lcu.Name};get linesInfomation error");
 				ErrorInfo.ErrCode = ErrorCode.LCU_LINEINFO_ERROR;
-				await MsgBox.Show(Resource.Error, $"{lcu.Name}",$"{Resource.GetLineInfoError}","", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "DataGridView");
+				await MsgBox.Show(Resource.Error, $"{lcu.Name}",$"{Resource.GetLineInfoError}","", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "MainWindow");
 				return false;
 			}
 
@@ -3611,7 +3592,7 @@ namespace WpfApp1_cmd.ViewModel
 			if (lineInfo == null || lineInfo.Line == null || lineInfo.Line.Machines == null )
 			{
 				ErrorInfo.ErrCode = ErrorCode.LCU_LINEINFO_ERROR;
-				await MsgBox.Show(Resource.Error, $"{lcu.Name}",$"{Resource.GetLineInfoError}","", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "DataGridView");
+				await MsgBox.Show(Resource.Error, $"{lcu.Name}",$"{Resource.GetLineInfoError}","", (int)(MsgDlgType.OK | MsgDlgType.ICON_ERROR), "MainWindow");
 				return false;
 			}
 
@@ -3640,6 +3621,11 @@ namespace WpfApp1_cmd.ViewModel
 					Status = Config.Options.machineType.Contains(mc.MachineType) ? ItemStatus.OK : ItemStatus.NOT_SUPPORTED,
 					ToolTipText = mc.MachineType
 				};
+				if (machine.Status == ItemStatus.NOT_SUPPORTED)
+				{
+					machine.IconToolTipText = Resource.NotApplicable;// "Not Supported";
+				}
+
 				Progress?.SetMessage($"Machine={mc.MachineName}");
 				foreach (var base_ in mc.Bases)
 				{
@@ -3670,8 +3656,11 @@ namespace WpfApp1_cmd.ViewModel
 							Module = module,
 							Parent = machine,
 							IPAddress = base_.IpAddr,
-							ToolTipText = "ユニット情報未取得"
+							//ToolTipText = "ユニット情報未取得"
+							ToolTipText = Resource.UnitInfoNotAcquired,
+							Status = machine.Status
 						};
+
 						Progress?.SetMessage($"Module={module.DispModule}");
 						baseInfo.Children.Add(moduleItem);
 						machine.Children.Add(moduleItem);
@@ -3680,12 +3669,12 @@ namespace WpfApp1_cmd.ViewModel
 						{
 							//未サポート機種の場合は、選択状態を解除
 							moduleItem.IsSelected.Value = false;
+							moduleItem.IconToolTipText = Resource.NotApplicable;
 						}
 						else {
 							//上位の選択を反映させる
 							moduleItem.IsSelected.Value = lcu.IsSelected.Value;
 						}
-
 					}
 				}
 				lcu.Children.Add(machine);
@@ -3708,6 +3697,8 @@ namespace WpfApp1_cmd.ViewModel
 				AddLog($"[LineInfo]:{lcu.Name}=Access Fail");
 				Progress?.SetMessage($"LCU:{lcu.LcuCtrl.Name}=Access Fail");
 				lcu.ErrCode = ErrorCode.LCU_CONNECT_ERROR;
+				lcu.Status = ItemStatus.NG;
+				lcu.IconToolTipText = Resource.ConnectionError;
 				return false;
 			}
 
@@ -3774,6 +3765,7 @@ namespace WpfApp1_cmd.ViewModel
 					AddLog($"[LineInfo] {lcu.Name};DiskSpace Error({lcu.DiskSpace}<{UpdateDataSize})");
 
 					Progress?.SetMessage($"LCU:{lcu.LcuCtrl.Name}=DiskSpace Error({lcu.DiskSpace}<{UpdateDataSize})");
+					lcu.IconToolTipText = Resource.DiskSpaceError;
 				}
 			}
 
@@ -3796,7 +3788,7 @@ namespace WpfApp1_cmd.ViewModel
 			DialogTitle = Resource.Confirm;// "確認";
 			DialogText = Resource.QuitAppMsg;// "アプリケーションを終了しますか？";
 
-			var r = await DialogHost.Show(new MyMessageBox(), "DataGridView");
+			var r = await DialogHost.Show(new MyMessageBox(), "MainWindow");
 			DialogHost.CloseDialogCommand.Execute(null, null);
 
 			if (r == null || r.ToString() == "CANCEL")
