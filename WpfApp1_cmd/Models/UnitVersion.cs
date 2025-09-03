@@ -153,6 +153,19 @@ namespace WpfApp1_cmd.Models
 
 		public bool IsVisibled { get; set; } = true;
 		public bool IsSelected { get; set; } = true;
+
+		public bool IsExistPath(string? path)
+		{
+			if( path == null )
+			{
+				return false;
+			}
+			if ( Path == path || FuserPath == path)
+			{
+				return true;
+			}
+			return false;
+		}
 	}
 
 }

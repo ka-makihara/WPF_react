@@ -1728,14 +1728,12 @@ namespace WpfApp1_cmd.ViewModel
 						ErrorInfo.ErrCode = ErrorCode.UPDATE_UNDEFINED_ERROR;
 						return 0;
 					}
-					//var version = CreateVersionInfo(lcu, machine, module, token);
 					var version = CreateVersionInfo(lcu, machine, module, token);
 					if (version == false)
 					{
 						ErrorInfo.ErrCode = ErrorCode.UPDATE_UNDEFINED_ERROR;
 						return 0;
 					}
-					//module.UnitVersions = version;
 					long nn = module.UnitVersions.Count(x => x.IsSelected.Value == true);
 					Debug.WriteLine($"[LoadModulesUpdateCommon] {lcu.Name};{machine.Name};{module.Name}={nn}");
 				}
@@ -2143,6 +2141,7 @@ namespace WpfApp1_cmd.ViewModel
 
 			// folder に含まれるファイルをリスト化
 			List<string> folders = CreateUpdateFolderList();
+			List<string> selFolders = CreateSelectedUpdateFolderList(lcu);
 
 			//対象ファイルをすべて LCU にアップロード
 			//対象のみとすると、ユニット毎に要/不要を計算する手間があるので、アップデートデータは全てアップロードする
@@ -2372,6 +2371,80 @@ namespace WpfApp1_cmd.ViewModel
 			return true;
 		}
 
+
+		private bool ExistUpdateDataPath(string? path)
+		{
+			if( path == null || path == "" || UpdateDataInfos == null)
+			{
+				return false;
+			}
+
+			foreach (var item in UpdateDataInfos)
+			{
+				if( item.IsExistPath(path) == true)
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
+		private List<string> CreateSelectedUpdateFolderList(LcuInfo lcuInfo)
+		{
+			List<string> paths = [];
+
+			if (UpdateDataInfos == null)
+			{
+				//例外除け
+				return paths;
+			}
+
+			foreach(var machine in lcuInfo.Children)
+			{
+				if( machine.IsSelected.Value == false )
+				{
+					continue;
+				}
+				foreach(var module in machine.Children)
+				{
+					if( module.IsSelected.Value == false )
+					{
+						continue;
+					}
+					if (module.UnitVersions.Count == 0)
+					{
+						// ユニット情報が未取得の場合は、全アップデートデータを対象とする
+						// (ユニット情報が未取得 ==> 全アップデートデータを対象)
+						paths.AddRange( CreateUpdateFolderList() );
+
+						//全データを追加したので、重複を削除して返す(追加で調べる必要はない)
+						return paths.Distinct().ToList();
+					}
+					else
+					{
+						foreach (var unit in module.UnitVersions)
+						{
+							if (unit.IsSelected.Value == false)
+							{
+								//選択されていないユニットはスキップ
+								continue;
+							}
+
+							if (ExistUpdateDataPath(unit.Path) == true)
+							{
+								//UpdateDataInfos に含まれるパスのみを対象とする
+								paths.Add(  Path.GetDirectoryName(unit.Path) );
+							}
+							if( ExistUpdateDataPath(unit.FuserPath) == true)
+							{
+								paths.Add(  Path.GetDirectoryName(unit.FuserPath) );
+							}
+						}
+					}
+				}
+			}
+			return paths.Distinct().ToList();
+		}
 		/// <summary>
 		/// アップデート対象のフォルダを取得する
 		/// </summary>

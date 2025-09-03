@@ -21,12 +21,8 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 4,
+          "SelectedChildIndex": 3,
           "Children": [
-            {
-              "$type": "Bookmark",
-              "Name": "ST:0:0:{aa2115a1-9712-457b-9047-dbb71ca2cdd2}"
-            },
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{40ea2e6b-2121-4bb8-a43e-c83c04b51041}"
@@ -50,9 +46,9 @@
               "Title": "IniFileParser.cs",
               "DocumentMoniker": "C:\\Users\\ka.makihara\\develop\\WPF_LcuCtrlLib\\WpfLcuCtrlLib\\IniFileParser.cs",
               "RelativeDocumentMoniker": "..\\WPF_LcuCtrlLib\\WpfLcuCtrlLib\\IniFileParser.cs",
-              "ToolTip": "C:\\Users\\ka.makihara\\develop\\WPF_LcuCtrlLib\\WpfLcuCtrlLib\\IniFileParser.cs*",
-              "RelativeToolTip": "..\\WPF_LcuCtrlLib\\WpfLcuCtrlLib\\IniFileParser.cs*",
-              "ViewState": "AgIAAHQAAAAAAAAAAAAewI0AAAAmAAAAAAAAAA==",
+              "ToolTip": "C:\\Users\\ka.makihara\\develop\\WPF_LcuCtrlLib\\WpfLcuCtrlLib\\IniFileParser.cs",
+              "RelativeToolTip": "..\\WPF_LcuCtrlLib\\WpfLcuCtrlLib\\IniFileParser.cs",
+              "ViewState": "AgIAAGEAAAAAAAAAAAAewH0AAAA3AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-08-27T05:33:08.849Z",
               "EditorCaption": ""
@@ -65,7 +61,7 @@
               "RelativeDocumentMoniker": "WpfApp1_cmd\\ViewModel\\MainWindowViewModel.cs",
               "ToolTip": "C:\\Users\\ka.makihara\\develop\\WPF_react\\WpfApp1_cmd\\ViewModel\\MainWindowViewModel.cs",
               "RelativeToolTip": "WpfApp1_cmd\\ViewModel\\MainWindowViewModel.cs",
-              "ViewState": "AgIAACoFAAAAAAAAAAAewDwFAAAoAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAARAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-08-25T02:35:56.368Z",
               "EditorCaption": ""
