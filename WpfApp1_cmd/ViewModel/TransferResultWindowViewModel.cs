@@ -1,4 +1,5 @@
-﻿using Reactive.Bindings;
+﻿using MaterialDesignThemes.Wpf;
+using Reactive.Bindings;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -36,12 +37,25 @@ namespace WpfApp1_cmd.ViewModel
 		public int TransferOkCount { get; set; }
 		public int TransferFailCount { get; set; }
 
+		private bool _isTransferCheck;
+		public bool IsTransferCheck
+		{
+			get => _isTransferCheck;
+			set
+			{
+				_isTransferCheck = value;
+				OnPropertyChanged(nameof(IsTransferCheck));
+			}
+		}
+
 		// CloseAction は ViewModel から View を閉じるための Action
 		public Action CloseAction { get; set; }
 		public ReactiveCommandSlim OKCommand { get; } = new ReactiveCommandSlim();
 
 		public TransferResultWindowViewModel(string resultData)
 		{
+			IsTransferCheck = ArgOptions.GetOptionBool("--inspection", Config.Options.GetDefaultOption("inspection", false));
+
 			// OK ボタンが押されたときの処理(クローズ)
 			OKCommand.Subscribe(_ =>
 			{
@@ -78,7 +92,7 @@ namespace WpfApp1_cmd.ViewModel
 
 			ResultDataList = [];
 			string StatusMsg = "----";
-			string DetailMsg = "----";
+			string VersionMsg = "----";
 
 			foreach (var st in data)
 			{
@@ -93,12 +107,12 @@ namespace WpfApp1_cmd.ViewModel
 					{
 						//Debug.WriteLine("status.Length == 1");
 						StatusMsg = status[0];
-						DetailMsg = "----"; // 詳細がない場合は "----" とする
+						VersionMsg = "----"; // 詳細がない場合は "----" とする
 					}
 					else
 					{
 						StatusMsg = status[0];
-						DetailMsg = status[1];
+						VersionMsg = status[1];
 					}
 					var n = StatusList.FirstOrDefault(x => x.Name == status[0]);
 					if (s2.Length > 3 && n != null)
@@ -109,7 +123,8 @@ namespace WpfApp1_cmd.ViewModel
 												  ModuleName = s2[2],
 												  UnitName = s2[3],
 												  Status = StatusMsg,
-												  Detail = DetailMsg 
+												  Version = VersionMsg,
+												  Check = IsTransferCheck ? "Checked" : "----"
 						});
 
 						string isp = $"{s2[0]};{s2[1]};{s2[2]}";
@@ -176,7 +191,22 @@ namespace WpfApp1_cmd.ViewModel
 		public string ModuleName { get; set; }
 		public string UnitName { get; set; }
 		public string Status { get; set; }
-		public string Detail { get; set; }
+		public string Version { get; set; }
+		public string Check { get; set; }
+
+		public PackIconKind StatusIconKind
+		{ 	
+			get
+			{
+				return Status switch
+				{
+					"OK" => PackIconKind.CheckCircleOutline,
+					"NG" => PackIconKind.CloseCircleOutline,
+					"Skip" => PackIconKind.SkipNextCircleOutline,
+					_ => PackIconKind.HelpCircleOutline,
+				};
+			}
+		}
 	}
 
 	public class NameData

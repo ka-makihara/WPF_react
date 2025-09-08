@@ -41,6 +41,7 @@
             </ObjectDataProvider>
 
             <converters:NumberToStringConverter x:Key="NumberToStringConverter" />
+            <BooleanToVisibilityConverter x:Key="BoolVisibilityConverter" />
         </ResourceDictionary>
     </Window.Resources>
 
@@ -203,7 +204,23 @@
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
 
-                    <DataGridTextColumn Header="Detail" Binding="{Binding Detail}" IsReadOnly="True"/>
+                    <DataGridTextColumn Header="Version" Binding="{Binding Version}" IsReadOnly="True"/>
+
+                    <DataGridTemplateColumn Header="Check" Visibility="{Binding DataContext.IsTransferCheck, Source={x:Reference DataContextProxy}, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <materialDesign:PackIcon Kind="{Binding StatusIconKind}" Width="24" Height="24" Foreground="DodgerBlue" />
+                                <!--
+                                <materialDesign:PackIcon Kind="{Binding StatusIconKind, Converter={StaticResource StringToPackIconConverter}}" Width="24" Height="24" Foreground="DodgerBlue" />
+                                -->
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <!--
+                    <DataGridTextColumn Header="Check" Binding="{Binding TransferResult}" IsReadOnly="True"
+                                        Visibility="{Binding DataContext.IsTransferCheck, Source={x:Reference DataContextProxy},Converter={StaticResource BooleanToVisibilityConverter}}"
+                                        />
+                    -->
 
                 </DataGrid.Columns>
             </DataGrid>

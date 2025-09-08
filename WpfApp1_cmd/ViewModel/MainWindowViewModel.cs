@@ -2140,11 +2140,10 @@ namespace WpfApp1_cmd.ViewModel
 			string lcuRoot = $"/MCFiles";
 
 			// folder に含まれるファイルをリスト化
-			List<string> folders = CreateUpdateFolderList();
-			List<string> selFolders = CreateSelectedUpdateFolderList(lcu);
+			//List<string> folders = CreateUpdateFolderList();
+			List<string> folders = CreateSelectedUpdateFolderList(lcu);
 
-			//対象ファイルをすべて LCU にアップロード
-			//対象のみとすると、ユニット毎に要/不要を計算する手間があるので、アップデートデータは全てアップロードする
+			//対象ファイルを LCU にアップロード
 			AddLog($"[Transfer] {lcu.Name}=UploadFiles Start");
 
 			// デバッグ環境でない場合
@@ -2433,11 +2432,11 @@ namespace WpfApp1_cmd.ViewModel
 							if (ExistUpdateDataPath(unit.Path) == true)
 							{
 								//UpdateDataInfos に含まれるパスのみを対象とする
-								paths.Add(  Path.GetDirectoryName(unit.Path) );
+								paths.Add(  DataFolder + Path.GetDirectoryName(unit.Path) );
 							}
 							if( ExistUpdateDataPath(unit.FuserPath) == true)
 							{
-								paths.Add(  Path.GetDirectoryName(unit.FuserPath) );
+								paths.Add(  DataFolder + Path.GetDirectoryName(unit.FuserPath) );
 							}
 						}
 					}
