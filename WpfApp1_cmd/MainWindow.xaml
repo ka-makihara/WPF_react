@@ -9,6 +9,7 @@
         xmlns:resources="clr-namespace:WpfApp1_cmd.Resources"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:converter="clr-namespace:WpfApp1_cmd.ValueConverter"
+        xmlns:services="clr-namespace:WpfApp1_cmd.Services"
         xmlns:rp="clr-namespace:Reactive.Bindings.Interactivity;assembly=ReactiveProperty.WPF"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance vm:MainWindowViewModel}"
@@ -19,7 +20,7 @@
         GlowBrush="{DynamicResource MahApps.Brushes.Accent}"
         BorderThickness="1"
         mahApps:DialogParticipation.Register="{Binding}"
-        ResizeMode="NoResize"
+        ResizeMode="CanResize"
         WindowStartupLocation="CenterScreen"
         ShowIconOnTitleBar="True"
         ShowSystemMenuOnRightClick="True"
@@ -27,7 +28,8 @@
         IsCloseButtonEnabled="False"
         ShowCloseButton="False"
         Style="{StaticResource MaterialDesignWindow}"
-        Title="{x:Static resources:Resource.WindowTitle}" Height="800" Width="850">
+        Title="{x:Static resources:Resource.WindowTitle}" Height="800" Width="850"
+        MinHeight="480" MinWidth="640">
 
 
     <Window.Resources>
@@ -114,6 +116,22 @@
                 <MenuItem Header="{x:Static resources:Resource.MENU_ConnectionCheck}" Icon="{materialDesign:PackIcon Kind=Network}" Command="{Binding LcuNetworkChkCommand}" />
                 <MenuItem Header="{x:Static resources:Resource.MENU_CheckDiskSpace}" Icon="{materialDesign:PackIcon Kind=DiscFull}" Command="{Binding LcuDiskChkCommand}" />
             </MenuItem>
+            <MenuItem Header="{x:Static resources:Resource.MENU_Settings}">
+                <MenuItem Header="{x:Static resources:Resource.MENU_ColorTheme}">
+                    <MenuItem Header="{x:Static resources:Resource.ThemeLight}"
+                              IsCheckable="True"
+                              IsChecked="{Binding ThemeSettings.IsLight, Source={x:Static Application.Current}, Mode=OneWay}"
+                              Tag="{x:Static services:ThemePreference.Light}" Click="ThemeMenuItem_Click" />
+                    <MenuItem Header="{x:Static resources:Resource.ThemeDark}"
+                              IsCheckable="True"
+                              IsChecked="{Binding ThemeSettings.IsDark, Source={x:Static Application.Current}, Mode=OneWay}"
+                              Tag="{x:Static services:ThemePreference.Dark}" Click="ThemeMenuItem_Click" />
+                    <MenuItem Header="{x:Static resources:Resource.ThemeSystem}"
+                              IsCheckable="True"
+                              IsChecked="{Binding ThemeSettings.IsSystem, Source={x:Static Application.Current}, Mode=OneWay}"
+                              Tag="{x:Static services:ThemePreference.System}" Click="ThemeMenuItem_Click" />
+                </MenuItem>
+            </MenuItem>
         </Menu>
         <!--
         <StatusBar VerticalAlignment="Center" Grid.Row="2" Grid.ColumnSpan="2">
@@ -126,9 +144,9 @@
 
         <Grid Grid.Row="1" Grid.ColumnSpan="2">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="215"/>
+                <ColumnDefinition Width="1*" MinWidth="150"/>
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="3*" MinWidth="300" />
             </Grid.ColumnDefinitions>
 
             <TreeView x:Name="lineView" Grid.Column="0" ItemsSource="{Binding TreeViewItems}" IsEnabled="{Binding IsTreeEnabled.Value, Mode=TwoWay}"
@@ -188,13 +206,16 @@
                 </TreeView.ItemTemplate>
             </TreeView>
 
-            <GridSplitter Grid.Column="1" Style="{StaticResource VerticalGridSplitter}" />
+            <GridSplitter Grid.Column="1" Style="{StaticResource VerticalGridSplitter}"
+                          ResizeDirection="Columns" ResizeBehavior="PreviousAndNext"
+                          VerticalAlignment="Stretch" />
 
-            <Grid Grid.Column="4" VerticalAlignment="Top">
+            <Grid Grid.Column="2">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*" MinHeight="120"/>
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*" MinHeight="120"/>
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <Grid.Resources>
                     <DataTemplate DataType="{x:Type vm:AViewModel}">
@@ -228,44 +249,41 @@
                     <mahApps:TransitioningContentControl Content="{Binding ActiveView}" Transition="RightReplace"  />
                 </materialDesign:DialogHost>
 
-                <GridSplitter Grid.Row="1" Height="5" Style="{StaticResource HorizontalGridSplitter}" />    
-                <StackPanel Grid.Row="2" Orientation="Vertical" Margin="0,3,0,0" >
+                <GridSplitter Grid.Row="1" Style="{StaticResource HorizontalGridSplitter}"
+                              ResizeDirection="Rows" ResizeBehavior="PreviousAndNext"
+                              VerticalAlignment="Center" />
+                <Grid Grid.Row="2" Margin="0,3,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
                     <TextBlock Text="Execution Log" FontSize="16" FontWeight="Bold" Margin="5,1,1,1"/>
-                    <Border BorderThickness="1" BorderBrush="White"/>
+                    <Border Grid.Row="1" BorderThickness="1" BorderBrush="{DynamicResource App.TextBrush}" Opacity="0.3"/>
 
-                    <TextBox x:Name="logMessage" AcceptsReturn="True" Height="250" FontSize="16" Margin="5" TextWrapping="Wrap"
-                            BorderBrush="{DynamicResource MaterialDesignShadowBrush}" BorderThickness="1"
-                            VerticalScrollBarVisibility="Auto"
-                            Text="{Binding LogData}"
-                             IsReadOnly="True"
-                            TextChanged="logMessage_TextChanged"
-                            HorizontalScrollBarVisibility="Auto" RenderTransformOrigin="0.509,0.328">
-                        <TextBox.RenderTransform>
-                            <TransformGroup>
-                                <ScaleTransform/>
-                                <SkewTransform AngleX="1.097"/>
-                                <RotateTransform/>
-                                <TranslateTransform X="-2.961"/>
-                            </TransformGroup>
-                        </TextBox.RenderTransform>
-                        <!--
-                        <i:Interaction.Triggers>
-                            <i:EventTrigger EventName="TextChanged">
-                                <rp:EventToReactiveCommand Command="{Binding LogMessageChangedCommand}" />
-                            </i:EventTrigger>
-                        </i:Interaction.Triggers>
-                        -->
-                    </TextBox>
-                    <!-- RichTextBox をログに使用しようとしたが、思うようにスクロールできなかったので、TextBoxに変更 -->
-                    <!--
-                    <local:BindableRichTextBox Document="{Binding LogMessage, Converter={StaticResource RichTextItemsToDocumentConverter}}"
-                                               Height="250" Margin="5"     
-                                               Block.LineHeight="1"
-                                               AcceptsReturn="True"
-                                               VerticalScrollBarVisibility="Visible"
-                                               HorizontalScrollBarVisibility="Auto"/>
-                    -->
-                    <StackPanel Orientation="Horizontal" Margin="5,10,1,1" HorizontalAlignment="Right" VerticalAlignment="Bottom" >
+                    <local:BindableRichTextBox x:Name="logMessage" Grid.Row="2" Margin="5" FontSize="14"
+                                 Style="{StaticResource {x:Type RichTextBox}}"
+                                 FontFamily="Consolas"
+                                 Background="{DynamicResource App.Log.BackgroundBrush}"
+                                 Foreground="{DynamicResource App.Log.TextBrush}"
+                                 BorderBrush="{DynamicResource MaterialDesignShadowBrush}" BorderThickness="1"
+                                 VerticalScrollBarVisibility="Visible"
+                                 HorizontalScrollBarVisibility="Auto"
+                                 IsReadOnly="True"
+                                 Document="{Binding LogData, Mode=OneWay, Converter={StaticResource RichTextItemsToDocumentConverter}}"
+                                 TextChanged="logMessage_TextChanged">
+                        <local:BindableRichTextBox.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Command="ApplicationCommands.Copy" />
+                                <MenuItem Command="ApplicationCommands.SelectAll" />
+                                <Separator />
+                                <MenuItem Header="{x:Static resources:Resource.MENU_ClearLog}"
+                                          Command="{Binding PlacementTarget.DataContext.ClearLogCommand, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}" />
+                            </ContextMenu>
+                        </local:BindableRichTextBox.ContextMenu>
+                    </local:BindableRichTextBox>
+                </Grid>
+                    <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="5,10,1,1" HorizontalAlignment="Right" VerticalAlignment="Bottom" >
                         <Button Height="40" materialDesign:ButtonAssist.CornerRadius="5"
                                 Command="{Binding StartTransferCommand}"
                                 Style="{StaticResource MaterialDesignRaisedLightButton}"
@@ -299,7 +317,6 @@
                             <TextBlock Text="{x:Static resources:Resource.BTN_Exit}" />
                         </Button>
                     </StackPanel>
-                </StackPanel>
             </Grid>
         </Grid>
     </Grid>

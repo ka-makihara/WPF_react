@@ -155,11 +155,16 @@ namespace WpfApp1_cmd.Models
 			//親がいないので何もしない
 		}
 
-		public LcuInfo(string name, int id=0)
+		public LcuInfo(
+			string name,
+			int id = 0,
+			WpfLcuCtrlLib.IFileTransferClient? fileTransferClient = null,
+			WpfLcuCtrlLib.ILcuWebApiClient? webApiClient = null,
+			Action<string>? log = null)
         {
 			IsSelected.Value = true;
 			LcuId = id;
-			_lcuCtrl = new(name,id);
+			_lcuCtrl = new(name, id, fileTransferClient, webApiClient, log);
 
 			_machines.ObserveAddChanged().Subscribe(x => AddMachine(x));
 			//IsSelected.Subscribe(x => Update(x));
@@ -305,7 +310,9 @@ namespace WpfApp1_cmd.Models
         public int Pos { get => Module.LogicalPos; }
         public string IPAddress { get; set; } = ""; // 本来Moduleにはない情報だが、アクセスの利便性のために追加
         public IniFileParser? UpdateInfo { get; set; } = null;
+		public IniFileParser? MachineUpdateInfo { get; set; }
 		public string[] UpdateStrings;
+		public string[]? MachineUpdateStrings { get; set; }
 		public UnitInfoLoadStatus UpdateInfoLoaded { get; set; } = UnitInfoLoadStatus.NotLoaded;
 
 		public void SetUpdateInfo(string path)
@@ -321,33 +328,6 @@ namespace WpfApp1_cmd.Models
 			UpdateStrings = System.IO.File.ReadAllLines(path, Encoding.GetEncoding(Define.TXT_ENCODING));	
 		}
 
-		public List<string> UpdateFiles(Options opt)
-        {
-            List<string> paths = [];
-
-            if (UpdateInfo != null)
-            {
-                foreach (var sec in UpdateInfo.SectionCount())
-                {
-					string p = UpdateInfo.GetValue(sec, "Path");
-
-					/*
-					if (opt.ContainsExt(Path.GetExtension(p)) == false)
-					{
-						continue;	
-					}
-					*/
-
-					paths.Add(UpdateInfo.GetValue(sec, "Path"));
-					var d = UpdateInfo.GetValue(sec, "FuserPath");
-					if( d != "" )
-					{
-						paths.Add(d);
-					}
-				}
-            }
-            return paths;
-        }
         private void AddUnitVersion(UnitVersion unitVersion)
         {
             unitVersion.Parent = this;

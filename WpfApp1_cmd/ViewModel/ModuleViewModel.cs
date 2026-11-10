@@ -34,7 +34,7 @@ namespace WpfApp1_cmd.ViewModel
 					string newVer = uv.Version;
 					if (newVer != item.CurVersion)
 					{
-						if (item.Attribute == Define.NOT_UPDATE)
+						if (!item.IsUpdatable)
 						{
 							item.IsSelected.Value = false;
 						}
@@ -55,7 +55,7 @@ namespace WpfApp1_cmd.ViewModel
 			}
 			else
 			{
-				if (item.Attribute == Define.NOT_UPDATE)
+				if (!item.IsUpdatable)
 				{
 					item.IsSelected.Value = false;
 				}
@@ -124,7 +124,7 @@ namespace WpfApp1_cmd.ViewModel
 			var newValue = IsAllSelected;// == true;
 			foreach (var unit in UnitVersions)
 			{
-				if (unit.Attribute == Define.NOT_UPDATE)
+				if (!unit.IsUpdatable)
 				{
 					unit.IsSelected.Value = false;
 				}
@@ -216,7 +216,7 @@ namespace WpfApp1_cmd.ViewModel
 					if( uv != null)
 					{
 						item.NewVersion = uv.Version;
-						if (item.Attribute == Define.NOT_UPDATE)
+						if (!item.IsUpdatable)
 						{
 							item.IsSelected.Value = false;
 						}
@@ -232,7 +232,7 @@ namespace WpfApp1_cmd.ViewModel
 				item.IsSelected.Subscribe( value =>
                 {
 					//Debug.WriteLine($"IsSelected Subscribe:{value}");
-					if(item.Attribute == Define.NOT_UPDATE)
+					if(!item.IsUpdatable)
 					{
 						item.IsSelected.Value = false;
 					}
@@ -269,13 +269,28 @@ namespace WpfApp1_cmd.ViewModel
         {
 			foreach (var unit in units)
 			{
-				if (unit.Attribute != Define.NOT_UPDATE) {
+				if (unit.IsUpdatable) {
 					unit.IsSelected.Value = select;
 				}
             }
-			UnitVersionGroupView.Refresh();
+			NotifyGroupSelectionChanged();
 			//Debug.WriteLine("SelecaAll()");
         }
+
+		/// <summary>
+		/// グループヘッダーのチェック状態を再評価させるためのカウンタ(ModuleView.xaml の MultiBinding で参照)
+		/// </summary>
+		private int _selectionRevision;
+		public int SelectionRevision
+		{
+			get => _selectionRevision;
+			private set => SetProperty(ref _selectionRevision, value);
+		}
+
+		private void NotifyGroupSelectionChanged()
+		{
+			SelectionRevision = unchecked(SelectionRevision + 1);
+		}
 
 		/// <summary>
 		/// チェックボックスの表示を行うかどうか(未使用)
@@ -347,9 +362,7 @@ namespace WpfApp1_cmd.ViewModel
 				return;
 			}
 			OnPropertyChanged(nameof(IsAllSelected));
-
-			//Debug.WriteLine("Refresh");
-			UnitVersionGroupView.Refresh();
+			NotifyGroupSelectionChanged();
 		}
 
 		/// <summary>
@@ -391,6 +404,7 @@ namespace WpfApp1_cmd.ViewModel
 				item.IsSelected.Value = chk;
 			}
 			OnPropertyChanged(nameof(IsAllSelected));
+			NotifyGroupSelectionChanged();
 		}
 
 		/// <summary>
@@ -409,7 +423,24 @@ namespace WpfApp1_cmd.ViewModel
 		public void SetSelectedModule()
 		{
 			int sel = UnitVersions.Count(x => x.IsSelected.Value == true);
-			SelectedModule = $"{Resource.TransferSelection}:{sel} {Resource.Units}";
+			string text = $"{Resource.TransferSelection}:{sel} {Resource.Units}";
+
+			int prohibited = UnitVersions.Count(x => x.IsUpdateProhibited);
+			int missingFile = UnitVersions.Count(x => !x.IsUpdateProhibited && x.IsBlockedByMissingFile);
+			List<string> notUpdatable = [];
+			if (prohibited > 0)
+			{
+				notUpdatable.Add($"{Resource.Update_Prohibited}:{prohibited}");
+			}
+			if (missingFile > 0)
+			{
+				notUpdatable.Add($"{Resource.Update_fileNotFound}:{missingFile}");
+			}
+			if (notUpdatable.Count > 0)
+			{
+				text += $"  ({string.Join(" / ", notUpdatable)})";
+			}
+			SelectedModule = text;
 		}
 	}
 }

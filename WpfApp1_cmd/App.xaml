@@ -15,11 +15,9 @@
                 <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Themes/Light.Blue.xaml" />
                 
                 <!--Material Design-->
+                <!-- Use one palette dictionary so theme changes update the resources used by controls. -->
                 <materialDesign:MahAppsBundledTheme BaseTheme="Inherit" PrimaryColor="Blue" SecondaryColor="Blue" />
-                <materialDesign:BundledTheme BaseTheme="Inherit" PrimaryColor="Blue" SecondaryColor="Blue"/>
-                
-                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Dark.xaml" />
-                
+
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignColors;component/Themes/Recommended/Primary/MaterialDesignColor.Blue.xaml" />
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />
 
@@ -51,6 +49,51 @@
             <SolidColorBrush x:Key="MahApps.Metro.Brushes.ToggleSwitchButton.OnSwitchBrush.Win10" Color="{DynamicResource Primary500}" />
             <SolidColorBrush x:Key="MahApps.Metro.Brushes.ToggleSwitchButton.OnSwitchMouseOverBrush.Win10" Color="{DynamicResource Primary400}" />
             <SolidColorBrush x:Key="MahApps.Metro.Brushes.ToggleSwitchButton.ThumbIndicatorCheckedBrush.Win10" Color="{DynamicResource Primary500Foreground}" />
+
+            <Style x:Key="App.ListRowStyle" TargetType="{x:Type DataGridRow}" BasedOn="{StaticResource MaterialDesignDataGridRow}">
+                <Setter Property="BorderThickness" Value="3,0,0,0" />
+                <Setter Property="BorderBrush" Value="Transparent" />
+                <Style.Triggers>
+                    <Trigger Property="AlternationIndex" Value="1">
+                        <Setter Property="Background" Value="{DynamicResource App.AlternatingRowBrush}" />
+                    </Trigger>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource App.List.HoverBrush}" />
+                    </Trigger>
+                    <Trigger Property="IsSelected" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource App.List.SelectedBrush}" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource App.List.SelectionBorderBrush}" />
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <Style TargetType="{x:Type DataGrid}" BasedOn="{StaticResource MaterialDesignDataGrid}">
+                <Setter Property="RowStyle" Value="{StaticResource App.ListRowStyle}" />
+                <Setter Property="AlternationCount" Value="2" />
+            </Style>
+
+            <Style x:Key="App.ListItemStyle" TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource MaterialDesignListBoxItem}">
+                <Setter Property="materialDesign:ListBoxItemAssist.HoverBackground" Value="{DynamicResource App.List.HoverBrush}" />
+                <Setter Property="materialDesign:ListBoxItemAssist.SelectedFocusedBackground" Value="{DynamicResource App.List.SelectedBrush}" />
+                <Setter Property="materialDesign:ListBoxItemAssist.SelectedUnfocusedBackground" Value="{DynamicResource App.List.SelectedBrush}" />
+                <Setter Property="BorderThickness" Value="3,0,0,0" />
+                <Setter Property="BorderBrush" Value="Transparent" />
+                <Style.Triggers>
+                    <Trigger Property="IsSelected" Value="True">
+                        <Setter Property="BorderBrush" Value="{DynamicResource App.List.SelectionBorderBrush}" />
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <Style TargetType="{x:Type ListBox}" BasedOn="{StaticResource MaterialDesignListBox}">
+                <Setter Property="ItemContainerStyle" Value="{StaticResource App.ListItemStyle}" />
+            </Style>
+
+            <Style TargetType="{x:Type ToolTip}" BasedOn="{StaticResource MaterialDesignToolTip}">
+                <Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}" />
+                <Setter Property="Foreground" Value="{DynamicResource App.TextBrush}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesignBody}" />
+            </Style>
 
             <!-- GridSplitter -->
             <Style x:Key="HorizontalGridSplitter" BasedOn="{StaticResource MaterialDesignGridSplitter}" TargetType="{x:Type GridSplitter}">

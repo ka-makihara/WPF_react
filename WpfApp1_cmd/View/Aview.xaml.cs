@@ -13,6 +13,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using WpfApp1_cmd.Services;
 
 namespace WpfApp1_cmd.View
 {
@@ -51,9 +52,15 @@ namespace WpfApp1_cmd.View
         private async void Button_Click(object sender, RoutedEventArgs e)
         {
             CounterValue++;
-            var r = DialogHost.Show(new MyMessageBox(),"DataGridView");
+            Task<object?> dialogTask = DialogHostShowCoordinator.ShowAsync(
+                "DataGridView",
+                () => DialogHost.Show(new MyMessageBox(), "DataGridView"));
             await Task.Delay(5000);
-            DialogHost.CloseDialogCommand.Execute(null, null);
+            if (DialogHost.IsDialogOpen("DataGridView"))
+            {
+                DialogHost.Close(DialogHost.GetDialogSession("DataGridView"));
+            }
+            await dialogTask;
         }
     }
 }

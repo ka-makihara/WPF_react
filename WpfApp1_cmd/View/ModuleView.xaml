@@ -59,8 +59,20 @@
                       SelectionUnit="FullRow"
                       SelectionMode="Extended"
                       GridLinesVisibility="All"
-                      MinHeight="300"
                       VirtualizingPanel.IsVirtualizingWhenGrouping="True">
+                <!-- 更新できない行(アップデート禁止・ファイルなし)をグレーアウトする -->
+                <DataGrid.RowStyle>
+                    <Style TargetType="{x:Type DataGridRow}" BasedOn="{StaticResource App.ListRowStyle}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsUpdatable}" Value="False">
+                                <Setter Property="Foreground" Value="Gray" />
+                                <Setter Property="Background" Value="#26808080" />
+                                <Setter Property="FontStyle" Value="Italic" />
+                                <Setter Property="ToolTip" Value="{Binding UpdateStatus}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.RowStyle>
 <!--
                 <DataGrid.Template>
                     <ControlTemplate>
@@ -73,7 +85,7 @@
                     <GroupStyle ContainerStyle="{StaticResource MahApps.Styles.GroupItem.DataGrid}" >
                         <GroupStyle.HeaderTemplate>
                             <DataTemplate>
-                                <StackPanel Orientation="Horizontal" Background="DarkBlue">
+                                <StackPanel Orientation="Horizontal" Background="{DynamicResource App.AlternatingRowBrush}">
                                     <!--
                                     <CheckBox IsChecked="{Binding DataContext.IsSelectedGroup, Source={x:Reference DataContextProxy}}" >
                                         IsChecked="{Binding DataContext.IsGroupChecked, RelativeSource={RelativeSource AncestorType=DataGrid}}"
@@ -81,10 +93,16 @@
                                         IsChecked="{Binding Path=Items[0].IsChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                     -->
                                     <CheckBox
-                                        IsChecked="{Binding Path=Items, Converter={StaticResource GroupToIsCheckedConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                                         Command="{Binding DataContext.GroupCheckCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                         CommandParameter="{Binding}"
                                         >
+                                        <!-- SelectionRevision の変更で再評価させる(CollectionView.Refresh を使うとスクロール位置が戻るため) -->
+                                        <CheckBox.IsChecked>
+                                            <MultiBinding Converter="{StaticResource GroupToIsCheckedConverter}" Mode="OneWay">
+                                                <Binding Path="Items" />
+                                                <Binding Path="DataContext.SelectionRevision" RelativeSource="{RelativeSource AncestorType=DataGrid}" />
+                                            </MultiBinding>
+                                        </CheckBox.IsChecked>
                                   
                                         <CheckBox.Style>
                                             <Style BasedOn="{StaticResource MahApps.Styles.CheckBox}" TargetType="{x:Type CheckBox}">
@@ -132,6 +150,7 @@
                         </DataGridTemplateColumn.HeaderStyle>
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
+                                <Grid>
                                 <CheckBox IsChecked="{Binding IsSelected.Value, UpdateSourceTrigger=PropertyChanged}"
                                     Command="{Binding DataContext.CheckBoxCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                     CommandParameter="{Binding}">
@@ -140,9 +159,36 @@
                                             <Setter Property="IsEnabled" Value="{Binding DataContext.IsUnitCheckBoxEnabled, Source={x:Reference DataContextProxy}}" />
                                             <Setter Property="Visibility" Value="{Binding DataContext.IsUnitCheckBoxEnabled, Source={x:Reference DataContextProxy}, Converter={StaticResource BoolVisibilityConverter}}" />
                                             <Setter Property="ToolTip" Value="{Binding UpdateStatus}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsUpdatable}" Value="False">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
                                         </Style>
                                     </CheckBox.Style>
                                 </CheckBox>
+                                <!-- 更新できないユニットはチェックボックスの代わりにアイコンを表示(禁止=鍵、ファイルなし=ファイル警告) -->
+                                <materialDesign:PackIcon Width="20" Height="20"
+                                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                                    Foreground="Gray" Background="Transparent"
+                                    ToolTip="{Binding UpdateStatus}">
+                                    <materialDesign:PackIcon.Style>
+                                        <Style TargetType="materialDesign:PackIcon">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsBlockedByMissingFile}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                    <Setter Property="Kind" Value="FileAlertOutline" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsUpdateProhibited}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                    <Setter Property="Kind" Value="Lock" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </materialDesign:PackIcon.Style>
+                                </materialDesign:PackIcon>
+                                </Grid>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
@@ -170,6 +216,12 @@
                         EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnPopupEditingStyle}"
                         ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"
                         Header="UpdateVersion" FontSize="16" FontFamily="Arial" Width="180" MinWidth="180" Binding="{Binding NewVersion}" IsReadOnly="True">
+                    </materialDesign:DataGridTextColumn>
+
+                    <materialDesign:DataGridTextColumn
+                        EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnPopupEditingStyle}"
+                        ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"
+                        Header="Status" FontSize="16" Width="*" MinWidth="160" Binding="{Binding UpdateStatus, Mode=OneWay}" IsReadOnly="True">
                     </materialDesign:DataGridTextColumn>
 
                 </DataGrid.Columns>

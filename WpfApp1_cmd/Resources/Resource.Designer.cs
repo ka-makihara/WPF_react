@@ -23,6 +23,13 @@ namespace WpfApp1_cmd.Resources {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class Resource {
+        public static string MENU_ClearLog => ResourceManager.GetString("MENU_ClearLog", resourceCulture);
+        public static string MENU_Settings => ResourceManager.GetString("MENU_Settings", resourceCulture);
+        public static string MENU_ColorTheme => ResourceManager.GetString("MENU_ColorTheme", resourceCulture);
+        public static string ThemeLight => ResourceManager.GetString("ThemeLight", resourceCulture);
+        public static string ThemeDark => ResourceManager.GetString("ThemeDark", resourceCulture);
+        public static string ThemeSystem => ResourceManager.GetString("ThemeSystem", resourceCulture);
+        public static string ThemeSettingsError => ResourceManager.GetString("ThemeSettingsError", resourceCulture);
         
         private static global::System.Resources.ResourceManager resourceMan;
         
@@ -66,6 +73,24 @@ namespace WpfApp1_cmd.Resources {
         public static string BackupCanceled {
             get {
                 return ResourceManager.GetString("BackupCanceled", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Specify a backup folder with --backup before updating. に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string BackupPathRequired {
+            get {
+                return ResourceManager.GetString("BackupPathRequired", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   The backup did not complete. The update was canceled to preserve recoverability. に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string BackupRequiredForTransfer {
+            get {
+                return ResourceManager.GetString("BackupRequiredForTransfer", resourceCulture);
             }
         }
         
@@ -678,6 +703,15 @@ namespace WpfApp1_cmd.Resources {
         public static string Update_notSelected {
             get {
                 return ResourceManager.GetString("Update_notSelected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Update file not found に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Update_fileNotFound {
+            get {
+                return ResourceManager.GetString("Update_fileNotFound", resourceCulture);
             }
         }
         

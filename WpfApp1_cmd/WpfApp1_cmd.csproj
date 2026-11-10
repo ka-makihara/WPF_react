@@ -44,10 +44,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\JigFormat\JigFormat\JigFormat.vcxproj" />
-    <ProjectReference Include="..\..\mcAccount\mcAccount\mcAccount.vcxproj">
-      <Private>True</Private>
-    </ProjectReference>
+    <ProjectReference Include="..\..\mcAccount\mcAccount\mcAccount.vcxproj" />
     <ProjectReference Include="..\..\WPF_LcuCtrlLib\WpfLcuCtrlLib\WpfLcuCtrlLib.csproj" />
   </ItemGroup>
 
@@ -58,7 +55,7 @@
     <EmbeddedResource Include="Resources\config.yaml" />
     <EmbeddedResource Include="Resources\TextFile1.json" />
     <Reference Include="SymmetricCryptography">
-      <HintPath>..\SymmetricCryptography.dll</HintPath>
+      <HintPath>..\..\LCU_dlls\SymmetricCryptography.dll</HintPath>
     </Reference>
     <Resource Include="Resources\question_32.png" />
     <Resource Include="Resources\warning.png" />

@@ -20,16 +20,28 @@ namespace WpfApp1_cmd.Models
         public string? CurVersion
         {
             get => _curVersion;
-            set => SetProperty(ref _curVersion,value);
+            set
+            {
+                if (SetProperty(ref _curVersion, value))
+                {
+                    OnPropertyChanged(nameof(UpdateStatus));
+                }
+            }
         }
         public string? NewVersion
         {
             get => _newVersion;
-            set => SetProperty(ref _newVersion, value);
+            set
+            {
+                if (SetProperty(ref _newVersion, value))
+                {
+                    OnPropertyChanged(nameof(UpdateStatus));
+                }
+            }
         }
 
 		/// <summary>
-		///  チェックボックスのツールチップ表示
+		///  チェックボックスのツールチップ、状態列の表示
 		/// </summary>
 		public string UpdateStatus
 		{
@@ -44,9 +56,13 @@ namespace WpfApp1_cmd.Models
 					return Resource.UnitsOnUnsupportedModels;// "未サポート機種上のユニット";
 				}
 
-				if ( Attribute == Define.NOT_UPDATE)
+				if ( IsUpdateProhibited)
 				{
 					return Resource.Update_Prohibited;  //アップデート禁止
+				}
+				else if (IsBlockedByMissingFile)
+				{
+					return Resource.Update_fileNotFound;  //アップデートファイルなし
 				}
 				else if (CurVersion == NewVersion)
 				{
@@ -84,6 +100,25 @@ namespace WpfApp1_cmd.Models
         public long   Size { get; set; }
         public ModuleInfo? Parent { get; set; }
 
+		/// <summary>
+		///  アップデートデータ側に更新ファイルが存在しない(一覧表示のみで選択不可)
+		/// </summary>
+		public bool IsUpdateFileMissing { get; set; }
+
+		/// <summary>
+		///  更新ファイル無しでも選択を許可する(--fileExist=test)
+		/// </summary>
+		public bool IsMissingUpdateFileSelectable { get; set; }
+
+		public bool IsUpdateProhibited => Attribute == Define.NOT_UPDATE;
+
+		/// <summary>
+		///  更新ファイル無しのため選択不可
+		/// </summary>
+		public bool IsBlockedByMissingFile => IsUpdateFileMissing && !IsMissingUpdateFileSelectable;
+
+		public bool IsUpdatable => !IsUpdateProhibited && !IsBlockedByMissingFile;
+
 		public void Update(bool? value)
 		{
 			//ModuleInfoの更新
@@ -110,7 +145,16 @@ namespace WpfApp1_cmd.Models
 			{
 				IsSelected.Value = sel;
 			}
-			IsSelected.Subscribe(x => Update(x));
+			IsSelected.Subscribe(x =>
+			{
+				if (IsBlockedByMissingFile && x != false)
+				{
+					IsSelected.Value = false;
+					return;
+				}
+				Update(x);
+				OnPropertyChanged(nameof(UpdateStatus));
+			});
 		}
 
 		/// <summary>

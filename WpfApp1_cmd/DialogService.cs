@@ -9,6 +9,7 @@ using MaterialDesignThemes.Wpf;
 
 using WpfApp1_cmd.ViewModel;
 using WpfApp1_cmd.View;
+using WpfApp1_cmd.Services;
 
 namespace WpfApp1_cmd
 {
@@ -30,7 +31,9 @@ namespace WpfApp1_cmd
                     Message = message,
                 }
             };
-            object result = await DialogHost.Show(dialog, _identifier);
+            object? result = await DialogHostShowCoordinator.ShowAsync(
+                _identifier,
+                () => DialogHost.Show(dialog, _identifier));
             return (result is bool selectedResult) && selectedResult;
         }
     }

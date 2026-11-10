@@ -24,12 +24,12 @@ namespace WpfApp1_cmd.ValueConverter
 				}
 				else
 				{
-					return Brushes.Black;
+					return System.Windows.Application.Current.FindResource("App.TextBrush");
 				}
 			}
 			else
 			{
-				return Brushes.Black;
+				return System.Windows.Application.Current.FindResource("App.TextBrush");
 			}
 		}
 

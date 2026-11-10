@@ -1,0 +1,80 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="FluentFTP" Version="52.1.0" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\WpfApp1_cmd\Services\ThemeSettingsStore.cs" Link="Services\ThemeSettingsStore.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\DialogHostShowCoordinator.cs" Link="Services\DialogHostShowCoordinator.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\UpdateFileListBuilder.cs" Link="Services\UpdateFileListBuilder.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\UpdateExecutionGate.cs" Link="Services\UpdateExecutionGate.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\TransferCompletionResultPresenter.cs" Link="Services\TransferCompletionResultPresenter.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\UnitVersionIndexLookupBuilder.cs" Link="Services\UnitVersionIndexLookupBuilder.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\UnitLinkConfigurationMatcher.cs" Link="Services\UnitLinkConfigurationMatcher.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\ModuleBackupService.cs" Link="Services\ModuleBackupService.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\ModuleUpdateService.cs" Link="Services\ModuleUpdateService.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\ModuleTransferInspectionService.cs" Link="Services\ModuleTransferInspectionService.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\LcuLineTreeService.cs" Link="Services\LcuLineTreeService.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\LcuLineInfoService.cs" Link="Services\LcuLineInfoService.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\LcuReachabilityService.cs" Link="Services\LcuReachabilityService.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\LcuInformationService.cs" Link="Services\LcuInformationService.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\LcuNetworkCheckService.cs" Link="Services\LcuNetworkCheckService.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\LcuUpdatePreparationService.cs" Link="Services\LcuUpdatePreparationService.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\LineInfoLoadWaiter.cs" Link="Services\LineInfoLoadWaiter.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\UpdateFolderSelectionService.cs" Link="Services\UpdateFolderSelectionService.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\UpdateDataLoadService.cs" Link="Services\UpdateDataLoadService.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\UnitLinkConfigurationService.cs" Link="Services\UnitLinkConfigurationService.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\UpdateDataSourceService.cs" Link="Services\UpdateDataSourceService.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\BackupDataService.cs" Link="Services\BackupDataService.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\UnitVersionListService.cs" Link="Services\UnitVersionListService.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\UpdateInspectionDiagnosticService.cs" Link="Services\UpdateInspectionDiagnosticService.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\TransferSelectionSummaryBuilder.cs" Link="Services\TransferSelectionSummaryBuilder.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\TransferSelectionTreeBuilder.cs" Link="Services\TransferSelectionTreeBuilder.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\TransferSelectionGroupBuilder.cs" Link="Services\TransferSelectionGroupBuilder.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\UpdateFolderSelectionSnapshotBuilder.cs" Link="Services\UpdateFolderSelectionSnapshotBuilder.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\TransferPreflightValidator.cs" Link="Services\TransferPreflightValidator.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\TransferPreflightResultPresenter.cs" Link="Services\TransferPreflightResultPresenter.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\TransferStartConfirmationPresenter.cs" Link="Services\TransferStartConfirmationPresenter.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\SelectedModulePreparationService.cs" Link="Services\SelectedModulePreparationService.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\TransferProgressCalculator.cs" Link="Services\TransferProgressCalculator.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\TreeSelectionDiagnosticBuilder.cs" Link="Services\TreeSelectionDiagnosticBuilder.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\TreeSelectionPolicy.cs" Link="Services\TreeSelectionPolicy.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\ViewCacheKeyRemovalBuilder.cs" Link="Services\ViewCacheKeyRemovalBuilder.cs" />
+    <Compile Include="..\..\WPF_LcuCtrlLib\WpfLcuCtrlLib\IniFileParser.cs" Link="WpfLcuCtrlLib\IniFileParser.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\TransferExecutionService.cs" Link="Services\TransferExecutionService.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\TransferWorkBuilder.cs" Link="Services\TransferWorkBuilder.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\TransferPauseService.cs" Link="Services\TransferPauseService.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\OperationProgressMonitor.cs" Link="Services\OperationProgressMonitor.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\PostMcFileResponseParser.cs" Link="Services\PostMcFileResponseParser.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\PostMcFileTransferService.cs" Link="Services\PostMcFileTransferService.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\PostMcFileTransferResultPresenter.cs" Link="Services\PostMcFileTransferResultPresenter.cs" />
+    <Compile Include="..\WpfApp1_cmd\ErrorInfo.cs" Link="ErrorInfo.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\McAccountProvider.cs" Link="Services\McAccountProvider.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\NeximLcuDirectoryService.cs" Link="Services\NeximLcuDirectoryService.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\LcuFolderUploadService.cs" Link="Services\LcuFolderUploadService.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\LcuFolderUploadProgressPresenter.cs" Link="Services\LcuFolderUploadProgressPresenter.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\LcuUnitFileUploadService.cs" Link="Services\LcuUnitFileUploadService.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\LcuFileUploadResultPresenter.cs" Link="Services\LcuFileUploadResultPresenter.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\UpdateCommonService.cs" Link="Services\UpdateCommonService.cs" />
+    <Compile Include="..\WpfApp1_cmd\Services\LcuPeripheralFileDownloadService.cs" Link="Services\LcuPeripheralFileDownloadService.cs" />
+    <Compile Include="..\..\WPF_LcuCtrlLib\WpfLcuCtrlLib\FileTransfer\IFileTransferClient.cs" Link="WpfLcuCtrlLib\FileTransfer\IFileTransferClient.cs" />
+    <Compile Include="..\..\WPF_LcuCtrlLib\WpfLcuCtrlLib\WebApi\ILcuWebApiClient.cs" Link="WpfLcuCtrlLib\WebApi\ILcuWebApiClient.cs" />
+    <Compile Include="..\..\WPF_LcuCtrlLib\WpfLcuCtrlLib\WebApi\HttpLcuWebApiClient.cs" Link="WpfLcuCtrlLib\WebApi\HttpLcuWebApiClient.cs" />
+  </ItemGroup>
+
+</Project>

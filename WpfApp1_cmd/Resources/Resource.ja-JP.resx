@@ -297,6 +297,9 @@
   <data name="Update_Prohibited" xml:space="preserve">
     <value>アップデート禁止</value>
   </data>
+  <data name="Update_fileNotFound" xml:space="preserve">
+    <value>アップデートファイルなし</value>
+  </data>
   <data name="Update_sameVersion" xml:space="preserve">
     <value>同一バージョン</value>
   </data>
@@ -336,4 +339,18 @@
   <data name="ConnectionError" xml:space="preserve">
     <value>接続エラー</value>
   </data>
+  <data name="BackupPathRequired" xml:space="preserve">
+    <value>更新前に --backup でバックアップ先フォルダを指定してください。</value>
+  </data>
+  <data name="BackupRequiredForTransfer" xml:space="preserve">
+    <value>バックアップが完了しなかったため、復元可能性を保つため更新を中止しました。</value>
+  </data>
+  <data name="MENU_Settings" xml:space="preserve"><value>設定</value></data>
+  <data name="MENU_ColorTheme" xml:space="preserve"><value>カラーテーマ</value></data>
+  <data name="ThemeLight" xml:space="preserve"><value>ライト</value></data>
+  <data name="ThemeDark" xml:space="preserve"><value>ダーク</value></data>
+  <data name="ThemeSystem" xml:space="preserve"><value>システム</value></data>
+  <data name="ThemeSettingsError" xml:space="preserve"><value>テーマ設定を読み込み、または保存できませんでした。設定ファイルとWindowsの色設定をご確認ください。
+{0}</value></data>
+  <data name="MENU_ClearLog" xml:space="preserve"><value>クリア</value></data>
 </root>

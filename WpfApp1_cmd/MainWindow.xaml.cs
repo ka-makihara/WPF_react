@@ -13,6 +13,7 @@ using System.Windows.Shapes;
 using MahApps.Metro.Controls;
 using MahApps.Metro.Controls.Dialogs;
 using WpfApp1_cmd.ViewModel;
+using WpfApp1_cmd.Services;
 
 namespace WpfApp1_cmd
 {
@@ -22,6 +23,7 @@ namespace WpfApp1_cmd
     public partial class MainWindow : MetroWindow
     {
 		private readonly MainWindowViewModel viewModel;
+        private FlowDocument? lastLogDocument;
 
         public MainWindow()
         {
@@ -42,17 +44,22 @@ namespace WpfApp1_cmd
             lineView.IsEnabled = false;
         }
 
-        /// <summary>
-        ///  Log領域の最終行にスクロールする
-        ///     イベントを Command に割り当てて ReactiveCommand(in ViewModel) で実行しようと考えたが例外が発生したので
-        ///     ここで実装してしまった。画面のスクロールだけなので・・・
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        private void ThemeMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            var item = (MenuItem)sender;
+            ((App)Application.Current).ThemeSettings.Select((ThemePreference)item.Tag);
+            item.GetBindingExpression(MenuItem.IsCheckedProperty)?.UpdateTarget();
+        }
+
         private void logMessage_TextChanged(object sender, TextChangedEventArgs e)
         {
-            // TextBox を最終行にスクロールする
-            logMessage.ScrollToEnd();
+            var log = (RichTextBox)sender;
+            // Theme changes also raise TextChanged, without replacing the log document.
+            if (ReferenceEquals(lastLogDocument, log.Document))
+                return;
+
+            lastLogDocument = log.Document;
+            log.ScrollToEnd();
         }
 
     }

@@ -24,23 +24,23 @@ namespace WpfApp1_cmd.ValueConverter
 				}
 				else
 				{
-					return Brushes.White;
+					return System.Windows.Application.Current.FindResource("App.TextBrush");
 				}
 			}
 			else if( value is ItemStatus status)
 			{
 				switch(status)
 				{
-					case ItemStatus.OK:            return Brushes.White;
+					case ItemStatus.OK:            return System.Windows.Application.Current.FindResource("App.TextBrush");
 					case ItemStatus.NG:            return Brushes.Red;
 					case ItemStatus.UNKNOWN:       return Brushes.Red;
-					case ItemStatus.NOT_SUPPORTED: return Brushes.Yellow;
-					default:                       return Brushes.White;
+					case ItemStatus.NOT_SUPPORTED: return System.Windows.Application.Current.FindResource("App.WarningBrush");
+					default:                       return System.Windows.Application.Current.FindResource("App.TextBrush");
 				}
 			}
 			else
 			{
-				return Brushes.White;
+				return System.Windows.Application.Current.FindResource("App.TextBrush");
 			}
 		}
 

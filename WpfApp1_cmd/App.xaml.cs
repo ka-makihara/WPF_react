@@ -10,6 +10,7 @@ using System.Text;
 using System.Windows;
 using WpfApp1_cmd.Models;
 using WpfApp1_cmd.ViewModel;
+using WpfApp1_cmd.Services;
 
 namespace WpfApp1_cmd
 {
@@ -332,6 +333,19 @@ namespace WpfApp1_cmd
 	/// </summary>
 	public partial class App : Application
 	{
+		public ThemeService ThemeSettings { get; }
+
+		public App()
+		{
+			ThemeSettings = new ThemeService(this);
+		}
+
+		protected override void OnExit(ExitEventArgs e)
+		{
+			ThemeSettings.Dispose();
+			base.OnExit(e);
+		}
+
 		[DllImport("user32.dll")]
 		private static extern bool SetForegroundWindow(IntPtr hWnd);
 		[DllImport("user32.dll")]
@@ -394,6 +408,7 @@ namespace WpfApp1_cmd
 			// .NET(Core系)は デフォルトで shift-jis(sjis) に対応したエンコーディングプロバイダーが登録されていないので、追加する
 			Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
+			ThemeSettings.Initialize();
 			MainWindow mainWindow = new MainWindow();
 			mainWindow.Show();
 		}

@@ -52,35 +52,67 @@ namespace WpfApp1_cmd
     {
         public object Convert(object value, System.Type targetType, object parameter, System.Globalization.CultureInfo culture)
         {
-            /*
-            if( !(value is RichTextItem item))
+            var doc = new FlowDocument
             {
-                return Binding.DoNothing;
+                FontFamily = new FontFamily("Consolas"),
+                FontSize = 14,
+                PagePadding = new Thickness(5)
+            };
+
+            if (value is string logText)
+            {
+                foreach (var line in logText.Split('\n'))
+                {
+                    var paragraph = new Paragraph(new Run(line.TrimEnd('\r')))
+                    {
+                        Margin = new Thickness(0)
+                    };
+                    paragraph.SetResourceReference(TextElement.ForegroundProperty, GetLogBrushKey(line));
+                    doc.Blocks.Add(paragraph);
+                }
+
+                return doc;
             }
-            var paragraph = new Paragraph();
-            paragraph.Inlines.Add(new Run()
+
+            if (value is not ICollection<RichTextItem> items)
             {
-                Text = item.Text,
-                Foreground = new SolidColorBrush(item.Color),
-                FontStyle = FontStyles.Italic,
-            });
-            return new FlowDocument(paragraph);
-            */
-            
-            var doc = new FlowDocument();
-     
-            foreach (var item in value as ICollection<RichTextItem>)
+                return doc;
+            }
+
+            foreach (var item in items)
             {
-                var paragraph = new Paragraph(new Run(item.Text))
+                doc.Blocks.Add(new Paragraph(new Run(item.Text))
                 {
                     Foreground = new SolidColorBrush(item.Color),
-                    FontStyle = FontStyles.Italic,
-                    //FontWeight = item.FontWeight,
-                    //Margin = item.Margin,
-                };
-                doc.Blocks.Add(paragraph);
+                    FontStyle = FontStyles.Italic
+                });
             }
+
             return doc;
+        }
+
+        private static string GetLogBrushKey(string line)
+        {
+            if (line.Contains("[ERROR]", StringComparison.OrdinalIgnoreCase)
+                || line.Contains("=NG", StringComparison.OrdinalIgnoreCase)
+                || line.Contains("Error", StringComparison.OrdinalIgnoreCase))
+            {
+                return "App.Log.ErrorBrush";
+            }
+
+            if (line.Contains("[WARNING]", StringComparison.OrdinalIgnoreCase)
+                || line.Contains(" Warning", StringComparison.OrdinalIgnoreCase))
+            {
+                return "App.Log.WarningBrush";
+            }
+
+            if (line.Contains("=OK:", StringComparison.OrdinalIgnoreCase)
+                || line.Contains(" Success", StringComparison.OrdinalIgnoreCase))
+            {
+                return "App.Log.SuccessBrush";
+            }
+
+            return "App.Log.TextBrush";
         }
         public object ConvertBack(object value, System.Type targetType, object parameter, System.Globalization.CultureInfo culture)
         {

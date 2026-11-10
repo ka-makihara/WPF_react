@@ -18,7 +18,6 @@
                   FontSize="20"
                   CanUserAddRows="False"
                   HeadersVisibility="All"
-                  AlternatingRowBackground="#666666"
                   IsReadOnly="False"
                   >
             <DataGrid.Columns>

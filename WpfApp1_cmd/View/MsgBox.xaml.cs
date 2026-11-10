@@ -14,6 +14,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using WpfApp1_cmd.Services;
 
 namespace WpfApp1_cmd.View
 {
@@ -28,7 +29,7 @@ namespace WpfApp1_cmd.View
             InitializeComponent();
         }
 
-        public static Task<object?> Show(string title, string text, string detail, string info, int ty, string identifier)
+        public static async Task<object?> Show(string title, string text, string detail, string info, int ty, string identifier)
         {
             var dialog = new MsgBox();
             BitmapImage icon;
@@ -73,7 +74,9 @@ namespace WpfApp1_cmd.View
                 dialog.Buttons.Children.Remove(btnCancel);
             }
 
-            return DialogHost.Show(dialog,identifier);
+            return await DialogHostShowCoordinator.ShowAsync(
+                identifier,
+                () => DialogHost.Show(dialog, identifier));
         }
     }
 }

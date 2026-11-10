@@ -297,6 +297,9 @@
   <data name="Update_Prohibited" xml:space="preserve">
     <value>Updates are prohibited</value>
   </data>
+  <data name="Update_fileNotFound" xml:space="preserve">
+    <value>Update file not found</value>
+  </data>
   <data name="Update_sameVersion" xml:space="preserve">
     <value>Same version.</value>
   </data>
@@ -336,4 +339,18 @@
   <data name="ConnectionError" xml:space="preserve">
     <value>Connection Error</value>
   </data>
+  <data name="BackupPathRequired" xml:space="preserve">
+    <value>Specify a backup folder with --backup before updating.</value>
+  </data>
+  <data name="BackupRequiredForTransfer" xml:space="preserve">
+    <value>The backup did not complete. The update was canceled to preserve recoverability.</value>
+  </data>
+  <data name="MENU_Settings" xml:space="preserve"><value>Settings</value></data>
+  <data name="MENU_ColorTheme" xml:space="preserve"><value>Color theme</value></data>
+  <data name="ThemeLight" xml:space="preserve"><value>Light</value></data>
+  <data name="ThemeDark" xml:space="preserve"><value>Dark</value></data>
+  <data name="ThemeSystem" xml:space="preserve"><value>System</value></data>
+  <data name="ThemeSettingsError" xml:space="preserve"><value>Unable to read or save theme settings. Check the settings file and Windows color settings.
+{0}</value></data>
+  <data name="MENU_ClearLog" xml:space="preserve"><value>Clear</value></data>
 </root>
