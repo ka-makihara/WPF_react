@@ -14,7 +14,9 @@ public class ModuleUpdateService_ExecuteTests
 		UpdateCommonVersionUnit[] expected = names.Select(name =>
 			new UpdateCommonVersionUnit(name, "1.0")).ToArray();
 		UnitVersionIndexLookup lookup = new UnitVersionIndexLookupBuilder().Build(names);
-		string[] lines = names.SelectMany(name => new[] { $"[{name}]", "Version=1.0" }).ToArray();
+		string[] lines = names.SelectMany(name =>
+			new[] { $"[{name}]", "Version=1.0", $"Path=/old-{name}.bin" }).ToArray();
+		List<ModuleUpdateVersion> transferredVersions = [];
 		ModuleFileTransferPlan first = new(
 			"first",
 			["Updated.bin", "Other.bin"],
@@ -43,6 +45,7 @@ public class ModuleUpdateService_ExecuteTests
 				{
 					if (change.IsUpdateCommonVersionChanged && lookup.FindIndex(change.Name) is int index)
 					{
+						transferredVersions.Add(versions[index]);
 						expected[index] = new UpdateCommonVersionUnit(expected[index].Name, change.NewVersion);
 					}
 				}
@@ -50,6 +53,11 @@ public class ModuleUpdateService_ExecuteTests
 			},
 			CancellationToken.None);
 
+		lines = UpdateCommonService.SetTransferredFilePaths(lines, transferredVersions);
+		Assert.Equal(transferSucceeds ? "Path=/Updated.bin" : "Path=/old-Updated.bin", lines[2]);
+		Assert.Contains("Path=/old-PathMismatch.bin", lines);
+		Assert.Contains("Path=/old-NotSelected.bin", lines);
+		Assert.Contains("Path=/old-Failed.bin", lines);
 		Assert.Equal(transferSucceeds ? "2.0" : "1.0", expected[0].CurrentVersion);
 		Assert.All(expected.Skip(1), unit => Assert.Equal("1.0", unit.CurrentVersion));
 		Assert.All(versions, unit => Assert.Equal("1.0", unit.CurrentVersion));

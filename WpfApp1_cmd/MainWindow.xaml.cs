@@ -1,10 +1,12 @@
 ﻿using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
@@ -32,7 +34,31 @@ namespace WpfApp1_cmd
 			DataContext = viewModel;
 
 			InitializeComponent();
+			SourceInitialized += (_, _) => ApplyRoundedCorners();
         }
+
+        private void ApplyRoundedCorners()
+        {
+            // DWMWA_WINDOW_CORNER_PREFERENCE is supported starting with Windows 11.
+            if (!OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22000))
+            {
+                Trace.TraceInformation("Rounded window corners require Windows 11 or later.");
+                return;
+            }
+
+            const int windowCornerPreference = 33;
+            int roundCorners = 2;
+            int result = DwmSetWindowAttribute(new WindowInteropHelper(this).Handle,
+                windowCornerPreference, ref roundCorners, sizeof(int));
+            if (result < 0)
+            {
+                Trace.TraceWarning($"Failed to apply rounded window corners: 0x{result:X8}");
+            }
+        }
+
+        [DllImport("dwmapi.dll", ExactSpelling = true)]
+        private static extern int DwmSetWindowAttribute(
+            IntPtr window, int attribute, ref int value, int valueSize);
         private void LaunchGitHubSite(object sender, RoutedEventArgs e)
         {
             // Launch the GitHub site...

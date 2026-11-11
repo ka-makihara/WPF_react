@@ -13,8 +13,8 @@ public sealed class ModuleTransferInspectionService_InspectAsyncTests
 
 		ModuleTransferInspectionResult result = await service.InspectAsync(
 			CreateRequest(["/Peripheral/unit.bin"]),
-			new ModuleTransferInspectionContext("machine", 2),
-			new FakeInspectionGateway((_, _, _, _, _, _) =>
+			new ModuleTransferInspectionContext("machine", "192.168.0.1", 2),
+			new FakeInspectionGateway((_, _, _, _, _, _, _) =>
 			{
 				downloadCalled = true;
 				return Task.FromResult(false);
@@ -36,8 +36,8 @@ public sealed class ModuleTransferInspectionService_InspectAsyncTests
 		await Assert.ThrowsAsync<OperationCanceledException>(() =>
 			service.InspectAsync(
 				CreateRequest(["/Peripheral/unit.bin"]),
-				new ModuleTransferInspectionContext("machine", 2),
-				new FakeInspectionGateway((_, _, _, _, _, token) =>
+				new ModuleTransferInspectionContext("machine", "192.168.0.1", 2),
+				new FakeInspectionGateway((_, _, _, _, _, _, token) =>
 				{
 					gatewayCalled = true;
 					Assert.Equal(cancellation.Token, token);
@@ -60,8 +60,8 @@ public sealed class ModuleTransferInspectionService_InspectAsyncTests
 		await Assert.ThrowsAsync<OperationCanceledException>(() =>
 			service.InspectAsync(
 				CreateRequest(["/Peripheral/unit.bin"]),
-				new ModuleTransferInspectionContext("machine", 2),
-				new FakeInspectionGateway((_, _, _, _, _, _) =>
+				new ModuleTransferInspectionContext("machine", "192.168.0.1", 2),
+				new FakeInspectionGateway((_, _, _, _, _, _, _) =>
 				{
 					gatewayCalled = true;
 					return Task.FromResult(false);
@@ -98,11 +98,12 @@ public sealed class ModuleTransferInspectionService_InspectAsyncTests
 
 			ModuleTransferInspectionResult result = await service.InspectAsync(
 				request,
-				new ModuleTransferInspectionContext("machine", 3),
-				new FakeInspectionGateway((machineName, position, machineFiles, lcuFiles, targetPath, _) =>
+				new ModuleTransferInspectionContext("machine", "192.168.0.1", 3),
+				new FakeInspectionGateway((machineName, ipAddress, position, machineFiles, lcuFiles, targetPath, _) =>
 				{
 					downloadCalled = true;
 					Assert.Equal("machine", machineName);
+					Assert.Equal("192.168.0.1", ipAddress);
 					Assert.Equal(3, position);
 					Assert.Equal(request.MachineFiles, machineFiles);
 					Assert.Equal(request.LcuFiles, lcuFiles);
@@ -138,11 +139,12 @@ public sealed class ModuleTransferInspectionService_InspectAsyncTests
 			@"C:\Inspection\");
 
 	private sealed class FakeInspectionGateway(
-		Func<string, int, IReadOnlyList<string>, IReadOnlyList<string>, string, CancellationToken, Task<bool>> download)
+		Func<string, string, int, IReadOnlyList<string>, IReadOnlyList<string>, string, CancellationToken, Task<bool>> download)
 		: IModuleTransferInspectionGateway
 	{
 		public Task<bool> DownloadFilesAsync(
 			string machineName,
+			string IpAddress,
 			int modulePosition,
 			IReadOnlyList<string> machineFiles,
 			IReadOnlyList<string> lcuFiles,
@@ -150,6 +152,7 @@ public sealed class ModuleTransferInspectionService_InspectAsyncTests
 			CancellationToken cancellationToken) =>
 			download(
 				machineName,
+				IpAddress,
 				modulePosition,
 				machineFiles,
 				lcuFiles,

@@ -52,6 +52,18 @@ namespace WpfApp1_cmd.Models
 
 			return true;
 		}
+
+		public static bool IsUnitSupported(string? unitName)
+		{
+			if (string.IsNullOrEmpty(unitName))
+			{
+				return true;
+			}
+
+			UnitLink? unit = units.FirstOrDefault(
+				link => link.components?.Contains(unitName, StringComparer.Ordinal) == true);
+			return unit?.support ?? true;
+		}
 	}
 
 	public class UnitLink
@@ -60,6 +72,7 @@ namespace WpfApp1_cmd.Models
 		public List<string> components { get; set; }
 		public string? mode { get; set; }
 		public List<string> files { get; set; }
+		public bool support { get; set; } = true;
 
 		public bool ContainsName(string? n)
 		{

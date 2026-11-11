@@ -38,6 +38,14 @@ namespace WpfApp1_cmd.Resources {
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Resource() {
         }
+
+        public static string StatusReady {
+            get { return ResourceManager.GetString("StatusReady", resourceCulture); }
+        }
+
+        public static string StatusUnits {
+            get { return ResourceManager.GetString("StatusUnits", resourceCulture); }
+        }
         
         /// <summary>
         ///   このクラスで使用されているキャッシュされた ResourceManager インスタンスを返します。

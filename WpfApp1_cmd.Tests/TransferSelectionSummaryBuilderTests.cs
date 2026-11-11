@@ -87,6 +87,32 @@ public sealed class TransferSelectionSummaryBuilderTests
 	}
 
 	[Fact]
+	public void CountSelectedUnits_ExcludesUnsupportedUnitsEvenWhenSelected()
+	{
+		IReadOnlyList<TransferSelectionLcu> lcus = new TransferSelectionTreeBuilder().Build(
+		[
+			new(true,
+			[
+				new(true,
+				[
+					new(true,
+					[
+						new(true, "Supported", "supported.bin", null),
+						new(true, "Unsupported", "unsupported.bin", null, IsSupported: false),
+						new(true, "Prohibited", "prohibited.bin", null, IsUpdateProhibited: true)
+					])
+				])
+			])
+		]);
+
+		int result = new TransferSelectionSummaryBuilder().CountSelectedUnits(lcus);
+
+		Assert.Equal(1, result);
+		Assert.False(Assert.Single(lcus).Machines[0].Modules[0].Units[1].IsSelected);
+		Assert.False(Assert.Single(lcus).Machines[0].Modules[0].Units[2].IsSelected);
+	}
+
+	[Fact]
 	public void CountSelectedUnits_ThrowsWhenCancelledWhileEnumeratingMachines()
 	{
 		using CancellationTokenSource cancellation = new();

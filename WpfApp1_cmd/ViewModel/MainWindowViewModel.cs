@@ -115,7 +115,8 @@ namespace WpfApp1_cmd.ViewModel
 		public CancellationToken Token => Cts.Token;
 
 		public ReactiveCommand WindowLoadedCommand { get; } = new ReactiveCommand();
-		public ReactiveCommand WindowClosingCommand { get; } = new ReactiveCommand();
+		public ReactiveCommand<System.ComponentModel.CancelEventArgs> WindowClosingCommand { get; } = new();
+		private bool _isShutdownConfirmed;
 
 		public ReactiveCommand TreeViewCommand { get; } = new ReactiveCommand();
 		public ReactiveCommand TreeViewChkCommand { get; } = new ReactiveCommand();
@@ -164,15 +165,6 @@ namespace WpfApp1_cmd.ViewModel
 			LogData += "\n";
 			LogData += str;
 
-			/*
-			RichTextItem item = new RichTextItem()
-			{
-				Text = log,
-				Color = Colors.White
-			};
-			LogMessage.Add(item);
-			*/
-			//OnPropertyChanged(nameof(LogMessage));
 			Debug.WriteLine(str);
 			if (LogWriter != null)
 			{
@@ -191,24 +183,39 @@ namespace WpfApp1_cmd.ViewModel
 		{
 			if (DialogHost.IsDialogOpen(identifier))
 			{
-				//DialogHost.Close(DialogHost.GetDialogSession(identifier));
 				DialogHost.Close(identifier);
 			}
 		}
 
-		// ユニット連携情報
-		//private Config _config;
-		//public Config Config { get => _config; set => _config = value; }
-
 		// ツリービューのアイテム
-		public ReactiveCollection<LcuInfo> TreeViewItems { get; set; }
+		public StatusBarViewModel StatusBar { get; } = new();
+		private ReactiveCollection<LcuInfo> treeViewItems = [];
+		public ReactiveCollection<LcuInfo> TreeViewItems
+		{
+			get => treeViewItems;
+			set
+			{
+				treeViewItems = value;
+				StatusBar.SetItems(value);
+				OnPropertyChanged();
+			}
+		}
 
 		// ツリービューの選択項目に対応するビューモデル
 		private Dictionary<string, ViewModelBase> viewModeTable;
 		public Dictionary<string, ViewModelBase> ViewModeTable { get => viewModeTable; set => viewModeTable = value; }
 
 		// ツリーの選択項目
-		public CheckableItem SelectedItem { get; set; }
+		private CheckableItem? selectedItem;
+		public CheckableItem? SelectedItem
+		{
+			get => selectedItem;
+			set
+			{
+				selectedItem = value;
+				StatusBar.SetSelection(value);
+			}
+		}
 
 		// ビューの切り替え
 		private ViewModelBase activeView = null;
@@ -224,7 +231,11 @@ namespace WpfApp1_cmd.ViewModel
 				}
 			}
 		}
-		private string DataFolder { get; set; } = "";   // UpdateCommon.inf のフォルダ
+		private string DataFolder
+		{
+			get => StatusBar.DataFolder;
+			set => StatusBar.DataFolder = value;
+		}
 		public long UpdateDataSize { get; set; } = 0;   // UpdateCommon.inf のフォルダのサイズ
 
 		public string DialogTitle { get; set; } = "Dialog Title";
@@ -394,6 +405,7 @@ namespace WpfApp1_cmd.ViewModel
 		/// </summary>
 		private async Task<bool> LoadLineInfo()
 		{
+			using IDisposable status = StatusBar.BeginOperation(Resource.ReadLineInformation);
 			using CancellationTokenSource loadCancellation = new();
 			CancelTokenSrc = loadCancellation;
 			CancellationToken token = loadCancellation.Token;
@@ -585,6 +597,7 @@ namespace WpfApp1_cmd.ViewModel
 					});
 				}
 			}
+
 		}
 
 		/// <summary>
@@ -593,6 +606,7 @@ namespace WpfApp1_cmd.ViewModel
 		/// <returns></returns>
 		private async Task<bool> LoadUpdateInfoAsync()
 		{
+			using IDisposable status = StatusBar.BeginOperation(Resource.ReadingUnitInfo);
 			CancellationToken token = Token;
 			token.ThrowIfCancellationRequested();
 			string applicationDirectory =
@@ -708,7 +722,14 @@ namespace WpfApp1_cmd.ViewModel
 
 			//Windowのロード時(ライン情報のよみこみ)、	クローズ時(ファイルの後始末)のコマンド
 			WindowLoadedCommand.Subscribe(() => WindowLoadedExec());
-			WindowClosingCommand.Subscribe(() => ApplicationShutDown());
+			WindowClosingCommand.Subscribe(args =>
+			{
+				args.Cancel = !_isShutdownConfirmed;
+				if (args.Cancel && QuitApplicationCommand.CanExecute())
+				{
+					QuitApplicationCommand.Execute();
+				}
+			});
 
 			// メニュー実行制御(Subscribe() するより先に設定する)
 			LcuNetworkChkCommand = CanExecuteLcuCommand.ToReactiveCommand();
@@ -761,7 +782,9 @@ namespace WpfApp1_cmd.ViewModel
 			TreeViewMouseLeftButtonDownCommand.Subscribe(args => TreeViewMouseLeftButtonDown(args));
 
 			// 転送制御ボタン
-			StartTransferCommand = CanTransferStartFlag.ToReactiveCommandSlim();
+			StartTransferCommand = CanTransferStartFlag
+				.CombineLatest(StatusBar.HasTransferSelection, (canStart, hasSelection) => canStart && hasSelection)
+				.ToReactiveCommandSlim();
 			StartTransferCommand.Subscribe(() => StartTransfer());
 
 			CanTransferStartFlag.Value = true;
@@ -1019,6 +1042,7 @@ namespace WpfApp1_cmd.ViewModel
 
 		private async Task FileOpenCmdAsync()
 		{
+			using IDisposable status = StatusBar.BeginOperation(Resource.ReadingUnitInfo);
 			CancellationToken cancellationToken = Token;
 			cancellationToken.ThrowIfCancellationRequested();
 			string? backupPath = ArgOptions.GetOption("--backup");
@@ -1245,7 +1269,7 @@ namespace WpfApp1_cmd.ViewModel
 								string viewName = moduleInfo.GetViewName();
 								viewModeTable.Add(viewName, new ModuleViewModel(moduleInfo, UpdateDataInfos));
 
-								moduleInfo.IsSelected.Value = Utility.CheckState<UnitVersion>(moduleInfo.UnitVersions);
+								moduleInfo.IsSelected.Value = Utility.CheckSelectableUnitSelectionState(moduleInfo.UnitVersions);
 
 								//該当のツリービューを展開する
 								lcuInfo.IsExpanded.Value = true;
@@ -1276,6 +1300,7 @@ namespace WpfApp1_cmd.ViewModel
 		/// </summary>
 		async void LcuNetworkChkCmd()
 		{
+			using IDisposable status = StatusBar.BeginOperation(Resource.ReadLineInformation);
 			CheckableItem item = SelectedItem;
 			
 			if( item is LcuInfo lcu)
@@ -1329,6 +1354,7 @@ namespace WpfApp1_cmd.ViewModel
 			LcuInfo lcu,
 			CancellationToken cancellationToken = default)
 		{
+			using IDisposable status = StatusBar.BeginOperation(Resource.ReadLineInformation);
 			ArgumentNullException.ThrowIfNull(lcu);
 			AddLog(LcuUpdatePreparationService.CreateDiskSpaceCheckStartedMessage(lcu.Name));
 			LcuInformationService service = new(new LcuCtrlInformationGateway(lcu.LcuCtrl));
@@ -1465,7 +1491,7 @@ namespace WpfApp1_cmd.ViewModel
 		{
 			foreach (string filePath in missingFiles)
 			{
-				AddLog($"[WARNING] UpdateCommon.inf reference file not found: {filePath}");
+				AddLog($"[WARNING] Update file not found (update data UpdateCommon.inf): {filePath}");
 			}
 		}
 
@@ -1908,6 +1934,7 @@ namespace WpfApp1_cmd.ViewModel
 		/// <returns></returns>
 		public async Task<bool> TransferExecute(CancellationToken token)
 		{
+			using IDisposable status = StatusBar.BeginOperation(Resource.UnitSoftTransfer);
 			//FTP転送のサイズを取得
 			// UpdateData の全データ× LCU の数
 			//   (選択されているもの以外のデータも転送する。-> ユニット毎に選択/非選択を考慮すると手間なので)
@@ -2063,6 +2090,7 @@ namespace WpfApp1_cmd.ViewModel
 		/// <returns>bool</returns>
 		public async Task<bool> BackupUnitData(string path, CancellationToken token)
 		{
+			using IDisposable status = StatusBar.BeginOperation(Resource.BackupUnitSoft);
 			BackupSelectionLcu[] selectionTree = new BackupSelectionLcu[TreeViewItems.Count];
 			for (int lcuIndex = 0; lcuIndex < selectionTree.Length; lcuIndex++)
 			{
@@ -2186,7 +2214,9 @@ namespace WpfApp1_cmd.ViewModel
 								unit.IsSelected.Value,
 								unit.Name,
 								unit.Path,
-								unit.FuserPath);
+								unit.FuserPath,
+								unit.IsSupported,
+								unit.IsUpdateProhibited);
 						}
 						modules[moduleIndex] = new TransferSelectionModuleInput(
 							module.IsSelected.Value,
@@ -2823,6 +2853,7 @@ namespace WpfApp1_cmd.ViewModel
 					return false;
 				}
 			}
+			List<ModuleUpdateVersion> transferredVersions = [];
 			ModuleUpdateTransferResult transferResult = await _moduleUpdateService.ExecuteAsync(
 				preparation.Plans,
 				preparation.Versions,
@@ -2872,6 +2903,7 @@ namespace WpfApp1_cmd.ViewModel
 						{
 							if (unitVersionIndex is int updatedIndex)
 							{
+								transferredVersions.Add(updateVersions[updatedIndex]);
 								updateCommonUnits[updatedIndex] = new UpdateCommonVersionUnit(
 									updateCommonUnits[updatedIndex].Name,
 									change.NewVersion);
@@ -2928,6 +2960,8 @@ namespace WpfApp1_cmd.ViewModel
 			ret = transferResult.IsSuccess && inspectionSucceeded;
 			TransferErrorCount += transferResult.FailedGroupCount;
 
+			lines = UpdateCommonService.SetTransferredFilePaths(lines, transferredVersions, token);
+
 			// 転送成功ファイルがある場合だけUpdateCommon.infを更新する。
 			bool inspectionEnabled = ArgOptions.GetOptionBool(
 				"--inspection",
@@ -2954,6 +2988,12 @@ namespace WpfApp1_cmd.ViewModel
 					token);
 			if (deploymentResult.WasDeployed)
 			{
+				if (deploymentResult.UploadSucceeded)
+				{
+					module.UpdateStrings = lines;
+					module.UpdateInfo = new IniFileParser(
+						Path.Combine(Path.GetTempPath(), Define.UPDATE_INFO_FILE));
+				}
 				ret = ret && deploymentResult.UploadSucceeded;
 				if (!deploymentResult.UploadSucceeded)
 				{
@@ -3172,7 +3212,7 @@ namespace WpfApp1_cmd.ViewModel
 								}
 
 								viewModeTable.Add(viewName, new ModuleViewModel((ModuleInfo)item, UpdateDataInfos));
-								moduleInfo.IsSelected.Value = Utility.CheckState<UnitVersion>(moduleInfo.UnitVersions);
+								moduleInfo.IsSelected.Value = Utility.CheckSelectableUnitSelectionState(moduleInfo.UnitVersions);
 								break;
 						}
 						ActiveView = viewModeTable[viewName];
@@ -3261,6 +3301,7 @@ namespace WpfApp1_cmd.ViewModel
 			bool forceMachineReload,
 			CancellationToken token)
 		{
+			using IDisposable status = StatusBar.BeginOperation(Resource.ReadingUnitInfo);
 			string tmpDir = Path.GetTempPath() + "MCFiles\\";
 			ModuleUpdateInfoLoadResult result = await _moduleUpdateService.LoadUpdateInfoAsync(
 				forceMachineReload
@@ -3314,6 +3355,7 @@ namespace WpfApp1_cmd.ViewModel
 		/// <returns></returns>
 		public async Task<bool> CreateVersionInfoAsync( LcuInfo lcu, MachineInfo machine, ModuleInfo module, CancellationToken token)
 		{
+			using IDisposable status = StatusBar.BeginOperation(Resource.ReadingUnitInfo);
 			token.ThrowIfCancellationRequested();
 			// 1. 前提チェック: LcuCtrl 未接続、またはアップデートデータ未指定の場合は終了
 			if (lcu.LcuCtrl == null || UpdateDataInfos == null)
@@ -3376,7 +3418,8 @@ namespace WpfApp1_cmd.ViewModel
 			{
 				token.ThrowIfCancellationRequested();
 				UpdateInfo update = UpdateDataInfos[index];
-				updateInfoSnapshot[index] = new UpdateVersionInputSnapshot(update.Name, update.Version);
+				updateInfoSnapshot[index] = new UpdateVersionInputSnapshot(
+					update.Name, update.Version, update.Path, update.FuserPath);
 			}
 			// 4-2. ユニットのグループリンク定義(Config.units)のスナップショットを作成
 			UnitVersionGroupInputSnapshot[] unitLinkSnapshot =
@@ -3412,13 +3455,12 @@ namespace WpfApp1_cmd.ViewModel
 			string machineType = module.Parent.MachineType;
 			bool isModuleSelected = module.IsSelected.Value != false;
 			bool isBackupData = IsBackupedData;
-			// --fileExist: strict=更新ファイル無しは除外 / test=表示して選択可 / 未指定=表示のみ(選択不可)
+			// --fileExist: strict=更新ファイル無しは除外 / その他=表示のみ(選択不可)
 			string fileExistMode = ArgOptions.GetOption("--fileExist", "") ?? "";
 			UnitVersionMissingFileMode missingFileMode =
 				string.Equals(fileExistMode, "strict", StringComparison.OrdinalIgnoreCase) ? UnitVersionMissingFileMode.Exclude
 				: string.Equals(fileExistMode, "test", StringComparison.OrdinalIgnoreCase) ? UnitVersionMissingFileMode.Selectable
 				: UnitVersionMissingFileMode.ListOnly;
-			bool missingUpdateFileSelectable = missingFileMode == UnitVersionMissingFileMode.Selectable;
 
 			// 5〜6. ユニット一覧の作成(バージョン比較・グループ決定・行作成・ログ作成)
 			UnitVersionListRequest listRequest = new(
@@ -3470,6 +3512,7 @@ namespace WpfApp1_cmd.ViewModel
 				UnitVersion version = new(definition.IsSelected)
 				{
 					Name = definition.Name,
+					IsSupported = Config.IsUnitSupported(definition.Name),
 					Attribute = definition.Attribute,
 					Path = definition.Path!,
 					FuserPath = definition.FuserPath!,
@@ -3478,9 +3521,12 @@ namespace WpfApp1_cmd.ViewModel
 					Parent = module,
 					Size = definition.Size,
 					UnitGroup = definition.UnitGroup,
-					IsUpdateFileMissing = definition.IsUpdateFileMissing,
-					IsMissingUpdateFileSelectable = missingUpdateFileSelectable
+					IsUpdateFileMissing = definition.IsUpdateFileMissing
 				};
+				if (!version.IsSupported)
+				{
+					AddLog($"[INFO] {lcu.Name};{machine.Name};{module.Name}:{definition.Name}=unsupported");
+				}
 				preparedVersions.Add(version);
 			}
 
@@ -3689,6 +3735,7 @@ namespace WpfApp1_cmd.ViewModel
 			CancellationToken token,
 			IReadOnlyCollection<string?>? supportedMachineTypes = null)
 		{
+			using IDisposable status = StatusBar.BeginOperation(Resource.ReadLineInformation);
 			LcuLineInfoResponseResult<LineInfo> responseResult =
 				await _lcuLineInfoService.GetLineInfoAsync<LineInfo>(
 					new LcuCtrlLineInfoGateway(lcu.LcuCtrl),
@@ -3860,6 +3907,7 @@ namespace WpfApp1_cmd.ViewModel
 				return;
 			}
 			StreamWriter? logWriter = LogWriter;
+			StatusBar.Dispose();
 			LogWriter = null;
 			if (logWriter != null)
 			{
@@ -3875,6 +3923,7 @@ namespace WpfApp1_cmd.ViewModel
 				}
 			});
 
+			_isShutdownConfirmed = true;
 			Application.Current.Shutdown();
 		}
 

@@ -104,6 +104,7 @@ public sealed class UpdateCommonService_DeployIfNeededTests
 			transferredAtEnd,
 			new UpdateCommonDeploymentRequest(
 				"machine-1",
+				"192.168.0.1",
 				4,
 				"Peripheral",
 				["[UnitA]", "Version=2.0"],
@@ -131,6 +132,7 @@ public sealed class UpdateCommonService_DeployIfNeededTests
 
 		public Task<bool> UploadAsync(
 			string machineName,
+			string IpAddress,
 			int position,
 			string machineRelativePath,
 			string lcuRelativePath,
@@ -143,6 +145,7 @@ public sealed class UpdateCommonService_DeployIfNeededTests
 
 		public Task<bool> DownloadAsync(
 			string machineName,
+			string IpAddress,
 			int position,
 			string machineRelativePath,
 			string lcuRelativePath,

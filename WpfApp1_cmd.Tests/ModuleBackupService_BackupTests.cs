@@ -28,6 +28,7 @@ public class ModuleBackupService_BackupTests
 				],
 				gateway.DownloadedFiles);
 			Assert.Equal("machine-1", gateway.MachineName);
+			Assert.Equal("192.168.0.1", gateway.IpAddress);
 			Assert.Equal(3, gateway.Position);
 			Assert.Equal(
 				[
@@ -150,6 +151,7 @@ public class ModuleBackupService_BackupTests
 			"lcu-1",
 			"machine-1",
 			"module-1",
+			"192.168.0.1",
 			3,
 			backupPath,
 			["Fuji/Data/unit.dat"],
@@ -173,6 +175,7 @@ public class ModuleBackupService_BackupTests
 		public List<string> CreatedFolders { get; private set; } = [];
 		public List<string> DownloadedFiles { get; private set; } = [];
 		public string? MachineName { get; private set; }
+		public string? IpAddress { get; private set; }
 		public int Position { get; private set; }
 
 		public Task<bool> CreateFoldersAsync(
@@ -187,12 +190,14 @@ public class ModuleBackupService_BackupTests
 
 		public async Task<bool> DownloadFilesAsync(
 			string machineName,
+			string IpAddress,
 			int position,
 			IReadOnlyList<string> files,
 			string localPath,
 			CancellationToken cancellationToken)
 		{
 			MachineName = machineName;
+			this.IpAddress = IpAddress;
 			Position = position;
 			DownloadedFiles = files.ToList();
 			OnDownload?.Invoke();

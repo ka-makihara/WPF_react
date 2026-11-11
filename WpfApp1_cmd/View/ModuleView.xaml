@@ -52,6 +52,7 @@
 
             <DataGrid x:Name="MetroDataGrid" Margin="5" AutoGenerateColumns="False"
                       EnableColumnVirtualization="True" EnableRowVirtualization="True"
+                      FontSize="20"
                       HeadersVisibility="All"
                       ItemsSource="{Binding UnitVersions}"
                       RowHeaderWidth="2"
@@ -62,14 +63,20 @@
                       VirtualizingPanel.IsVirtualizingWhenGrouping="True">
                 <!-- 更新できない行(アップデート禁止・ファイルなし)をグレーアウトする -->
                 <DataGrid.RowStyle>
-                    <Style TargetType="{x:Type DataGridRow}" BasedOn="{StaticResource App.ListRowStyle}">
+                    <Style TargetType="{x:Type DataGridRow}" BasedOn="{StaticResource MaterialDesignDataGridRow}">
+                        <Setter Property="Background" Value="Transparent" />
                         <Style.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="Transparent" />
+                            </Trigger>
                             <DataTrigger Binding="{Binding IsUpdatable}" Value="False">
                                 <Setter Property="Foreground" Value="Gray" />
-                                <Setter Property="Background" Value="#26808080" />
                                 <Setter Property="FontStyle" Value="Italic" />
                                 <Setter Property="ToolTip" Value="{Binding UpdateStatus}" />
                             </DataTrigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource App.List.HoverBrush}" />
+                            </Trigger>
                         </Style.Triggers>
                     </Style>
                 </DataGrid.RowStyle>
@@ -119,7 +126,7 @@
                                         </i:Interaction.Triggers>
                                         -->
                                     </CheckBox>
-                                    <TextBlock VerticalAlignment="Center">
+                                    <TextBlock VerticalAlignment="Center" FontSize="20">
                                         <TextBlock.Text>
                                             <MultiBinding StringFormat="{}{0} - {1}">
                                                 <Binding Path="Name" Converter="{vc:UnitNameConverter}" />
@@ -134,10 +141,12 @@
                 </DataGrid.GroupStyle>
                 
                 <DataGrid.Columns>
-                    <DataGridTemplateColumn Header="Select">
+                    <DataGridTemplateColumn Header="Select" Width="100" MinWidth="100">
                         <DataGridTemplateColumn.HeaderTemplate>
                             <DataTemplate>
-                                <CheckBox Content="All"
+                                <CheckBox Content="ALL"
+                                    FontSize="15"
+                                    HorizontalAlignment="Center"
                                     IsChecked="{Binding DataContext.IsAllSelected, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                     Command="{Binding DataContext.AllSelectCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}">
                                 </CheckBox>
@@ -180,6 +189,10 @@
                                                     <Setter Property="Visibility" Value="Visible" />
                                                     <Setter Property="Kind" Value="FileAlertOutline" />
                                                 </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsSupported}" Value="False">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                    <Setter Property="Kind" Value="BlockHelper" />
+                                                </DataTrigger>
                                                 <DataTrigger Binding="{Binding IsUpdateProhibited}" Value="True">
                                                     <Setter Property="Visibility" Value="Visible" />
                                                     <Setter Property="Kind" Value="Lock" />
@@ -196,7 +209,7 @@
                     <materialDesign:DataGridTextColumn 
                         EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnPopupEditingStyle}"
                         ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"
-                        Header="Unit" FontSize="16" FontFamily="Arial" Width="200" MinWidth="200" Binding="{Binding Name}" IsReadOnly="True">
+                        Header="Unit" FontSize="14" FontFamily="Arial" Width="200" MinWidth="200" Binding="{Binding Name}" IsReadOnly="True">
                         <!-- マウスオーバーでツールチップを表示する
                         <materialDesign:DataGridTextColumn.CellStyle>
                             <Style TargetType="DataGridCell" BasedOn="{StaticResource MaterialDesignDataGridCell}">
@@ -209,19 +222,19 @@
                     <materialDesign:DataGridTextColumn
                         EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnPopupEditingStyle}"
                         ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"
-                        Header="PreviousVersion" FontSize="16" FontFamily="Arial" Width="180" MinWidth="180" Binding="{Binding CurVersion}" IsReadOnly="True">
+                        Header="PreviousVersion" FontSize="14" FontFamily="Arial" Width="180" MinWidth="180" Binding="{Binding CurVersion}" IsReadOnly="True">
                     </materialDesign:DataGridTextColumn>
 
                     <materialDesign:DataGridTextColumn
                         EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnPopupEditingStyle}"
                         ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"
-                        Header="UpdateVersion" FontSize="16" FontFamily="Arial" Width="180" MinWidth="180" Binding="{Binding NewVersion}" IsReadOnly="True">
+                        Header="UpdateVersion" FontSize="14" FontFamily="Arial" Width="180" MinWidth="180" Binding="{Binding NewVersion}" IsReadOnly="True">
                     </materialDesign:DataGridTextColumn>
 
                     <materialDesign:DataGridTextColumn
                         EditingElementStyle="{StaticResource MaterialDesignDataGridTextColumnPopupEditingStyle}"
                         ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"
-                        Header="Status" FontSize="16" Width="*" MinWidth="160" Binding="{Binding UpdateStatus, Mode=OneWay}" IsReadOnly="True">
+                        Header="Status" FontSize="14" Width="*" MinWidth="160" Binding="{Binding UpdateStatus, Mode=OneWay}" IsReadOnly="True">
                     </materialDesign:DataGridTextColumn>
 
                 </DataGrid.Columns>

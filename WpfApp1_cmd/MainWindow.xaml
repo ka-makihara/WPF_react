@@ -20,15 +20,15 @@
         GlowBrush="{DynamicResource MahApps.Brushes.Accent}"
         BorderThickness="1"
         mahApps:DialogParticipation.Register="{Binding}"
-        ResizeMode="CanResize"
+        ResizeMode="CanResizeWithGrip"
         WindowStartupLocation="CenterScreen"
         ShowIconOnTitleBar="True"
         ShowSystemMenuOnRightClick="True"
         TitleCharacterCasing="Normal"
-        IsCloseButtonEnabled="False"
-        ShowCloseButton="False"
+        IsCloseButtonEnabled="{Binding CanAppQuitFlag.Value}"
+        ShowCloseButton="True"
         Style="{StaticResource MaterialDesignWindow}"
-        Title="{x:Static resources:Resource.WindowTitle}" Height="800" Width="850"
+        Title="{x:Static resources:Resource.WindowTitle}" Height="740" Width="900"
         MinHeight="480" MinWidth="640">
 
 
@@ -65,7 +65,8 @@
             <rp:EventToReactiveCommand Command="{Binding WindowLoadedCommand}" />
         </i:EventTrigger>
         <i:EventTrigger EventName="Closing">
-            <rp:EventToReactiveCommand Command="{Binding WindowClosingCommand}" />
+            <rp:EventToReactiveCommand Command="{Binding WindowClosingCommand}"
+                                       IgnoreEventArgs="False" CallExecuteOnScheduler="False" />
         </i:EventTrigger>
     </i:Interaction.Triggers>
 
@@ -105,6 +106,37 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
+        <StatusBar Grid.Row="2" Grid.ColumnSpan="2" Padding="0,0,20,0" DataContext="{Binding StatusBar}">
+            <StatusBar.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="3*" />
+                        </Grid.ColumnDefinitions>
+                    </Grid>
+                </ItemsPanelTemplate>
+            </StatusBar.ItemsPanel>
+            <StatusBarItem>
+                <TextBlock Text="{Binding Operation}" Margin="4,0,8,0" />
+            </StatusBarItem>
+            <StatusBarItem Grid.Column="1" HorizontalContentAlignment="Stretch">
+                <TextBlock Text="{Binding Selection}" TextTrimming="CharacterEllipsis"
+                           ToolTip="{Binding Selection}" />
+            </StatusBarItem>
+            <StatusBarItem Grid.Column="2">
+                <StackPanel Orientation="Horizontal" Margin="8,0">
+                    <TextBlock Text="{x:Static resources:Resource.StatusUnits}" Margin="0,0,4,0" />
+                    <TextBlock Text="{Binding UnitCount}" />
+                </StackPanel>
+            </StatusBarItem>
+            <StatusBarItem Grid.Column="3" HorizontalContentAlignment="Stretch">
+                <TextBlock Text="{Binding DataFolder}" TextTrimming="CharacterEllipsis"
+                           ToolTip="{Binding DataFolder}" />
+            </StatusBarItem>
+        </StatusBar>
         <Menu IsMainMenu="True" Grid.ColumnSpan="2" >
             <MenuItem Header="{x:Static resources:Resource.MENU_File}" Visibility="{Binding IsFileMenuEnabled, Converter={StaticResource BoolToVisible}}">
                 <MenuItem Header="{x:Static resources:Resource.MENU_ReadUpdateData}" Icon="{materialDesign:PackIcon Kind=PresentOpen}" Command="{Binding FileOpenCommand}" />
@@ -283,7 +315,7 @@
                         </local:BindableRichTextBox.ContextMenu>
                     </local:BindableRichTextBox>
                 </Grid>
-                    <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="5,10,1,1" HorizontalAlignment="Right" VerticalAlignment="Bottom" >
+                    <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="5,10,1,16" HorizontalAlignment="Right" VerticalAlignment="Bottom" >
                         <Button Height="40" materialDesign:ButtonAssist.CornerRadius="5"
                                 Command="{Binding StartTransferCommand}"
                                 Style="{StaticResource MaterialDesignRaisedLightButton}"

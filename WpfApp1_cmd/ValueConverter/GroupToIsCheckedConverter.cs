@@ -27,7 +27,7 @@ namespace WpfApp1_cmd.ValueConverter
 					new ObservableCollection<UnitVersion>(group.Cast<UnitVersion>())
 				);
 				//Debug.WriteLine($"GroupToIsCheckedConverter:{unitVersions[0].Name}");
-				return Utility.CheckState(unitVersions.ToList());
+				return Utility.CheckSelectableUnitSelectionState(unitVersions);
 			}
 			return false;
 		}

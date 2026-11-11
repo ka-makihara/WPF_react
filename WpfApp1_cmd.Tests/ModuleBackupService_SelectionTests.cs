@@ -14,20 +14,20 @@ public sealed class ModuleBackupService_SelectionTests
 			[
 				new("MachineA", true, true,
 				[
-					new("ModuleA", true),
-					new("ModuleB", false)
+					new("ModuleA", "192.168.0.1", true),
+					new("ModuleB", "192.168.0.2", false)
 				]),
-				new("MachineB", true, false, [new("ModuleC", true)]),
-				new(null, true, true, [new("ModuleD", true)]),
-				new("MachineC", false, true, [new("ModuleE", true)])
+				new("MachineB", true, false, [new("ModuleC", "192.168.0.3", true)]),
+				new(null, true, true, [new("ModuleD", "192.168.0.4", true)]),
+				new("MachineC", false, true, [new("ModuleE", "192.168.0.5", true)])
 			]),
 			new("LineB", true, false, true,
 			[
-				new("MachineD", true, true, [new("ModuleF", true)])
+				new("MachineD", true, true, [new("ModuleF", "192.168.0.6", true)])
 			]),
 			new("LineC", true, true, false,
 			[
-				new("MachineE", true, true, [new("ModuleG", true)])
+				new("MachineE", true, true, [new("ModuleG", "192.168.0.7", true)])
 			])
 		];
 
@@ -40,6 +40,7 @@ public sealed class ModuleBackupService_SelectionTests
 		Assert.Equal(0, selected.ModuleIndex);
 		Assert.Equal("LineA", selected.LcuName);
 		Assert.Equal("MachineA", selected.MachineName);
+		Assert.Equal("192.168.0.1", selected.IPAddress);
 		Assert.Equal("ModuleA", selected.ModuleName);
 	}
 
@@ -50,7 +51,7 @@ public sealed class ModuleBackupService_SelectionTests
 		[
 			new("LineA", true, true, true,
 			[
-				new("MachineA", true, true, [new("ModuleA", false)])
+				new("MachineA", true, true, [new("ModuleA", "192.168.0.1", false)])
 			])
 		];
 

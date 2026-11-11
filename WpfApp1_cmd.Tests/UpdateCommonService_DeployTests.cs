@@ -33,11 +33,13 @@ public class UpdateCommonService_DeployTests
 				Path.Combine(inspectionRoot, "Fuji", "System3", "Program", "Peripheral", "UpdateCommon.inf"),
 				result.InspectionFilePath);
 			Assert.Equal("machine-1", gateway.UploadMachineName);
+			Assert.Equal("192.168.0.1", gateway.UploadIpAddress);
 			Assert.Equal(4, gateway.UploadPosition);
 			Assert.Equal("Fuji/System3/Program/Peripheral/UpdateCommon.inf", gateway.UploadMachinePath);
 			Assert.Equal("UpdateCommon.inf", gateway.UploadLcuPath);
 			Assert.Equal(localRoot, gateway.UploadLocalDirectory);
 			Assert.Equal("machine-1", gateway.DownloadMachineName);
+			Assert.Equal("192.168.0.1", gateway.DownloadIpAddress);
 			Assert.Equal("Fuji/System3/Program/Peripheral/UpdateCommon.inf", gateway.DownloadMachinePath);
 			Assert.Equal("UpdateCommon.inf", gateway.DownloadLcuPath);
 			Assert.Equal(
@@ -144,6 +146,7 @@ public class UpdateCommonService_DeployTests
 		bool verifyAfterUpload) =>
 		new(
 			"machine-1",
+			"192.168.0.1",
 			4,
 			"Fuji/System3/Program/Peripheral",
 			["[UnitA]", "Version=2.0"],
@@ -170,16 +173,19 @@ public class UpdateCommonService_DeployTests
 		public int UploadCount { get; private set; }
 		public int DownloadCount { get; private set; }
 		public string? UploadMachineName { get; private set; }
+		public string? UploadIpAddress { get; private set; }
 		public int UploadPosition { get; private set; }
 		public string? UploadMachinePath { get; private set; }
 		public string? UploadLcuPath { get; private set; }
 		public string? UploadLocalDirectory { get; private set; }
 		public string? DownloadMachineName { get; private set; }
+		public string? DownloadIpAddress { get; private set; }
 		public string? DownloadMachinePath { get; private set; }
 		public string? DownloadLcuPath { get; private set; }
 
 		public Task<bool> UploadAsync(
 			string machineName,
+			string IpAddress,
 			int position,
 			string machineRelativePath,
 			string lcuRelativePath,
@@ -188,6 +194,7 @@ public class UpdateCommonService_DeployTests
 		{
 			UploadCount++;
 			UploadMachineName = machineName;
+			UploadIpAddress = IpAddress;
 			UploadPosition = position;
 			UploadMachinePath = machineRelativePath;
 			UploadLcuPath = lcuRelativePath;
@@ -198,6 +205,7 @@ public class UpdateCommonService_DeployTests
 
 		public Task<bool> DownloadAsync(
 			string machineName,
+			string IpAddress,
 			int position,
 			string machineRelativePath,
 			string lcuRelativePath,
@@ -206,6 +214,7 @@ public class UpdateCommonService_DeployTests
 		{
 			DownloadCount++;
 			DownloadMachineName = machineName;
+			DownloadIpAddress = IpAddress;
 			DownloadMachinePath = machineRelativePath;
 			DownloadLcuPath = lcuRelativePath;
 			OnDownload?.Invoke();

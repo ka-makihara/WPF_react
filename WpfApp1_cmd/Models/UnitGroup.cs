@@ -25,7 +25,7 @@ namespace WpfApp1_cmd.Models
 		public void UpdateStatus()
 		{
 			if( Units == null) { return; }
-			Status = Utility.CheckState(Units);
+			Status = Utility.CheckSelectableUnitSelectionState(Units);
 		}
 
 		public UnitGroup(UnitVersion ver)
@@ -57,4 +57,3 @@ namespace WpfApp1_cmd.Models
 		}
 	}
 }
-

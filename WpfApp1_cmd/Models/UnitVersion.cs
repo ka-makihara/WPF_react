@@ -13,6 +13,7 @@ namespace WpfApp1_cmd.Models
     {
         private string? _curVersion;
         private string? _newVersion;
+		private bool _isSupported = true;
 
 		//public ReactivePropertySlim<bool?> IsSelected { get; set; } = new ReactivePropertySlim<bool?>(false);
         public ReactivePropertySlim<bool?> IsUpdated { get; set; } = new ReactivePropertySlim<bool?>(false);
@@ -46,6 +47,11 @@ namespace WpfApp1_cmd.Models
 		public string UpdateStatus
 		{
 			get {
+				if (!IsSupported)
+				{
+					return Resource.NotApplicable;
+				}
+
 				MachineInfo? mcInfo = Parent?.GetMachineInfo();
 				if( mcInfo == null)
 				{
@@ -105,19 +111,31 @@ namespace WpfApp1_cmd.Models
 		/// </summary>
 		public bool IsUpdateFileMissing { get; set; }
 
-		/// <summary>
-		///  更新ファイル無しでも選択を許可する(--fileExist=test)
-		/// </summary>
-		public bool IsMissingUpdateFileSelectable { get; set; }
-
 		public bool IsUpdateProhibited => Attribute == Define.NOT_UPDATE;
+
+		public bool IsSupported
+		{
+			get => _isSupported;
+			set
+			{
+				if (SetProperty(ref _isSupported, value))
+				{
+					OnPropertyChanged(nameof(UpdateStatus));
+					OnPropertyChanged(nameof(IsUpdatable));
+					if (!value)
+					{
+						IsSelected.Value = false;
+					}
+				}
+			}
+		}
 
 		/// <summary>
 		///  更新ファイル無しのため選択不可
 		/// </summary>
-		public bool IsBlockedByMissingFile => IsUpdateFileMissing && !IsMissingUpdateFileSelectable;
+		public bool IsBlockedByMissingFile => IsUpdateFileMissing;
 
-		public bool IsUpdatable => !IsUpdateProhibited && !IsBlockedByMissingFile;
+		public bool IsUpdatable => IsSupported && !IsUpdateProhibited && !IsBlockedByMissingFile;
 
 		public void Update(bool? value)
 		{
@@ -147,7 +165,7 @@ namespace WpfApp1_cmd.Models
 			}
 			IsSelected.Subscribe(x =>
 			{
-				if (IsBlockedByMissingFile && x != false)
+				if ((!IsSupported || IsBlockedByMissingFile) && x != false)
 				{
 					IsSelected.Value = false;
 					return;

@@ -259,7 +259,7 @@ namespace WpfApp1_cmd.ViewModel
 		public bool? IsAllSelected
         {
             get {
-                return Utility.CheckState(UnitVersions);
+                return Utility.CheckSelectableUnitSelectionState(UnitVersions);
 			}
             set {
                 SelectAll(value, UnitVersions);
@@ -375,7 +375,8 @@ namespace WpfApp1_cmd.ViewModel
 
 			//グループ下のリストを取得
 			var versions = cvs.Items.Cast<UnitVersion>().ToList();
-			int tc = versions.Count(x => x.IsSelected.Value == true);
+			int tc = versions.Count(
+				x => x.IsSupported && !x.IsUpdateProhibited && x.IsSelected.Value == true);
 
 			if (tc == 0 )
 			{

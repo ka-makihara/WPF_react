@@ -1,7 +1,195 @@
-﻿using System.IO;
-using WpfLcuCtrlLib;
+namespace WpfApp1_cmd.Services
+{
 
-namespace WpfApp1_cmd.Services;
+
+public static class UnitLinkConfigurationMatcher
+{
+	public static bool HasSameName(
+		IReadOnlyDictionary<string, object> existing,
+		IReadOnlyDictionary<string, string> configured)
+	{
+		ArgumentNullException.ThrowIfNull(existing);
+		ArgumentNullException.ThrowIfNull(configured);
+
+		if (existing.Count != configured.Count)
+		{
+			return false;
+		}
+
+		return existing.All(pair =>
+			configured.TryGetValue(pair.Key, out string? value) &&
+			string.Equals(pair.Value.ToString(), value, StringComparison.Ordinal));
+	}
+}
+}
+
+namespace WpfApp1_cmd.Services
+{
+using System.IO;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
+public sealed record UnitLinkConfigurationEntry(
+	IReadOnlyDictionary<string, string> Name,
+	IReadOnlyList<string> Components,
+	string? Mode,
+	IReadOnlyList<string> Files);
+
+public sealed class UnitLinkConfigurationService
+{
+	private static readonly JsonSerializerOptions JsonOptions = new()
+	{
+		PropertyNameCaseInsensitive = false
+	};
+
+	public async Task<IReadOnlyList<UnitLinkConfigurationEntry>> LoadOverridesAsync(
+		string path,
+		CancellationToken cancellationToken = default)
+	{
+		ArgumentException.ThrowIfNullOrWhiteSpace(path);
+		cancellationToken.ThrowIfCancellationRequested();
+		if (!File.Exists(path))
+		{
+			return [];
+		}
+
+		string json = await File.ReadAllTextAsync(path, cancellationToken);
+		cancellationToken.ThrowIfCancellationRequested();
+		return await Task.Run(
+			() => ParseOverrides(json, cancellationToken),
+			cancellationToken);
+	}
+
+	private static IReadOnlyList<UnitLinkConfigurationEntry> ParseOverrides(
+		string json,
+		CancellationToken cancellationToken)
+	{
+		UnitLinkConfigurationFile? configuration =
+			JsonSerializer.Deserialize<UnitLinkConfigurationFile>(json, JsonOptions);
+		if (configuration?.Units == null)
+		{
+			return [];
+		}
+
+		UnitLinkConfigurationEntry[] entries =
+			new UnitLinkConfigurationEntry[configuration.Units.Count];
+		for (int unitIndex = 0; unitIndex < configuration.Units.Count; unitIndex++)
+		{
+			cancellationToken.ThrowIfCancellationRequested();
+			UnitLinkConfigurationItem unit = configuration.Units[unitIndex];
+			Dictionary<string, string> names = new(StringComparer.Ordinal);
+			foreach (KeyValuePair<string, JsonElement> pair in unit.Name)
+			{
+				cancellationToken.ThrowIfCancellationRequested();
+				names.Add(pair.Key, pair.Value.ToString());
+			}
+
+			entries[unitIndex] = new(
+				names,
+				CopyStrings(unit.Components, cancellationToken),
+				unit.Mode,
+				CopyStrings(unit.Files, cancellationToken));
+		}
+
+		cancellationToken.ThrowIfCancellationRequested();
+		return entries;
+	}
+
+	private static string[] CopyStrings(
+		IReadOnlyList<string> values,
+		CancellationToken cancellationToken)
+	{
+		string[] copy = new string[values.Count];
+		for (int index = 0; index < values.Count; index++)
+		{
+			cancellationToken.ThrowIfCancellationRequested();
+			copy[index] = values[index];
+		}
+
+		return copy;
+	}
+
+	private sealed class UnitLinkConfigurationFile
+	{
+		[JsonPropertyName("units")]
+		public List<UnitLinkConfigurationItem>? Units { get; set; }
+	}
+
+	private sealed class UnitLinkConfigurationItem
+	{
+		[JsonPropertyName("name")]
+		public Dictionary<string, JsonElement> Name { get; set; } = [];
+
+		[JsonPropertyName("components")]
+		public List<string> Components { get; set; } = [];
+
+		[JsonPropertyName("mode")]
+		public string? Mode { get; set; }
+
+		[JsonPropertyName("files")]
+		public List<string> Files { get; set; } = [];
+	}
+}
+}
+
+namespace WpfApp1_cmd.Services
+{
+
+
+public sealed class UnitVersionIndexLookup
+{
+	private readonly IReadOnlyDictionary<string, int> _indicesByName;
+	private readonly int? _indexWithoutName;
+
+	internal UnitVersionIndexLookup(
+		IReadOnlyDictionary<string, int> indicesByName,
+		int? indexWithoutName)
+	{
+		_indicesByName = indicesByName;
+		_indexWithoutName = indexWithoutName;
+	}
+
+	public int? FindIndex(string? name) =>
+		name == null
+			? _indexWithoutName
+			: _indicesByName.TryGetValue(name, out int index) ? index : null;
+}
+
+public sealed class UnitVersionIndexLookupBuilder
+{
+	public UnitVersionIndexLookup Build(
+		IReadOnlyList<string?> names,
+		CancellationToken cancellationToken = default)
+	{
+		ArgumentNullException.ThrowIfNull(names);
+		cancellationToken.ThrowIfCancellationRequested();
+
+		Dictionary<string, int> indicesByName = new(StringComparer.Ordinal);
+		int? indexWithoutName = null;
+		for (int index = 0; index < names.Count; index++)
+		{
+			cancellationToken.ThrowIfCancellationRequested();
+			string? name = names[index];
+			if (name == null)
+			{
+				indexWithoutName ??= index;
+			}
+			else
+			{
+				indicesByName.TryAdd(name, index);
+			}
+		}
+
+		cancellationToken.ThrowIfCancellationRequested();
+		return new(indicesByName, indexWithoutName);
+	}
+}
+}
+
+namespace WpfApp1_cmd.Services
+{
+using System.IO;
+using WpfLcuCtrlLib;
 
 // =====================================================================
 //  ユニット一覧(転送ユニット選択画面の行)作成サービス
@@ -32,12 +220,13 @@ public enum UnitVersionMissingFileMode
 	Exclude,
 	/// <summary>一覧に表示するが選択不可(既定)</summary>
 	ListOnly,
-	/// <summary>一覧に表示し選択も可能(--fileExist=test)</summary>
+	/// <summary>旧テストモード。ファイル無しは一覧表示のみで選択不可(--fileExist=test)</summary>
 	Selectable
 }
 
-/// <summary>アップデートデータ側のユニット名とバージョン</summary>
-public sealed record UpdateVersionInputSnapshot(string Name, string Version);
+/// <summary>アップデートデータ側のユニット名、バージョン、参照ファイル</summary>
+public sealed record UpdateVersionInputSnapshot(
+	string Name, string Version, string? Path = null, string? FuserPath = null);
 
 /// <summary>unitLink.json のグループ定義(構成ユニット名と、機種別のグループ名)</summary>
 public sealed record UnitVersionGroupInputSnapshot(
@@ -135,7 +324,8 @@ public sealed record UnitVersionPreparationDiagnostic(
 
 #region 内部処理の入出力(テストから各段階を検証するため public)
 
-public sealed record UpdateVersionCandidate(string Name, string Version);
+public sealed record UpdateVersionCandidate(
+	string Name, string Version, string? Path = null, string? FuserPath = null);
 
 public sealed record MachineUnitVersion(string Name, string Version);
 
@@ -185,7 +375,8 @@ public sealed record UnitVersionBuildRequest(
 	int NotUpdateAttribute,
 	string? Path = null,
 	string? FuserPath = null,
-	bool AllowMissingUpdateFile = false);
+	bool AllowMissingUpdateFile = false,
+	bool RequireFuserFile = false);
 
 public sealed record UnitVersionBuildResult(
 	UnitVersionBuildOutcome Outcome,
@@ -332,7 +523,8 @@ public sealed class UnitVersionListService
 		foreach (UpdateVersionInputSnapshot update in updateVersions)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
-			versionCandidates.Add(new UpdateVersionCandidate(update.Name, update.Version));
+			versionCandidates.Add(new UpdateVersionCandidate(
+				update.Name, update.Version, update.Path, update.FuserPath));
 		}
 
 		List<UnitVersionGroupDefinition> groupDefinitions = new(groups.Count);
@@ -420,8 +612,8 @@ public sealed class UnitVersionListService
 				cancellationToken);
 			UnitVersionBuildResult buildResult = BuildModel(
 				new UnitVersionBuildRequest(
-					request.DataFolder + unit.Path,
-					request.DataFolder + unit.FuserPath,
+					request.DataFolder + (candidate.Path ?? unit.Path),
+					request.DataFolder + (candidate.FuserPath ?? unit.FuserPath),
 					unit.Attribute,
 					unit.CurrentVersion,
 					candidate.Version,
@@ -430,9 +622,10 @@ public sealed class UnitVersionListService
 					request.IsBackupData,
 					request.IsBaseUpdateInfo,
 					request.NotUpdateAttribute,
-					unit.Path,
-					unit.FuserPath,
-					request.AllowMissingUpdateFile),
+					candidate.Path ?? unit.Path,
+					candidate.FuserPath ?? unit.FuserPath,
+					request.AllowMissingUpdateFile,
+					RequireFuserFile: !string.IsNullOrEmpty(candidate.FuserPath)),
 				cancellationToken);
 			preparedItems.Add(new UnitVersionPreparationItem(
 				candidate.Name,
@@ -673,8 +866,12 @@ public sealed class UnitVersionListService
 		}
 		string updatePath = request.Path ?? "";
 		string fuserPath = request.FuserPath ?? "";
-		bool fuserFileExists = fuserPath.Length == 0
+		bool fuserFileExists = (!request.RequireFuserFile && fuserPath.Length == 0)
 			|| System.IO.File.Exists(request.FuserFilePath ?? "");
+		if (request.RequireFuserFile && !fuserFileExists && !request.AllowMissingUpdateFile)
+		{
+			return new(UnitVersionBuildOutcome.UpdateFileNotFound);
+		}
 		cancellationToken.ThrowIfCancellationRequested();
 		bool clearFuserPath = fuserPath.Length != 0 && !fuserFileExists;
 		if (clearFuserPath)
@@ -687,7 +884,8 @@ public sealed class UnitVersionListService
 			&& attribute != request.NotUpdateAttribute
 			&& request.NewVersion != "N/A"
 			&& !request.IsBackupData
-			&& updateFileExists;
+			&& updateFileExists
+			&& (!request.RequireFuserFile || fuserFileExists);
 		if (request.IsBaseUpdateInfo)
 		{
 			currentVersion = "Undefined";
@@ -715,7 +913,7 @@ public sealed class UnitVersionListService
 			request.UnitGroup ?? "",
 			isSelected,
 			size,
-			!updateFileExists);
+			!updateFileExists || (request.RequireFuserFile && !fuserFileExists));
 	}
 
 	/// <summary>
@@ -915,31 +1113,12 @@ public sealed class UnitVersionListService
 		foreach (UnitVersionPreparationItem item in projection.ItemsNotCreated)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
-			if (item.BuildResult.Outcome == UnitVersionBuildOutcome.UpdateFileNotFound)
-			{
-				diagnostics.Add(new(
-					UnitVersionPreparationDiagnosticPhase.Preparation,
-					UnitVersionDiagnosticDestination.ApplicationLog,
-					$"[WARNING] {lcuName};{machineName};{moduleName}:{item.UnitName}={item.SourcePath} Update file not found (excluded)"));
-			}
-			else if (item.BuildResult.Outcome == UnitVersionBuildOutcome.InvalidAttribute)
+			if (item.BuildResult.Outcome == UnitVersionBuildOutcome.InvalidAttribute)
 			{
 				diagnostics.Add(new(
 					UnitVersionPreparationDiagnosticPhase.Preparation,
 					UnitVersionDiagnosticDestination.ApplicationLog,
 					$"[ERROR] {moduleName}:{item.UnitName} has invalid Attribute={item.Attribute}"));
-			}
-		}
-
-		foreach (UnitVersionPreparedDefinition definition in projection.ItemsToCreate)
-		{
-			cancellationToken.ThrowIfCancellationRequested();
-			if (definition.IsUpdateFileMissing)
-			{
-				diagnostics.Add(new(
-					UnitVersionPreparationDiagnosticPhase.Preparation,
-					UnitVersionDiagnosticDestination.ApplicationLog,
-					$"[WARNING] {lcuName};{machineName};{moduleName}:{definition.Name}={definition.Path} Update file not found ({(missingUpdateFileSelectable ? "test: selectable" : "not selectable")})"));
 			}
 		}
 
@@ -957,4 +1136,5 @@ public sealed class UnitVersionListService
 	}
 
 	#endregion
+}
 }

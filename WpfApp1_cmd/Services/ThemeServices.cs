@@ -1,3 +1,5 @@
+namespace WpfApp1_cmd.Services
+{
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -9,8 +11,6 @@ using ControlzEx.Theming;
 using MaterialDesignThemes.Wpf;
 using Microsoft.Win32;
 using WpfApp1_cmd.Resources;
-
-namespace WpfApp1_cmd.Services;
 
 public sealed class ThemeService : INotifyPropertyChanged, IDisposable
 {
@@ -149,4 +149,50 @@ public sealed class ThemeService : INotifyPropertyChanged, IDisposable
         disposed = true;
         SystemEvents.UserPreferenceChanged -= OnUserPreferenceChanged;
     }
+}
+}
+
+namespace WpfApp1_cmd.Services
+{
+using System.IO;
+
+public enum ThemePreference
+{
+    System,
+    Light,
+    Dark
+}
+
+public sealed class ThemeSettingsStore(string filePath)
+{
+    public ThemePreference Load()
+    {
+        string value;
+        try
+        {
+            value = File.ReadAllText(filePath).Trim();
+        }
+        catch (FileNotFoundException)
+        {
+            return ThemePreference.System;
+        }
+        catch (DirectoryNotFoundException)
+        {
+            return ThemePreference.System;
+        }
+        if (!Enum.TryParse(value, out ThemePreference preference) || !Enum.IsDefined(preference))
+            throw new InvalidDataException($"Invalid theme setting: {value}");
+
+        return preference;
+    }
+
+    public void Save(ThemePreference preference)
+    {
+        if (!Enum.IsDefined(preference))
+            throw new ArgumentOutOfRangeException(nameof(preference));
+
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(filePath))!);
+        File.WriteAllText(filePath, preference.ToString());
+    }
+}
 }

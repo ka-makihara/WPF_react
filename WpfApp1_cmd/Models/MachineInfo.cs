@@ -344,7 +344,7 @@ namespace WpfApp1_cmd.Models
 				return;
 			}
 			*/
-			IsSelected.Value = Utility.CheckState(UnitVersions);
+			IsSelected.Value = Utility.CheckSelectableUnitSelectionState(UnitVersions);
 /*
 			if (value == true)
 			{

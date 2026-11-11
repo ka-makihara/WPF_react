@@ -99,6 +99,7 @@ public sealed class ModuleBackupService_ExecuteModuleTests
 			"LineA",
 			"MachineA",
 			"ModuleA",
+			"192.168.0.1",
 			1,
 			backupRoot,
 			["/Peripheral/program.bin"],
@@ -131,6 +132,7 @@ public sealed class ModuleBackupService_ExecuteModuleTests
 
 		public async Task<bool> DownloadFilesAsync(
 			string machineName,
+			string IpAddress,
 			int position,
 			IReadOnlyList<string> files,
 			string localPath,

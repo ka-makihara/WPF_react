@@ -326,6 +326,14 @@ namespace WpfApp1_cmd
 				return null;
 			}
 		}
+
+		public static bool? CheckSelectableUnitSelectionState(IEnumerable<UnitVersion> units)
+		{
+			ArgumentNullException.ThrowIfNull(units);
+
+			List<UnitVersion> selectableUnits = units.Where(unit => unit.IsUpdatable).ToList();
+			return selectableUnits.Count == 0 ? false : CheckState(selectableUnits);
+		}
 	}
 
 	/// <summary>

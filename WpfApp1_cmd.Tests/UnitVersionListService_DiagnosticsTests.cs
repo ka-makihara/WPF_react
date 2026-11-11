@@ -51,10 +51,6 @@ public sealed class UnitVersionListService_DiagnosticsTests
 				new UnitVersionPreparationDiagnostic(
 					UnitVersionPreparationDiagnosticPhase.Preparation,
 					UnitVersionDiagnosticDestination.ApplicationLog,
-					"[WARNING] LineA;MachineA;ModuleA:Missing=/Missing.bin Update file not found (excluded)"),
-				new UnitVersionPreparationDiagnostic(
-					UnitVersionPreparationDiagnosticPhase.Preparation,
-					UnitVersionDiagnosticDestination.ApplicationLog,
 					"[ERROR] ModuleA:Invalid has invalid Attribute=bad"),
 				new UnitVersionPreparationDiagnostic(
 					UnitVersionPreparationDiagnosticPhase.IniUpdate,
@@ -65,7 +61,7 @@ public sealed class UnitVersionListService_DiagnosticsTests
 	}
 
 	[Fact]
-	public void CreateDiagnostics_LogsWarningForListedUnitWithoutUpdateFile()
+	public void CreateDiagnostics_DoesNotWarnForMissingMachinePath()
 	{
 		UnitVersionPreparationProjection projection = new(
 			[],
@@ -87,15 +83,11 @@ public sealed class UnitVersionListService_DiagnosticsTests
 				"MachineA",
 				"ModuleA");
 
-		UnitVersionPreparationDiagnostic diagnostic = Assert.Single(diagnostics);
-		Assert.Equal(UnitVersionDiagnosticDestination.ApplicationLog, diagnostic.Destination);
-		Assert.Equal(
-			"[WARNING] LineA;MachineA;ModuleA:Missing=/Missing.bin Update file not found (not selectable)",
-			diagnostic.Message);
+		Assert.Empty(diagnostics);
 	}
 
 	[Fact]
-	public void CreateDiagnostics_LogsSelectableWarningInTestMode()
+	public void CreateDiagnostics_DoesNotWarnForMissingMachinePathInTestMode()
 	{
 		UnitVersionPreparationProjection projection = new(
 			[],
@@ -116,9 +108,7 @@ public sealed class UnitVersionListService_DiagnosticsTests
 				"ModuleA",
 				missingUpdateFileSelectable: true);
 
-		Assert.Equal(
-			"[WARNING] LineA;MachineA;ModuleA:Missing=/Missing.bin Update file not found (test: selectable)",
-			Assert.Single(diagnostics).Message);
+		Assert.Empty(diagnostics);
 	}
 
 	[Fact]

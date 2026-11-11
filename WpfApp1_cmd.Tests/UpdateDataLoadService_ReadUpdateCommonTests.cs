@@ -5,6 +5,42 @@ namespace WpfApp1_cmd.Tests;
 
 public sealed class UpdateDataLoadService_ReadUpdateCommonTests
 {
+	[Theory]
+	[InlineData("", false, 0)]
+	[InlineData("\\fuser.bin", true, 0)]
+	[InlineData("\\fuser.bin", false, 1)]
+	public void Read_ChecksUpdateDataFuserPathEvenWhenPathIsDirectory(
+		string fuserPath,
+		bool fuserExists,
+		int expectedMissingFiles)
+	{
+		string root = CreateTemporaryDirectory();
+		try
+		{
+			Directory.CreateDirectory(Path.Combine(root, "folder"));
+			if (fuserExists)
+			{
+				File.WriteAllText(Path.Combine(root, "fuser.bin"), "payload");
+			}
+			string infoPath = Path.Combine(root, "UpdateCommon.inf");
+			File.WriteAllText(infoPath, $"[Unit]\nPath=\\folder\nFuserPath={fuserPath}\n");
+
+			UpdateCommonInfoReadResult result = new UpdateDataLoadService()
+				.ReadUpdateCommon(infoPath, root, _ => null);
+
+			Assert.Null(result.ErrorMessage);
+			Assert.Equal(expectedMissingFiles, result.MissingFiles.Count);
+			if (expectedMissingFiles != 0)
+			{
+				Assert.Equal(root + fuserPath, Assert.Single(result.MissingFiles));
+			}
+		}
+		finally
+		{
+			Directory.Delete(root, recursive: true);
+		}
+	}
+
 	[Fact]
 	public void Read_ReturnsFileEntriesAndSkipsDirectories()
 	{
@@ -47,7 +83,7 @@ public sealed class UpdateDataLoadService_ReadUpdateCommonTests
 				],
 				result.PathEntries);
 			Assert.Equal(
-				[Path.Combine(root, "missing.bin")],
+				[Path.Combine(root, "fuser.bin"), Path.Combine(root, "missing.bin")],
 				result.MissingFiles);
 			Assert.Equal(
 				UpdateDataLoadService.GetPeripheralSize(root),

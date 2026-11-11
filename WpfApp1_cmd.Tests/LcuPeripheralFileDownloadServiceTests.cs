@@ -19,6 +19,7 @@ public sealed class LcuPeripheralFileDownloadServiceTests
 				new LcuPeripheralFileDownloadRequest(
 					1,
 					"machine-1",
+					"192.168.0.1",
 					3,
 					peripheralDirectory,
 					"UpdateCommon.inf",
@@ -30,6 +31,7 @@ public sealed class LcuPeripheralFileDownloadServiceTests
 			Assert.Equal(1, gateway.LcuId);
 			Assert.Equal(cancellation.Token, gateway.SetToken);
 			Assert.Equal("machine-1", gateway.MachineName);
+			Assert.Equal("192.168.0.1", gateway.IpAddress);
 			Assert.Equal(3, gateway.Position);
 			Assert.Equal(peripheralDirectory + "UpdateCommon.inf", gateway.MachineRelativeFile);
 			Assert.Equal("/MCFiles/" + peripheralDirectory + "UpdateCommon.inf", gateway.LcuRelativeFile);
@@ -60,6 +62,7 @@ public sealed class LcuPeripheralFileDownloadServiceTests
 				new LcuPeripheralFileDownloadRequest(
 					1,
 					"machine-1",
+					"192.168.0.1",
 					3,
 					"Peripheral/",
 					"UpdateCommon.inf",
@@ -86,6 +89,7 @@ public sealed class LcuPeripheralFileDownloadServiceTests
 				new LcuPeripheralFileDownloadRequest(
 					1,
 					"machine-1",
+					"192.168.0.1",
 					3,
 					"Peripheral/",
 					"UpdateCommon.inf",
@@ -115,6 +119,7 @@ public sealed class LcuPeripheralFileDownloadServiceTests
 					new LcuPeripheralFileDownloadRequest(
 						1,
 						"machine-1",
+						"192.168.0.1",
 						3,
 						"Peripheral/",
 						"UpdateCommon.inf",
@@ -138,6 +143,7 @@ public sealed class LcuPeripheralFileDownloadServiceTests
 		public int LcuId { get; private set; }
 		public CancellationToken SetToken { get; private set; }
 		public string? MachineName { get; private set; }
+		public string? IpAddress { get; private set; }
 		public int Position { get; private set; }
 		public string? MachineRelativeFile { get; private set; }
 		public string? LcuRelativeFile { get; private set; }
@@ -161,6 +167,7 @@ public sealed class LcuPeripheralFileDownloadServiceTests
 
 		public Task<bool> DownloadMachineFileAsync(
 			string machineName,
+			string IpAddress,
 			int position,
 			string machineRelativeFile,
 			string lcuRelativeFile,
@@ -169,6 +176,7 @@ public sealed class LcuPeripheralFileDownloadServiceTests
 		{
 			DownloadCount++;
 			MachineName = machineName;
+			this.IpAddress = IpAddress;
 			Position = position;
 			MachineRelativeFile = machineRelativeFile;
 			LcuRelativeFile = lcuRelativeFile;

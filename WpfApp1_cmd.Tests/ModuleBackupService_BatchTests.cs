@@ -13,8 +13,8 @@ public class ModuleBackupService_BatchTests
 			var service = new ModuleBackupService(() => new DateTime(2026, 10, 27, 16, 0, 0));
 			var workItems = new[]
 			{
-				new ModuleBackupWorkItem<int>("lcu:1", "machine:1", "module-a", 1),
-				new ModuleBackupWorkItem<int>("lcu:2", "machine:2", "module-b", 2)
+				new ModuleBackupWorkItem<int>("lcu:1", "machine:1", "module-a", "192.168.0.1", 1),
+				new ModuleBackupWorkItem<int>("lcu:2", "machine:2", "module-b", "192.168.0.2", 2)
 			};
 			List<int> processed = [];
 			List<string> backupPaths = [];
@@ -58,8 +58,8 @@ public class ModuleBackupService_BatchTests
 		{
 			var workItems = new[]
 			{
-				new ModuleBackupWorkItem<int>("lcu", "machine", "module-a", 1),
-				new ModuleBackupWorkItem<int>("lcu", "machine", "module-b", 2)
+				new ModuleBackupWorkItem<int>("lcu", "machine", "module-a", "192.168.0.1", 1),
+				new ModuleBackupWorkItem<int>("lcu", "machine", "module-b", "192.168.0.1", 2)
 			};
 			List<int> processed = [];
 
@@ -92,7 +92,8 @@ public class ModuleBackupService_BatchTests
 		string root = CreateTemporaryDirectory();
 		try
 		{
-			var workItem = new ModuleBackupWorkItem<int>("lcu", "machine", "module", 1);
+			var workItem = new ModuleBackupWorkItem<int>(
+				"lcu", "machine", "module", "192.168.0.1", 1);
 			var result = await new ModuleBackupService().ExecuteBatchAsync(
 				[workItem],
 				root,
@@ -119,7 +120,7 @@ public class ModuleBackupService_BatchTests
 		try
 		{
 			ModuleBackupWorkItem<int> workItem =
-				new("lcu", "machine", "module", 1);
+				new("lcu", "machine", "module", "192.168.0.1", 1);
 			bool completed = false;
 			var result = await new ModuleBackupService().ExecuteBatchAsync(
 				[workItem],
@@ -153,7 +154,7 @@ public class ModuleBackupService_BatchTests
 		try
 		{
 			ModuleBackupWorkItem<int> workItem =
-				new("lcu", "machine", "module", 1);
+				new("lcu", "machine", "module", "192.168.0.1", 1);
 			bool backupCalled = false;
 			var result = await new ModuleBackupService().ExecuteBatchAsync(
 				[workItem],
